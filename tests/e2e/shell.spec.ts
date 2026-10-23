@@ -149,6 +149,38 @@ test.describe('editor shell (F01)', () => {
     expect(box?.height).toBe(20);
   });
 
+  test('text-base keeps its font size and no token colour leaks into it (D-041 regression)', async ({ page }) => {
+    await page.goto('/editor');
+    // `text-base` is emitted because F01 components use it (EmptyState, shadcn Input). Probe it inside a
+    // container with a different size and colour so neither value can pass by inheritance.
+    const probe = await page.evaluate(() => {
+      const container = document.createElement('div');
+      container.style.cssText = 'font-size:10px;line-height:10px;color:rgb(1, 2, 3)';
+      container.innerHTML = '<p class="text-base">probe</p>';
+      document.body.append(container);
+      const style = getComputedStyle(container.firstElementChild as HTMLElement);
+      const result = { fontSize: style.fontSize, lineHeight: style.lineHeight, color: style.color };
+      container.remove();
+      return result;
+    });
+    expect(probe).toEqual({ fontSize: '16px', lineHeight: '24px', color: 'rgb(1, 2, 3)' });
+  });
+
+  test('main has a definite height that a height:100% child fills (future React Flow)', async ({ page }) => {
+    await page.goto('/editor');
+    const main = page.locator('main');
+    expect((await main.boundingBox())?.height).toBe(DESKTOP.height);
+    const fill = await main.evaluate((el) => {
+      const child = document.createElement('div');
+      child.style.height = '100%';
+      el.append(child);
+      const height = child.getBoundingClientRect().height;
+      child.remove();
+      return height;
+    });
+    expect(fill).toBe(DESKTOP.height - 56);
+  });
+
   test('editor-home empty state is in the static shell (AC-023)', async ({ page, baseURL }) => {
     await instant(
       page,

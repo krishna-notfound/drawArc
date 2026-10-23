@@ -29,6 +29,9 @@ function WithOpener({ showOpener = true }: { showOpener?: boolean }) {
       <button type="button" onClick={() => setOpen(true)}>
         Fallback opener
       </button>
+      <button type="button" onClick={() => setOpen(false)}>
+        Close from elsewhere
+      </button>
       <SidebarPanel id="p" side="left" open={open} onClose={() => setOpen(false)} label="Panel" openerRef={openerRef}>
         <button type="button" data-sidebar-close onClick={() => setOpen(false)}>
           Close
@@ -120,6 +123,16 @@ describe('SidebarPanel focus return (AC-014, EC-006)', () => {
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
     await user.keyboard('{Escape}');
     expect(screen.getByRole('button', { name: 'Opener' })).toHaveFocus();
+  });
+
+  it('does not steal focus back to the opener when focus has moved elsewhere', async () => {
+    const user = userEvent.setup();
+    render(<WithOpener />);
+    await user.click(screen.getByRole('button', { name: 'Opener' }));
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Close from elsewhere' }));
+    expect(document.getElementById('p')).toHaveAttribute('data-state', 'closed');
+    expect(screen.getByRole('button', { name: 'Close from elsewhere' })).toHaveFocus();
   });
 
   it('falls back to body without throwing when the opener is gone', async () => {

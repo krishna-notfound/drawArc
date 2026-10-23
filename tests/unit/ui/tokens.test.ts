@@ -20,7 +20,7 @@ describe('design tokens on :root (AC-001)', () => {
 
 describe('@theme inline utility mapping (AC-002)', () => {
   const expected: Record<string, string> = {
-    '--color-base': '--bg-base',
+    '--background-color-base': '--bg-base',
     '--color-surface': '--bg-surface',
     '--color-elevated': '--bg-elevated',
     '--color-subtle': '--bg-subtle',
@@ -46,8 +46,27 @@ describe('@theme inline utility mapping (AC-002)', () => {
     expect(theme.get(utility)).toBe(`var(${token})`);
   });
 
+  it('registers bg-base in the background-only namespace, never as --color-base (D-041)', () => {
+    // --color-base would also generate `text-base` as a colour and drop its font size.
+    expect(theme.has('--color-base')).toBe(false);
+  });
+
+  it('defines no --color-* whose name collides with a font-size utility (text-xs … text-9xl)', () => {
+    const collisions = [...theme.keys()].filter((name) => /^--color-(xs|sm|base|lg|xl|[2-9]xl)$/.test(name));
+    expect(collisions).toEqual([]);
+  });
+
   it('does not map the reserved --color-accent-text (D-037)', () => {
     expect(theme.has('--color-accent-text')).toBe(false);
+  });
+});
+
+describe('base styles', () => {
+  it('sets the body background and colour inside @layer base so utilities can override them', () => {
+    const base = blockBody(css, '@layer base');
+    expect(base).toMatch(/body\s*\{[^}]*background:\s*var\(--bg-base\)[^}]*color:\s*var\(--text-primary\)/);
+    const outside = css.replace(`@layer base {${base}}`, '');
+    expect(outside).not.toMatch(/(^|\n)\s*body\s*\{/);
   });
 });
 

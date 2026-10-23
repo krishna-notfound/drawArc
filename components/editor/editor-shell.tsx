@@ -75,7 +75,8 @@ export function EditorShell({ navbarCenter, navbarRight, sidebar, aiSidebar, chi
           {aiSidebar}
         </AiSidebar>
       ) : null}
-      <main className="relative min-h-dvh pt-14">{children}</main>
+      {/* Definite height (viewport minus the navbar via pt-14) so a height:100% child such as React Flow fills it. */}
+      <main className="relative h-dvh pt-14">{children}</main>
     </EditorChromeContext.Provider>
   );
 }

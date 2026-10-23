@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/editor/empty-state';
 export default function EditorHomePage() {
   return (
     <EditorShell>
-      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center p-6">
+      <div className="flex h-full items-center justify-center overflow-y-auto p-6">
         <EmptyState
           as="h1"
           icon={LayoutDashboard}

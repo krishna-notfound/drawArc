@@ -15,7 +15,7 @@ export interface ProjectSidebarProps {
   open: boolean;
   onClose: () => void;
   openerRef?: RefObject<HTMLElement | null>;
-  /** Absent → the New Project button is disabled (EC-007). */
+  /** Absent → the New Project button is aria-disabled with a sign-in tooltip (EC-007). */
   onNewProject?: () => void;
   /** F04 supplies the lists; undefined → empty state. */
   myProjects?: ReactNode;
@@ -80,13 +80,15 @@ export function ProjectSidebar({ open, onClose, openerRef, onNewProject, myProje
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
-              {/* Disabled buttons emit no pointer events; the wrapper carries the tooltip. */}
-              <span className="block w-full" tabIndex={0}>
-                <Button type="button" className={NEW_PROJECT_CLASS} disabled>
-                  <Plus className="h-5 w-5" />
-                  New Project
-                </Button>
-              </span>
+              {/* aria-disabled, not `disabled`: it stays focusable and keeps pointer events, so the tooltip works. */}
+              <Button
+                type="button"
+                aria-disabled="true"
+                className={`${NEW_PROJECT_CLASS} cursor-not-allowed opacity-50`}
+              >
+                <Plus className="h-5 w-5" />
+                New Project
+              </Button>
             </TooltipTrigger>
             <TooltipContent>Sign in to create a project</TooltipContent>
           </Tooltip>

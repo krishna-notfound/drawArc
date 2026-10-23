@@ -35,12 +35,16 @@ export function SidebarPanel({ id, side, open, onClose, label, openerRef, childr
       const closeButton = panel?.querySelector<HTMLElement>(`[${SIDEBAR_CLOSE_ATTRIBUTE}]`);
       (closeButton ?? panel)?.focus();
     } else if (!open && wasOpen.current) {
+      const active = document.activeElement;
+      // Restore only if focus was in the panel (or was dropped to <body> when the panel went inert);
+      // if the user has moved on — e.g. into the other sidebar — leave focus where it is.
+      const focusWasInPanel = !active || active === document.body || (panel?.contains(active) ?? false);
       const opener = openerRef?.current;
-      if (opener?.isConnected) {
+      if (focusWasInPanel && opener?.isConnected) {
         opener.focus();
-      } else if (panel && document.activeElement instanceof HTMLElement && panel.contains(document.activeElement)) {
+      } else if (focusWasInPanel && active instanceof HTMLElement && active !== document.body) {
         // The opener is gone (EC-006): drop focus to <body> rather than leave it in a closed panel.
-        document.activeElement.blur();
+        active.blur();
       }
     }
     wasOpen.current = open;

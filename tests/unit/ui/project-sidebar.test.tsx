@@ -66,13 +66,17 @@ describe('ProjectSidebar content (AC-017)', () => {
 });
 
 describe('ProjectSidebar New Project button (AC-018, EC-007)', () => {
-  it('is disabled with a sign-in tooltip when no handler is supplied', async () => {
+  it('is aria-disabled (still hoverable/focusable) with a sign-in tooltip when no handler is supplied', async () => {
     const user = userEvent.setup();
     renderSidebar();
     const button = screen.getByRole('button', { name: 'New Project' });
-    expect(button).toBeDisabled();
-    await user.hover(button.parentElement as HTMLElement);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toBeDisabled();
+    expect(button.closest('[tabindex="0"]:not(button)')).toBeNull();
+    await user.hover(button);
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Sign in to create a project');
+    await user.click(button);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('is enabled, full-width, has a Plus icon, and calls the handler once', async () => {

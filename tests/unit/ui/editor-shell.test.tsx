@@ -55,7 +55,7 @@ describe('EditorShell (AC-020, FR-014)', () => {
     expect(document.getElementById('project-sidebar')).toHaveAttribute('data-state', 'closed');
     expect(document.getElementById('ai-sidebar')).toBeNull();
     const main = screen.getByRole('main');
-    expect(main).toHaveClass('relative', 'pt-14', 'min-h-dvh');
+    expect(main).toHaveClass('relative', 'pt-14', 'h-dvh');
     expect(main).toHaveTextContent('Page content');
   });
 
