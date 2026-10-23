@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — implemented and verified; awaiting owner review (AC-029 CI-run link pending push authorization) |
+| Status | Verification — all ACs verified incl. CI (AC-029); PR #1 open, awaiting owner review/merge |
 | Spec approved | 2026-10-23, owner (incl. local decisions D-F00-1 … D-F00-8) |
 | Implementation authorized | 2026-10-23, owner (native execution; 4–5 commits per phase) — plan `docs/superpowers/plans/2026-10-23-f00-product-foundation.md` |
 | Last verified | 2026-10-23, commit `43ebf7e` on branch `feat/f00-product-foundation` (not merged, not pushed) |
@@ -28,7 +28,7 @@ Commits (author `krishna <krishnagtkr@gmail.com>`, branch `feat/f00-product-foun
 | `npm run e2e` | 3 passed (setup; `/` 200; unknown route 404 "Page not found") (AC-009) |
 | AC-005 `server-only` probe (`app/probe-server-only`, deleted) | `next build` failed: "You're importing a module that depends on server-only" via `lib/env.ts` |
 | AC-027 | no protected file in `1ac4b34..43ebf7e`; `next.config.ts` unchanged (`cacheComponents`, `partialPrefetching`, `agentFeedback` all true) |
-| AC-029 CI run URL | **pending** — repository has no remote; pushing needs owner authorization |
+| AC-029 CI run | **verified 2026-10-23** — PR #1 https://github.com/krishna-notfound/drawArc/pull/1, run https://github.com/krishna-notfound/drawArc/actions/runs/39991557696: check 64/64, build OK, check:bundle 9 sentinels none found, audit 0 |
 
 Resolved package versions: zod 4.6.7, clsx 2.1.1, tailwind-merge 3.7.0, server-only 0.0.1, vitest 5.0.5, vite 8.3.5, @vitejs/plugin-react 6.1.2, vite-tsconfig-paths 6.1.1, jsdom 30.1.3, @testing-library/react 16.3.3, @testing-library/dom 10.4.2, @testing-library/jest-dom 7.0.1 (Vitest entry `@testing-library/jest-dom/vitest` unchanged), @playwright/test 1.64.1, @next/playwright 16.4.2, yaml 2.9.1, @types/node 22.20.5. No lint overrides were needed for owner files.
 

@@ -148,6 +148,29 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-039 — F01 approved, including D-F01-1 … D-F01-8 and D-F01-2a
+**APPROVED** 2026-10-23 (owner approved feature 01 as written) — React Flow stylesheet + `@xyflow/react ~12.12` installed in F01; shared `SidebarPanel`; sidebars closed by default; placeholder `/editor`; z-index scale; layout.tsx metadata/body classes only; `AppDialog`/`ConfirmDialog`; `--accent-ai-foreground` white on `bg-ai`. Recorded as "approved within F01" per D-035.
+
+### D-040 — Development workflow: feature branch per phase off `main`, PR to GitHub `krishna-notfound/drawArc` (public), fresh planner/implementer/reviewer agents per phase, 4–5 commits per phase
+**APPROVED** 2026-10-23 (owner). Default branch renamed `master` → `main`. Commits authored `krishna <krishnagtkr@gmail.com>` (owner-confirmed GitHub email). Stacked branches allowed while a predecessor PR is open.
+
+---
+
+### D-041 — F01 review fixes approved: `--background-color-base`, `cn` dependency, commit owner's home page
+**APPROVED** 2026-10-23 (owner) — (1) The base background token is registered as `--background-color-base` instead of `--color-base`: in Tailwind v4 `--color-base` also generates `text-base` as a colour, which overrode the `text-base` font size and made shadcn Input/Textarea text invisible (found by the F01 final review in the built CSS). AC-002 and 02-design amended. (2) `cn` (shadcn's first-party class merger, `shadcn-ui/cn`) is an approved dependency because shadcn 4.22 registry components import it; `lib/utils.ts` re-exports it so one engine ships. (3) The owner's uncommitted `app/page.tsx` edit and staged `public/*.svg` deletions are committed with F01, because the committed create-next-app page violated F01's no-raw-colour rule in clean checkouts/CI.
+
+---
+
+### D-042 — F02 approved; first migration on Neon `development` only; lean testing policy
+**APPROVED** 2026-10-23 (owner: "go for it … move to next phase"). F00 (PR #1) and F01 (PR #2) merged to `main` with merge commits. F02 spec approved with its local decisions; the Prisma migration for `User` may be applied to the Neon `development` branch only (never `production`). Testing policy (owner): only meaningful behaviour/risk tests — no per-line or trivial tests; an AC may be verified by build, type-check, lint, or inspection when a test adds nothing; record which.
+
+---
+
+### D-043 — Deleted accounts: soft-delete kept, email held for 15 days, then released; no cron
+**APPROVED** 2026-10-24 (owner). Purpose: stop users resetting a free trial or other per-account benefits by deleting and re-creating an account with the same email. On `user.deleted` the row is soft-deleted and keeps its email. A new account with that email is refused while `now - deletedAt < 15 days` (specific "recently deleted" screen with the date it becomes available); after 15 days the old row's email is released (`deleted+<userId>@invalid`) and the new account proceeds. Enforced by comparing `deletedAt` with the current date at request/webhook time — no scheduled job. A `user.deleted` for an unknown `clerkId` writes a tombstone so a late `user.created` cannot create a live row. F02 FR-018 / AC-035–036 added. Supersedes the "manual reconciliation" handling for this case.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

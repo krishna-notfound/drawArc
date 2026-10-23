@@ -118,7 +118,7 @@ export interface EmptyStateProps { icon: LucideIcon; title: string; description?
   --radius: 0.75rem;
 }
 @theme inline {
-  --color-base: var(--bg-base); --color-surface: var(--bg-surface); --color-elevated: var(--bg-elevated); --color-subtle: var(--bg-subtle);
+  --background-color-base: var(--bg-base); /* not --color-base: that would turn text-base into a colour (D-041) */ --color-surface: var(--bg-surface); --color-elevated: var(--bg-elevated); --color-subtle: var(--bg-subtle);
   --color-surface-border: var(--border-default); --color-surface-subtle: var(--border-subtle);
   --color-copy-primary: var(--text-primary); --color-copy-secondary: var(--text-secondary); --color-copy-muted: var(--text-muted); --color-copy-faint: var(--text-faint);
   --color-brand: var(--accent-primary); --color-brand-dim: var(--accent-primary-dim);
