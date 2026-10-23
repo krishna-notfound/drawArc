@@ -1,0 +1,20 @@
+# F08 — Implementation Plan (outline)
+
+**Dependencies to be installed:** none (`@xyflow/react` ships `NodeResizer`, `NodeToolbar`; `lucide-react` `Check` icon; shadcn `Tooltip` from F01). **Environment variables:** none. **Migrations:** none.
+
+| Task | Deliverable | Satisfies | Files | Done when |
+|---|---|---|---|---|
+| T-001 | **Spike (½ day):** on the dev server, confirm (a) a `NodeResizer` gesture through the F06 hook yields one undo entry and synced `width/height`; (b) `room.batch(() => onNodesChange([...]))` yields one undo entry and one storage message for 3 `replace` changes — else switch `updateNodesData` to `history.pause/resume`. Record outputs in status.md. | FR-002, FR-004, FR-012 precondition | `tests/integration/liveblocks/flow-resize-and-batch.test.tsx` (kept as regression) | Test passes; decision recorded |
+| T-002 | `components/canvas/nodes/node-resizer.tsx` wrapper (48 × 32 min, circle aspect, visibility gate) + CSS for `.canvas-resize-handle`/`.canvas-resize-line`; mount in `canvas-node.tsx`. | FR-001, FR-003, FR-005 | `components/canvas/nodes/node-resizer.tsx`, `components/canvas/nodes/canvas-node.tsx`, `app/globals.css`, `tests/unit/components/canvas/node-resizer.test.tsx` | AC-001, AC-002 pass; AC-007 screenshot |
+| T-003 | `components/canvas/nodes/node-label.tsx` (rest rendering, placeholder, 5-line clamp, identical typography contract) and `LABEL_MAX_LENGTH` constant. | FR-009, FR-014 | `components/canvas/nodes/node-label.tsx`, `types/canvas.ts` (constant), `tests/unit/components/canvas/node-label.test.tsx` | AC-013, AC-020 pass |
+| T-004 | `components/canvas/nodes/node-label-editor.tsx`: textarea overlay, open paths (dblclick / Enter), commit/cancel/blur semantics, key isolation, unmount-skips-commit guard, focus return; wire into `canvas-node.tsx`; `hooks/useSelectedNodeIds.ts` (+ `useSelectionColor`) with shallow selector. | FR-006, FR-007, FR-008, FR-010 | `components/canvas/nodes/node-label-editor.tsx`, `components/canvas/nodes/canvas-node.tsx`, `hooks/useSelectedNodeIds.ts`, `tests/unit/components/canvas/node-label-editor.test.tsx` | AC-008–AC-011 pass |
+| T-005 | `hooks/useCanvasMutations.ts`: add `updateNodesData(ids, patch)` batched via `room.batch()` (or pause/resume per T-001). | FR-012 | `hooks/useCanvasMutations.ts`, `tests/unit/hooks/useCanvasMutations.test.tsx` (extend) | unit test asserts one `onNodesChange` call with N `replace` changes inside one batch |
+| T-006 | `components/canvas/node-color-toolbar.tsx`: `NodeToolbar` over the selection, 8 swatches, radiogroup + roving tabindex, active/mixed state, hover glow CSS, `nodrag nopan`; rendered as a child of `<ReactFlow>` in the F06 island behind `canEdit`. | FR-011, FR-012, FR-013 | `components/canvas/node-color-toolbar.tsx`, `components/canvas/flow-canvas.tsx` (F06, 1-line render), `app/globals.css`, `tests/unit/components/canvas/node-color-toolbar.test.tsx` | AC-015, AC-018 pass; AC-016 screenshot |
+| T-007 | E2E single-user: resize maths and clamp, undo granularity, key isolation, multi-select colour; E2E collab: resize sync, delete-while-editing, viewer gate, concurrent label LWW, concurrent drag convergence, undo-after-remote, offline commit. | FR-002–FR-014 | `tests/e2e/canvas/08-node-editing.spec.ts`, `tests/e2e/canvas/08-node-editing-collab.spec.ts` | AC-003–006, 012, 014, 017, 019, 021–024 pass on preview |
+
+Order: T-001 → (T-002 ∥ T-003) → T-004 → T-005 → T-006 → T-007. Each ≤ 1 day; each ends with `npm run check` green and output attached.
+
+Notes for the Gate 6 plan:
+- `canvas-node.tsx` grows in this feature; keep it under ~150 lines by delegating to the three new components. The `React.memo` wrapper and `nodeTypes` constant from F07 are untouched.
+- `CanvasDocumentSchema` (F06) bounds labels at `MAX_LABEL = 500`; this feature's UX cap is 200 (`LABEL_MAX_LENGTH`). The two are compatible (schema ≥ UX); do not tighten the schema here.
+- Test hooks: `window.__history = { undo, redo, canUndo, canRedo }` is added here under `NEXT_PUBLIC_E2E_HOOKS=1` so AC-006/AC-023 do not depend on F10's shortcut being merged first; F10 reuses it.
