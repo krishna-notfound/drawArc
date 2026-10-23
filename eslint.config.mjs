@@ -67,6 +67,7 @@ const eslintConfig = defineConfig([
       "scripts/**",
       "tests/setup.ts",
       "tests/e2e/**",
+      "tests/integration/db.ts",
     ],
     rules: { "no-restricted-syntax": "off" },
   },
