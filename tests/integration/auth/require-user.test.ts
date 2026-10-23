@@ -1,9 +1,11 @@
 // @vitest-environment node
+import type { WebhookEvent } from '@clerk/nextjs/webhooks';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createRequireUser } from '@/lib/auth';
+import { handleClerkEvent } from '@/lib/clerk-webhook';
 import type { PrismaClient } from '@/lib/generated/prisma/client';
-import { type BackendUserLike, markUserDeleted, upsertUserFromClerk } from '@/lib/users';
+import { type BackendUserLike, EmailHeldError, markUserDeleted, upsertUserFromClerk } from '@/lib/users';
 import { makeUser } from '@/tests/factories';
 import { createFakeLogger } from '@/tests/helpers/fake-logger';
 import { createTestPrisma, hasTestDatabase, migrateTestDatabase, testSchema } from '@/tests/integration/db';
@@ -69,11 +71,12 @@ describe.skipIf(!hasTestDatabase)('User sync against Postgres (L2)', { timeout: 
 
     expect(await markUserDeleted(db, input.clerkId)).toBe('marked');
     expect((await db.user.findUniqueOrThrow({ where: { clerkId: input.clerkId } })).deletedAt).toBeInstanceOf(Date);
-    expect(await markUserDeleted(db, `${PREFIX}missing`)).toBe('missing');
-    expect(await db.user.count({ where: { clerkId: `${PREFIX}missing` } })).toBe(0);
+    // FR-018 supersedes "missing writes nothing": an unknown clerkId gets a tombstone (AC-036 below).
+    expect(await markUserDeleted(db, `${PREFIX}missing`)).toBe('tombstoned');
+    expect(await db.user.count({ where: { clerkId: `${PREFIX}missing`, deletedAt: { not: null } } })).toBe(1);
   });
 
-  function requireUserFor(backendUser: BackendUserLike) {
+  function requireUserFor(backendUser: BackendUserLike, now?: Date) {
     const bindPendingMemberships = vi.fn(async () => ({ bound: 0 }));
     const requireUser = createRequireUser({
       auth: async () => ({ userId: backendUser.id }),
@@ -84,6 +87,7 @@ describe.skipIf(!hasTestDatabase)('User sync against Postgres (L2)', { timeout: 
         throw new Error(`unexpected redirect to ${url}`);
       },
       logger: createFakeLogger(),
+      ...(now ? { now: () => now } : {}),
     });
     return { requireUser, bindPendingMemberships };
   }
@@ -131,5 +135,94 @@ describe.skipIf(!hasTestDatabase)('User sync against Postgres (L2)', { timeout: 
     expect(row.deletedAt).toBeNull();
     expect(row).toMatchObject({ name: 'New Name', avatarUrl: 'https://img.clerk.com/new' });
     expect(user.id).toBe(row.id);
+  });
+
+  // FR-018 / D-043: a deleted account's email is held for 15 days, then released to a new account.
+  describe('email hold after account deletion (AC-035)', () => {
+    const NOW = new Date('2026-10-24T12:00:00.000Z');
+    const DAY = 24 * 60 * 60 * 1000;
+
+    function newAccount(clerkId: string, email: string): BackendUserLike {
+      return {
+        id: clerkId,
+        firstName: 'Re',
+        lastName: 'Joined',
+        username: null,
+        imageUrl: 'https://img.clerk.com/rejoined',
+        primaryEmailAddressId: 'e1',
+        emailAddresses: [{ id: 'e1', emailAddress: email }],
+      };
+    }
+
+    function createdEvent(clerkId: string, email: string): WebhookEvent {
+      return {
+        type: 'user.created',
+        object: 'event',
+        data: { id: clerkId, email_addresses: [{ id: 'e1', email_address: email }], primary_email_address_id: 'e1' },
+      } as unknown as WebhookEvent;
+    }
+
+    it('refuses a new account for an email deleted 3 days ago and keeps the old row intact', async () => {
+      const email = `${PREFIX}held@example.com`;
+      const deletedAt = new Date(NOW.getTime() - 3 * DAY);
+      const old = await db.user.create({ data: { clerkId: `${PREFIX}held_old`, email, deletedAt } });
+
+      const { requireUser, bindPendingMemberships } = requireUserFor(newAccount(`${PREFIX}held_new`, email), NOW);
+      const err = await requireUser().then(
+        () => null,
+        (e: unknown) => e,
+      );
+      expect(err).toBeInstanceOf(EmailHeldError);
+      expect(err).toMatchObject({ code: 'FORBIDDEN', reason: 'recently-deleted' });
+      expect((err as EmailHeldError).availableAt).toEqual(new Date(deletedAt.getTime() + 15 * DAY));
+      expect(bindPendingMemberships).not.toHaveBeenCalled();
+
+      const webhook = await handleClerkEvent(createdEvent(`${PREFIX}held_new`, email), {
+        db,
+        logger: createFakeLogger(),
+        bindPendingMemberships: async () => ({ bound: 0 }),
+        now: () => NOW,
+      });
+      expect(webhook).toEqual({ handled: false, reason: 'email-held' });
+
+      expect(await db.user.findUniqueOrThrow({ where: { id: old.id } })).toMatchObject({ email, deletedAt });
+      expect(await db.user.count({ where: { clerkId: `${PREFIX}held_new` } })).toBe(0);
+    });
+
+    it('releases the email of an account deleted 16 days ago and creates the new live row', async () => {
+      const email = `${PREFIX}released@example.com`;
+      const deletedAt = new Date(NOW.getTime() - 16 * DAY);
+      const old = await db.user.create({ data: { clerkId: `${PREFIX}released_old`, email, deletedAt } });
+
+      const { requireUser } = requireUserFor(newAccount(`${PREFIX}released_new`, email), NOW);
+      const { user } = await requireUser();
+
+      expect(user).toMatchObject({ clerkId: `${PREFIX}released_new`, email });
+      expect(await db.user.findUniqueOrThrow({ where: { id: old.id } })).toMatchObject({
+        email: `deleted+${old.id}@invalid`,
+        deletedAt,
+      });
+      expect((await db.user.findUniqueOrThrow({ where: { email } })).deletedAt).toBeNull();
+    });
+  });
+
+  it('user.deleted before user.created leaves only a tombstone (AC-036)', async () => {
+    const clerkId = `${PREFIX}out_of_order`;
+    const deps = { db, logger: createFakeLogger(), bindPendingMemberships: async () => ({ bound: 0 }) };
+    const deleted = { type: 'user.deleted', object: 'event', data: { id: clerkId, deleted: true } };
+    const created = {
+      type: 'user.created',
+      object: 'event',
+      data: { id: clerkId, email_addresses: [{ id: 'e1', email_address: `${PREFIX}late@example.com` }], primary_email_address_id: 'e1' },
+    };
+
+    expect(await handleClerkEvent(deleted as unknown as WebhookEvent, deps)).toEqual({ handled: true });
+    expect(await handleClerkEvent(created as unknown as WebhookEvent, deps)).toEqual({ handled: false, reason: 'user-deleted' });
+
+    const rows = await db.user.findMany({ where: { clerkId } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ email: `deleted+${clerkId}@invalid`, name: null, avatarUrl: null });
+    expect(rows[0]?.deletedAt).toBeInstanceOf(Date);
+    expect(await db.user.count({ where: { email: `${PREFIX}late@example.com` } })).toBe(0);
   });
 });

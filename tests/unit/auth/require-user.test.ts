@@ -65,6 +65,7 @@ describe('requireUser — unauthenticated (AC-014)', () => {
     ['/editor/abc', '/sign-in?redirect_url=%2Feditor%2Fabc'],
     ['https://evil.example', '/sign-in'],
     ['//evil', '/sign-in'],
+    ['/\t/evil.com', '/sign-in'],
     ['/\\evil.example', '/sign-in'],
   ])('redirects pages to sign-in (returnTo %s → %s, EC-012)', async (returnTo, expected) => {
     const { requireUser } = setup(signedOut);
@@ -119,6 +120,20 @@ describe('requireUser — lazy User row (AC-015)', () => {
     const err = await rejection(requireUser());
     expect(err).toBeInstanceOf(AppError);
     expect(err).toMatchObject({ code: 'UPSTREAM' });
+    expect(fake.writes()).toBe(0);
+  });
+
+  it('never revives a tombstone: Clerk no longer has that user (FR-018)', async () => {
+    const tombstone = makeUser({
+      clerkId: 'user_clerk_new',
+      email: 'deleted+user_clerk_new@invalid',
+      name: null,
+      avatarUrl: null,
+      deletedAt: new Date('2026-10-01T00:00:00Z'),
+    });
+    const { requireUser, deps, fake } = setup({}, [tombstone]);
+    expect(await rejection(requireUser())).toMatchObject({ code: 'UNAUTHENTICATED' });
+    expect(deps.currentUser).not.toHaveBeenCalled();
     expect(fake.writes()).toBe(0);
   });
 

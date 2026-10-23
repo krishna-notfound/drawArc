@@ -10,6 +10,8 @@ import {
   type BackendUserLike,
   bindPendingMemberships,
   EmailConflictError,
+  EmailHeldError,
+  isTombstone,
   mapBackendUser,
   toAuthUser,
   type UserDb,
@@ -39,12 +41,24 @@ export interface RequireUserDeps {
   bindPendingMemberships: (user: AuthUser) => Promise<{ bound: number }>;
   redirect: (url: string) => never;
   logger: Logger;
+  /** Clock for the deleted-email hold (FR-018); defaults to the system clock. */
+  now?: () => Date;
 }
 
 const SIGN_IN_PATH = '/sign-in';
 
+// Browsers strip tab/newline characters from URLs, so "/\t/evil.com" would become "//evil.com": control
+// characters are rejected outright, and the URL parser must agree that the path stays on our origin.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
+const SAME_ORIGIN = 'http://same-origin.invalid';
+
 function isSafeReturnPath(path: string): boolean {
-  return path.startsWith('/') && !path.startsWith('//') && !path.includes('\\');
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\') || CONTROL_CHARS.test(path)) return false;
+  try {
+    return new URL(path, SAME_ORIGIN).origin === SAME_ORIGIN;
+  } catch {
+    return false;
+  }
 }
 
 export function signInUrl(returnTo?: string): string {
@@ -65,6 +79,8 @@ export function createRequireUser(deps: RequireUserDeps) {
 
     const row = await deps.db.user.findUnique({ where: { clerkId } });
     if (row && !row.deletedAt) return { user: toAuthUser(row) };
+    // A tombstone means Clerk told us this user was deleted before we ever saw it: never revive it (FR-018).
+    if (row && isTombstone(row)) return unauthenticated();
 
     // First request for this user, or a row the webhook marked deleted while the Clerk session is still
     // valid (Clerk is authoritative, D-F02-4): sync from Clerk once.
@@ -82,8 +98,11 @@ export function createRequireUser(deps: RequireUserDeps) {
 
     let user: AuthUser;
     try {
-      user = toAuthUser(await upsertUserFromClerk(deps.db, input, { resurrect: true }));
+      user = toAuthUser(await upsertUserFromClerk(deps.db, input, { resurrect: true, now: deps.now }));
     } catch (err) {
+      if (err instanceof EmailHeldError) {
+        deps.logger.info({ clerkId, availableAt: err.availableAt.toISOString() }, 'user sync refused: email held after deletion');
+      }
       if (err instanceof EmailConflictError) {
         deps.logger.error(
           { clerkId, conflictingClerkId: err.conflictingClerkId },

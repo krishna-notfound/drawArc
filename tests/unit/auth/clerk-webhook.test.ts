@@ -59,10 +59,18 @@ describe('handleClerkEvent — idempotent and order-tolerant (AC-021)', () => {
     expect(fake.rows()[0]?.deletedAt).toBeInstanceOf(Date);
   });
 
-  it('treats deleting an unknown user as handled with no write', async () => {
+  it('writes a tombstone for an unknown user, so a late created cannot make it live (FR-018, AC-036)', async () => {
     const { fake, handle } = setup();
     await expect(handle(deletedEvent())).resolves.toEqual({ handled: true });
-    expect(fake.writes()).toBe(0);
+    await expect(handle(userEvent('user.created'))).resolves.toEqual({ handled: false, reason: 'user-deleted' });
+    expect(fake.rows()).toHaveLength(1);
+    expect(fake.rows()[0]).toMatchObject({
+      clerkId: 'user_clerk_1',
+      email: 'deleted+user_clerk_1@invalid',
+      name: null,
+      avatarUrl: null,
+    });
+    expect(fake.rows()[0]?.deletedAt).toBeInstanceOf(Date);
   });
 });
 

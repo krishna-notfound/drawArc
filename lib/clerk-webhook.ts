@@ -8,17 +8,27 @@ import { ClerkDeletedSchema, ClerkWebhookUserSchema } from '@/schemas/clerk';
 import type { AuthUser } from './auth';
 import { httpStatusFor } from './errors';
 import type { Logger } from './logger';
-import { EmailConflictError, mapWebhookUser, markUserDeleted, toAuthUser, type UserDb, upsertUserFromClerk } from './users';
+import {
+  EmailConflictError,
+  EmailHeldError,
+  mapWebhookUser,
+  markUserDeleted,
+  toAuthUser,
+  type UserDb,
+  upsertUserFromClerk,
+} from './users';
 
 export type ClerkEventResult = {
   handled: boolean;
-  reason?: 'unknown-type' | 'no-email' | 'missing-id' | 'invalid-payload' | 'email-conflict';
+  reason?: 'unknown-type' | 'no-email' | 'missing-id' | 'invalid-payload' | 'email-conflict' | 'email-held' | 'user-deleted';
 };
 
 export interface ClerkEventDeps {
   db: UserDb;
   logger: Logger;
   bindPendingMemberships: (user: AuthUser) => Promise<{ bound: number }>;
+  /** Clock for the deleted-email hold and deletion timestamps (FR-018); defaults to the system clock. */
+  now?: () => Date;
 }
 
 /**
@@ -28,6 +38,7 @@ export interface ClerkEventDeps {
  */
 export async function handleClerkEvent(evt: WebhookEvent, deps: ClerkEventDeps): Promise<ClerkEventResult> {
   const { db, logger } = deps;
+  const now = deps.now ?? (() => new Date());
   switch (evt.type) {
     case 'user.created':
     case 'user.updated': {
@@ -42,10 +53,23 @@ export async function handleClerkEvent(evt: WebhookEvent, deps: ClerkEventDeps):
         logger.warn({ type: evt.type, clerkId: parsed.data.id }, 'clerk user has no email; not synced');
         return { handled: false, reason: 'no-email' };
       }
+      // A deleted (or tombstoned) user stays as it is: a late or stale event must not refresh or revive it.
+      const existing = await db.user.findUnique({ where: { clerkId: input.clerkId }, select: { deletedAt: true } });
+      if (existing?.deletedAt) {
+        logger.info({ type: evt.type, clerkId: input.clerkId }, 'clerk webhook for a deleted user ignored');
+        return { handled: false, reason: 'user-deleted' };
+      }
       try {
-        const row = await upsertUserFromClerk(db, input);
-        if (!row.deletedAt) await deps.bindPendingMemberships(toAuthUser(row));
+        const row = await upsertUserFromClerk(db, input, { now });
+        await deps.bindPendingMemberships(toAuthUser(row));
       } catch (err) {
+        if (err instanceof EmailHeldError) {
+          logger.warn(
+            { type: evt.type, clerkId: err.clerkId, availableAt: err.availableAt.toISOString() },
+            'clerk webhook: email held after a recent account deletion; not synced',
+          );
+          return { handled: false, reason: 'email-held' };
+        }
         if (!(err instanceof EmailConflictError)) throw err;
         logger.error(
           { type: evt.type, clerkId: err.clerkId, conflictingClerkId: err.conflictingClerkId },
@@ -63,7 +87,7 @@ export async function handleClerkEvent(evt: WebhookEvent, deps: ClerkEventDeps):
         return { handled: false, reason: 'missing-id' };
       }
       // Membership removal for deleted users is owed by F03/F12 once ProjectMember exists.
-      await markUserDeleted(db, clerkId);
+      await markUserDeleted(db, clerkId, now());
       return { handled: true };
     }
     default:
