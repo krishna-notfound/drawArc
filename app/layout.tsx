@@ -1,5 +1,8 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { clerkAppearance } from "@/lib/clerk-appearance";
 
 import "./globals.css";
 import { Providers } from "./providers";
@@ -26,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-base text-copy-primary font-sans">
-        <Providers>{children}</Providers>
+        {/* Inside <body> per Clerk's App Router guidance; static (no `dynamic` prop) so the shell still prerenders. */}
+        <ClerkProvider appearance={clerkAppearance} afterSignOutUrl="/sign-in">
+          <Providers>{children}</Providers>
+        </ClerkProvider>
       </body>
     </html>
   );
