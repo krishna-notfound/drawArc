@@ -1,4 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config } from 'dotenv';
+
+// Test workers need E2E_USER_* and the Clerk keys (clerkSetup); the dev server reads .env.local itself.
+config({ path: ['.env.local', '.env'], quiet: true });
 
 const isCI = Boolean(process.env.CI);
 
@@ -10,7 +14,12 @@ export default defineConfig({
   use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },
   projects: [
     { name: 'setup', testMatch: /global\.setup\.ts/ },
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, dependencies: ['setup'] },
+    // Specs run signed in as E2E user A unless they reset storageState (see tests/e2e/auth.spec.ts).
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user-a.json' },
+      dependencies: ['setup'],
+    },
   ],
   webServer: [
     {

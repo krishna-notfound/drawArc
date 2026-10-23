@@ -48,3 +48,6 @@ next-env.d.ts
 
 # generated clients
 /lib/generated/
+
+# Playwright saved sessions (Clerk test users)
+/playwright/.auth/

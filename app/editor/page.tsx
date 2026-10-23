@@ -1,20 +1,29 @@
-import { LayoutDashboard } from 'lucide-react';
+import { Suspense } from 'react';
 
+import { EditorHomeBody } from '@/components/editor/editor-home-body';
 import { EditorShell } from '@/components/editor/editor-shell';
-import { EmptyState } from '@/components/editor/empty-state';
+import { UserMenu, UserMenuPlaceholder } from '@/components/editor/user-menu';
+import { requireUser } from '@/lib/auth';
 
-// F01 placeholder (D-F01-5): F02 gates this route, F04 owns its final content.
+// Gated server-side: requireUser() runs in a Suspense child (code-standards rule 2) and redirects signed-out
+// visitors to /sign-in. Only the navbar's user slot waits for it, so the shell the visitor may already be
+// using is never remounted when the gate resolves. The body is static and user-independent; F04 replaces
+// it and must keep any user data inside a gated Suspense child.
+async function EditorHomeGate() {
+  await requireUser({ unauthenticated: 'redirect' });
+  return <UserMenu />;
+}
+
 export default function EditorHomePage() {
   return (
-    <EditorShell>
-      <div className="flex h-full items-center justify-center overflow-y-auto p-6">
-        <EmptyState
-          as="h1"
-          icon={LayoutDashboard}
-          title="Create a project or open an existing one"
-          description="Start a new architecture workspace, or choose a project from the sidebar."
-        />
-      </div>
+    <EditorShell
+      navbarRight={
+        <Suspense fallback={<UserMenuPlaceholder />}>
+          <EditorHomeGate />
+        </Suspense>
+      }
+    >
+      <EditorHomeBody />
     </EditorShell>
   );
 }
