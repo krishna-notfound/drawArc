@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run check
+
+      # Sentinel values (not real secrets) let check:bundle prove no server secret reaches .next/static.
+      - name: Build with sentinel secrets
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://SENTINEL@localhost/db
+          DATABASE_URL_UNPOOLED: postgresql://SENTINEL@localhost/db_unpooled
+          DATABASE_URL_TEST: postgresql://SENTINEL@localhost/db_test
+          CLERK_SECRET_KEY: sk_SENTINEL_clerk
+          CLERK_WEBHOOK_SIGNING_SECRET: whsec_SENTINEL_clerk
+          LIVEBLOCKS_SECRET_KEY: sk_SENTINEL_liveblocks
+          LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
+          BLOB_READ_WRITE_TOKEN: SENTINEL_blob
+          TRIGGER_SECRET_KEY: SENTINEL_trigger
+
+      - name: Bundle secret check
+        run: npm run check:bundle
+        env:
+          DATABASE_URL: postgresql://SENTINEL@localhost/db
+          DATABASE_URL_UNPOOLED: postgresql://SENTINEL@localhost/db_unpooled
+          DATABASE_URL_TEST: postgresql://SENTINEL@localhost/db_test
+          CLERK_SECRET_KEY: sk_SENTINEL_clerk
+          CLERK_WEBHOOK_SIGNING_SECRET: whsec_SENTINEL_clerk
+          LIVEBLOCKS_SECRET_KEY: sk_SENTINEL_liveblocks
+          LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
+          BLOB_READ_WRITE_TOKEN: SENTINEL_blob
+          TRIGGER_SECRET_KEY: SENTINEL_trigger
+
+      - run: npm audit --audit-level=high
