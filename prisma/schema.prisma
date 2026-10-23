@@ -1,0 +1,24 @@
+// drawArc Postgres schema (Neon). Clerk is authoritative for identity; `User` is its local projection (D-011).
+// Connection URLs live in prisma.config.ts (CLI) and lib/prisma.ts (runtime adapter), never here (Prisma 7).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  clerkId   String    @unique
+  /// Primary email at sync time, always lowercase; pending memberships bind by it (F03).
+  email     String    @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  /// Set by the `user.deleted` webhook; the row is kept for audit.
+  deletedAt DateTime?
+}

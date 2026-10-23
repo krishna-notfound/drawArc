@@ -12,8 +12,9 @@ Built with Next.js 16 (App Router, Cache Components), React 19, TypeScript, Tail
 ## Setup
 
 ```bash
-npm ci
-cp .env.example .env.local   # every key is optional until the feature named in its comment activates it
+npm ci                       # also generates the Prisma client (postinstall)
+cp .env.example .env.local   # fill in the keys marked "required" (database and Clerk); see Authentication setup
+npm run db:deploy            # apply migrations to the database in DATABASE_URL_UNPOOLED
 npm run dev                  # http://localhost:3000
 ```
 
@@ -30,12 +31,27 @@ Environment variables are validated at startup by `lib/env.ts` (server) and `lib
 | `typecheck` | Generate Next.js route types (`next typegen`), then `tsc --noEmit` |
 | `test` | Unit tests once (Vitest) |
 | `test:watch` | Unit tests in watch mode |
-| `check` | The quality gate: route types + typecheck, lint, unit tests, Prisma schema validation |
+| `check` | The quality gate: route types + typecheck, lint, unit and integration tests, `prisma validate` |
 | `check:bundle` | After a build, fail if a sentinel server secret appears in `.next/static` |
 | `e2e` | End-to-end tests (Playwright; starts the dev server) |
 | `e2e:install` | Download the Chromium browser Playwright uses |
+| `postinstall` | Runs `prisma generate` after every install (the client lives in git-ignored `lib/generated/prisma`) |
+| `db:generate` | Regenerate the Prisma client after editing `prisma/schema.prisma` |
+| `db:migrate` | Create and apply a migration on a development database (`prisma migrate dev`) |
+| `db:deploy` | Apply committed migrations (`prisma migrate deploy`) |
 
 `npm run check` must pass before any task is reported complete. CI (`.github/workflows/ci.yml`) runs `check`, `build`, `check:bundle`, and `npm audit --audit-level=high`.
+
+## Authentication setup
+
+drawArc signs users in with Clerk and keeps a local `User` row in Neon Postgres (Prisma 7).
+
+1. **Clerk** (development instance): enable Email + Password and "require email address". Copy the publishable and secret keys into `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`, and keep the four `NEXT_PUBLIC_CLERK_*_URL` routing keys from `.env.example`.
+2. **Webhook**: in the Clerk dashboard add an endpoint `https://<host>/api/webhooks/clerk` subscribed to `user.created`, `user.updated` and `user.deleted`, and put its signing secret in `CLERK_WEBHOOK_SIGNING_SECRET`. Locally, a tunnel (for example ngrok) is needed for real deliveries; without one, any `whsec_` value lets the app boot, and the local `User` row is still created on first sign-in.
+3. **Database**: `DATABASE_URL` is Neon's pooled connection string (runtime), `DATABASE_URL_UNPOOLED` the direct one (Prisma CLI). Run `npm run db:deploy` to apply migrations.
+4. **Tests**: integration tests (`tests/integration`) run against `DATABASE_URL_TEST` — a direct Neon URL, optionally with `schema=<name>` to isolate the suite — and skip when it is unset. End-to-end tests sign in a Clerk test user from `E2E_USER_A_EMAIL` / `E2E_USER_A_PASSWORD` (use a `+clerk_test` address; its verification code is `424242`).
+
+Every page, route handler and Server Action authenticates by calling `requireUser()` from `lib/auth.ts` first; `proxy.ts` only establishes the Clerk session.
 
 ## How this project is planned
 
