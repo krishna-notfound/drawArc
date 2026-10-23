@@ -10,7 +10,8 @@ async function loadConfig() {
   return (await import('../../../playwright.config')).default;
 }
 
-describe('playwright.config.ts (F00 AC-010)', () => {
+// The first import of @playwright/test is slow under a parallel suite; allow for a cold start.
+describe('playwright.config.ts (F00 AC-010)', { timeout: 30_000 }, () => {
   it('starts only the Next server by default and wires setup → chromium', async () => {
     vi.stubEnv('E2E_LIVEBLOCKS', undefined);
     const config = await loadConfig();

@@ -27,10 +27,10 @@ Environment variables are validated at startup by `lib/env.ts` (server) and `lib
 | `build` | Production build |
 | `start` | Serve the production build |
 | `lint` | ESLint (flat config; enforces the Cache Components and env-access rules) |
-| `typecheck` | `tsc --noEmit` |
+| `typecheck` | Generate Next.js route types (`next typegen`), then `tsc --noEmit` |
 | `test` | Unit tests once (Vitest) |
 | `test:watch` | Unit tests in watch mode |
-| `check` | The quality gate: typecheck, lint, unit tests, Prisma schema validation |
+| `check` | The quality gate: route types + typecheck, lint, unit tests, Prisma schema validation |
 | `check:bundle` | After a build, fail if a sentinel server secret appears in `.next/static` |
 | `e2e` | End-to-end tests (Playwright; starts the dev server) |
 | `e2e:install` | Download the Chromium browser Playwright uses |

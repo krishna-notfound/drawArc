@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as {
   engines?: { node?: string };
+  scripts: Record<string, string>;
   devDependencies: Record<string, string>;
 };
 
@@ -19,5 +20,11 @@ describe('toolchain (F00 AC-001)', () => {
 
   it('uses @types/node 22', () => {
     expect(pkg.devDependencies['@types/node']).toMatch(/^\^22/);
+  });
+
+  // Route-aware types such as LayoutProps are generated into .next/types; a fresh clone (and CI) has none.
+  it('generates Next route types before type-checking', () => {
+    expect(pkg.scripts.typecheck).toMatch(/^next typegen && tsc --noEmit/);
+    expect(pkg.scripts.check).toMatch(/^next typegen && tsc --noEmit/);
   });
 });

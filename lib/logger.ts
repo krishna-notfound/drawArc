@@ -22,17 +22,38 @@ export interface Logger {
 const LEVEL_ORDER: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
 const SENSITIVE_KEY = /password|token|secret|authorization/i;
 
+// `new Date()` is a blocking value during Cache Components prerendering; `performance.now()` is not guarded.
+function timestamp(): string {
+  return new Date(performance.timeOrigin + performance.now()).toISOString();
+}
+
 function serializeError(err: unknown): { name: string; message: string; stack?: string } {
   if (err instanceof Error) return { name: err.name, message: err.message, stack: err.stack };
   return { name: 'NonError', message: String(err) };
 }
 
-function redact(fields: LogContext): LogContext {
-  const out: LogContext = {};
-  for (const [key, value] of Object.entries(fields)) {
-    out[key] = SENSITIVE_KEY.test(key) ? '[redacted]' : value;
+/** JSON replacer: redacts sensitive keys at any depth, serialises Errors and BigInts, and breaks cycles. */
+function safeReplacer(): (key: string, value: unknown) => unknown {
+  const seen = new WeakSet<object>();
+  return (key, value) => {
+    if (key !== '' && SENSITIVE_KEY.test(key)) return '[redacted]';
+    if (typeof value === 'bigint') return value.toString();
+    if (value instanceof Error) return serializeError(value);
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  };
+}
+
+function serializeLine(line: Record<string, unknown>): string {
+  try {
+    return JSON.stringify(line, safeReplacer());
+  } catch {
+    // A throwing toJSON or getter must never replace the caller's own error.
+    return JSON.stringify({ level: line.level, time: line.time, msg: line.msg, logError: 'unserializable' });
   }
-  return out;
 }
 
 function createLogger(bindings: LogContext): Logger {
@@ -41,13 +62,13 @@ function createLogger(bindings: LogContext): Logger {
     const { err, ...rest } = { ...bindings, ...ctx };
     const line = {
       level,
-      time: new Date().toISOString(),
+      time: timestamp(),
       msg,
-      ...redact(rest),
+      ...rest,
       ...(err === undefined ? {} : { err: serializeError(err) }),
     };
     const stream = level === 'warn' || level === 'error' ? process.stderr : process.stdout;
-    stream.write(`${JSON.stringify(line)}\n`);
+    stream.write(`${serializeLine(line)}\n`);
   };
 
   return {

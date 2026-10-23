@@ -10,10 +10,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "tsc --noEmit && eslint . && vitest run && node scripts/check-prisma.mjs",
+    "check": "next typegen && tsc --noEmit && eslint . && vitest run && node scripts/check-prisma.mjs",
     "check:bundle": "node scripts/check-bundle-secrets.mjs",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium"

@@ -52,4 +52,25 @@ describe('lib/logger (F00 FR-011)', () => {
     expect(err).toMatchObject({ name: 'Error', message: 'e' });
     expect(typeof err.stack).toBe('string');
   });
+
+  it('never throws on BigInt or circular values and keeps the log line (review finding)', async () => {
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const { logger } = await import('@/lib/logger');
+    const circular: Record<string, unknown> = { name: 'loop' };
+    circular.self = circular;
+    expect(() => logger.error({ err: new Error('original'), count: BigInt(10), circular }, 'failed')).not.toThrow();
+    const line = lineAt(stderr, 0);
+    expect(line).toMatchObject({ level: 'error', msg: 'failed', count: '10' });
+    expect((line.err as Record<string, unknown>).message).toBe('original');
+    expect((line.circular as Record<string, unknown>).self).toBe('[Circular]');
+  });
+
+  it('serialises nested Errors and redacts nested sensitive keys (review finding)', async () => {
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const { logger } = await import('@/lib/logger');
+    logger.error({ cause: new Error('inner'), headers: { authorization: 'Bearer x', accept: 'json' } }, 'nested');
+    const line = lineAt(stderr, 0);
+    expect(line.cause).toMatchObject({ name: 'Error', message: 'inner' });
+    expect(line.headers).toEqual({ authorization: '[redacted]', accept: 'json' });
+  });
 });

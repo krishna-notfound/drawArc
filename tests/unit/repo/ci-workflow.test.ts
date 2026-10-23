@@ -45,4 +45,11 @@ describe('.github/workflows/ci.yml (F00 AC-016)', () => {
     const build = steps.find((step) => step.run === 'npm run build');
     SERVER_KEYS.forEach((key) => expect(build?.env?.[key]).toContain('SENTINEL'));
   });
+
+  // Without these, check:bundle prints "no sentinel values set" and passes without checking anything.
+  it('gives the bundle check the same sentinel secrets as the build (review finding)', () => {
+    const build = steps.find((step) => step.run === 'npm run build');
+    const bundleCheck = steps.find((step) => step.run === 'npm run check:bundle');
+    SERVER_KEYS.forEach((key) => expect(bundleCheck?.env?.[key]).toBe(build?.env?.[key]));
+  });
 });
