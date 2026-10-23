@@ -9,6 +9,9 @@ const isCI = Boolean(process.env.CI);
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
+  // Every context round-trips to the Clerk development instance (handshake, Frontend API); with one worker per
+  // core a cold dev server plus Clerk's throttling timed out page loads, so parallelism is capped.
+  workers: 4,
   retries: isCI ? 2 : 0,
   reporter: isCI ? 'github' : 'list',
   use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },

@@ -7,6 +7,8 @@ import { ensureClerkTesting, userA } from './clerk-users';
 const EMPTY_STATE = 'Create a project or open an existing one';
 const DESKTOP = { width: 1280, height: 800 };
 const CLERK_TEST_CODE = '424242';
+// Redirects stream from Suspense children and may wait on Clerk's Frontend API; allow for a busy dev server.
+const NAVIGATION = { timeout: 15_000 };
 const MOBILE = { width: 390, height: 844 };
 
 function userButton(page: Page) {
@@ -22,9 +24,9 @@ test.describe('signed out', () => {
 
   test('/ and /editor send visitors to /sign-in (AC-007, AC-008)', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page).toHaveURL(/\/sign-in$/, NAVIGATION);
     await page.goto('/editor');
-    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page).toHaveURL(/\/sign-in$/, NAVIGATION);
     await expect(emailField(page)).toBeVisible();
   });
 
@@ -74,12 +76,12 @@ test.describe('signed out', () => {
       await code.pressSequentially(CLERK_TEST_CODE);
     }
 
-    await expect(page).toHaveURL(/\/editor$/);
+    await expect(page).toHaveURL(/\/editor$/, NAVIGATION);
     await expect(page.getByRole('heading', { name: EMPTY_STATE })).toBeVisible();
     await userButton(page).click();
     // Clerk's account panel buttons expose no accessible name in 7.9; its stable element class is used.
     await page.locator('.cl-userButtonPopoverActionButton__signOut').click();
-    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page).toHaveURL(/\/sign-in$/, NAVIGATION);
   });
 });
 
@@ -87,7 +89,7 @@ test.describe('signed in as user A', () => {
   test('/, /sign-in and /sign-up land on /editor without rendering a form (AC-006, AC-007)', async ({ page }) => {
     for (const path of ['/', '/sign-in', '/sign-up']) {
       await page.goto(path);
-      await expect(page).toHaveURL(/\/editor$/);
+      await expect(page).toHaveURL(/\/editor$/, NAVIGATION);
       await expect(page.getByRole('heading', { name: EMPTY_STATE })).toBeVisible();
       await expect(page.locator('.cl-signIn-root, .cl-signUp-root')).toHaveCount(0);
     }
