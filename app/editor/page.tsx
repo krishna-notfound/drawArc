@@ -1,0 +1,20 @@
+import { LayoutDashboard } from 'lucide-react';
+
+import { EditorShell } from '@/components/editor/editor-shell';
+import { EmptyState } from '@/components/editor/empty-state';
+
+// F01 placeholder (D-F01-5): F02 gates this route, F04 owns its final content.
+export default function EditorHomePage() {
+  return (
+    <EditorShell>
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center p-6">
+        <EmptyState
+          as="h1"
+          icon={LayoutDashboard}
+          title="Create a project or open an existing one"
+          description="Start a new architecture workspace, or choose a project from the sidebar."
+        />
+      </div>
+    </EditorShell>
+  );
+}

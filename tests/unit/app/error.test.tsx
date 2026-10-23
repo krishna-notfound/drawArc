@@ -17,3 +17,9 @@ it('omits the reference line when the thrown value has no digest', () => {
   render(<ErrorPage error="not an Error" retry={() => {}} />);
   expect(screen.queryByText(/Reference:/)).toBeNull();
 });
+
+it('styles the retry action as a shadcn Button with tokens (F01 AC-024)', () => {
+  render(<ErrorPage error={new Error('x')} retry={() => {}} />);
+  expect(screen.getByRole('button', { name: 'Try again' })).toHaveClass('inline-flex');
+  expect(screen.getByRole('main')).toHaveClass('bg-base', 'text-copy-primary');
+});
