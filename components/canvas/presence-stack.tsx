@@ -1,6 +1,6 @@
 'use client';
 
-import { useOthers } from '@liveblocks/react/suspense';
+import { useOthers, useSelf } from '@liveblocks/react/suspense';
 import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -62,19 +62,17 @@ export function PresenceStack() {
   );
 }
 
-export interface PresenceOthersProps {
-  currentUserId: string;
-}
-
 /**
- * The avatar stack (FR-005–FR-009). Must render inside the room. Others only, one avatar per user id (P-11-3),
- * viewers included; at most 5 (3 under 768 px) then "+N"; the divider only when someone else is here. Avatars
- * are focusable for their tooltips but have no actions.
+ * The avatar stack (FR-005–FR-009). Must render inside the room. Others only (the own id comes from the room
+ * token, so the user's other tabs are dropped too), one avatar per user id (P-11-3), viewers included; at most
+ * 5 (3 under 768 px) then "+N"; the divider only when someone else is here. Avatars are focusable for their
+ * tooltips but have no actions.
  */
-export function PresenceOthers({ currentUserId }: PresenceOthersProps) {
+export function PresenceOthers() {
+  const selfId = useSelf((me) => me.id);
   const element = useSyncExternalStore(subscribeTarget, getTarget, getServerTarget);
   const compact = useSyncExternalStore(subscribeCompact, getCompact, getServerCompact);
-  const entries = useOthers((others) => presenceEntries(others, currentUserId), samePresenceEntries);
+  const entries = useOthers((others) => presenceEntries(others, selfId), samePresenceEntries);
   if (!element || entries.length === 0) return null;
   const { shown, hidden } = splitOverflow(entries, compact ? 3 : 5);
   return createPortal(

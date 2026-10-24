@@ -27,10 +27,10 @@ export function displayName(name: string): string {
  * Others → stack entries (FR-005, P-11-3): the current user's own connections (other tabs) are dropped, the rest
  * are de-duplicated by user id in first-seen order, and `tabs` counts each user's connections.
  */
-export function presenceEntries(others: readonly PresenceSource[], currentUserId: string): PresenceEntry[] {
+export function presenceEntries(others: readonly PresenceSource[], selfId: string): PresenceEntry[] {
   const byId = new Map<string, PresenceEntry>();
   for (const other of others) {
-    if (other.id === currentUserId) continue;
+    if (other.id === selfId) continue;
     const seen = byId.get(other.id);
     if (seen) {
       seen.tabs += 1;
