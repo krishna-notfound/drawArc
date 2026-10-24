@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 
+import { ImportTemplateControl } from '@/components/editor/import-template-dialog';
 import { useOptionalProjectDialogs } from '@/components/editor/project-dialogs-context';
 import { ProjectRoom } from '@/components/editor/project-room';
 import { RoomLoading } from '@/components/editor/room-fallbacks';
 import type { EditorIslandProps } from '@/lib/editor/island-props';
 
 import { CanvasPersistence } from './canvas-persistence';
+import { CanvasReplacedToast } from './canvas-replaced-toast';
 import { FlowCanvas } from './flow-canvas';
 import { LiveCursors } from './live-cursors';
 import { NodeColorToolbar } from './node-color-toolbar';
@@ -39,6 +41,9 @@ export function CanvasEditor({ projectId, role }: EditorIslandProps) {
             <LiveCursors />
             <NodeColorToolbar />
             <CanvasPersistence projectId={projectId} />
+            {/* F14: the navbar Import button (portalled into the import slot) and the others' replace toast. */}
+            <ImportTemplateControl />
+            <CanvasReplacedToast />
           </FlowCanvas>
           <PresenceOthers />
         </ProjectRoom>
