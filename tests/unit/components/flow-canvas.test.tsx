@@ -36,6 +36,11 @@ vi.mock('@xyflow/react', async (importOriginal) => {
   };
 });
 
+// The palette needs a real React Flow store; here only its presence is asserted.
+vi.mock('@/components/canvas/shape-palette', () => ({
+  ShapePalette: () => <div role="toolbar" aria-label="Shape palette" />,
+}));
+
 vi.mock('@liveblocks/react-flow', () => ({
   useLiveblocksFlow: (options: unknown) => {
     captured.hookArgs.push(options);
@@ -85,7 +90,8 @@ describe('FlowCanvas read-only mode (AC-015, P-06-4)', () => {
     // Panning and zooming stay on for everyone.
     expect(props.panOnScroll).toBe(true);
     expect(screen.queryByText('View only') !== null).toBe(!writable);
-    expect(screen.queryByTestId('dev-add-node') !== null).toBe(writable);
+    // F07 FR-012: the shape palette exists only for writable members.
+    expect(screen.queryByRole('toolbar', { name: 'Shape palette' }) !== null).toBe(writable);
     // Read-only members get no change handlers: Liveblocks throws on any mutation from a read-only token.
     expect(props.onNodesChange === captured.flow.onNodesChange).toBe(writable);
   });
