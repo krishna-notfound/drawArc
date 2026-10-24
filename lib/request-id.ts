@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { unstable_rethrow } from 'next/navigation';
 import { z } from 'zod';
 
 import { AppError, errorResponse } from './errors';
@@ -62,6 +63,9 @@ export function withRequest<T extends unknown[]>(
     try {
       return await handler(ctx, ...args);
     } catch (err) {
+      // Next's own control flow (redirect, notFound, the build-time prerender interrupt of a GET handler that
+      // reads the session) is neither a failure to log nor ours to answer.
+      unstable_rethrow(err);
       if (err instanceof z.ZodError || err instanceof AppError) {
         const response = errorResponse(err, { requestId: ctx.requestId, headers: opts.headers });
         const code = err instanceof AppError ? err.code : 'VALIDATION';
