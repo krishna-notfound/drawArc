@@ -13,6 +13,8 @@ export interface SidebarPanelProps {
   label: string;
   /** Focus returns here on close. */
   openerRef?: RefObject<HTMLElement | null>;
+  /** Move focus into the panel when it opens (default). False for an automatic, non-user open (F04). */
+  focusOnOpen?: boolean;
   children: ReactNode;
   className?: string;
 }
@@ -25,13 +27,23 @@ export const SIDEBAR_CLOSE_ATTRIBUTE = 'data-sidebar-close';
  * content (`position: fixed`) and, when closed, sits fully off-screen, hidden from
  * assistive tech, inert, and shadowless, so nothing peeks into the viewport.
  */
-export function SidebarPanel({ id, side, open, onClose, label, openerRef, children, className }: SidebarPanelProps) {
+export function SidebarPanel({
+  id,
+  side,
+  open,
+  onClose,
+  label,
+  openerRef,
+  focusOnOpen = true,
+  children,
+  className,
+}: SidebarPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   const wasOpen = useRef(false);
 
   useEffect(() => {
     const panel = panelRef.current;
-    if (open && !wasOpen.current) {
+    if (open && !wasOpen.current && focusOnOpen) {
       const closeButton = panel?.querySelector<HTMLElement>(`[${SIDEBAR_CLOSE_ATTRIBUTE}]`);
       (closeButton ?? panel)?.focus();
     } else if (!open && wasOpen.current) {
@@ -48,7 +60,7 @@ export function SidebarPanel({ id, side, open, onClose, label, openerRef, childr
       }
     }
     wasOpen.current = open;
-  }, [open, openerRef]);
+  }, [open, openerRef, focusOnOpen]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     // DOM containment excludes portalled content (dialogs, menus) whose events bubble through React.
