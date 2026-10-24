@@ -11,7 +11,8 @@ async function seriousViolations(page: Page) {
 
 test.describe('editor shell accessibility (AC-027, FR-020)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
+    // Below lg: the sidebar starts closed (F04 opens it by default at >= 1024 px).
+    await page.setViewportSize({ width: 1000, height: 800 });
     await page.goto('/editor');
   });
 

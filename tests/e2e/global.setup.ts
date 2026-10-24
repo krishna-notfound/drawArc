@@ -20,4 +20,8 @@ setup('sign in user A', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Create a project or open an existing one' })).toBeVisible();
   await expect(page.locator('.cl-userButtonTrigger')).toBeVisible();
   await page.context().storageState({ path: USER_A_STATE });
+  // Warm-up: compile the workspace route once so the first spec to open it does not race a cold dev server
+  // (the ERR_ABORTED flake seen on cold navigations in F02/F03).
+  await page.goto('/editor/not-a-cuid');
+  await expect(page.getByRole('heading', { name: "You can't open this project" })).toBeVisible({ timeout: 60_000 });
 });

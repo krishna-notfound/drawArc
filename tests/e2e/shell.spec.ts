@@ -1,7 +1,8 @@
 import { instant } from '@next/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-const DESKTOP = { width: 1280, height: 800 };
+// Below the lg breakpoint, so the project sidebar starts closed (F04 opens it by default at >= 1024 px).
+const DESKTOP = { width: 1000, height: 800 };
 const MOBILE = { width: 390, height: 844 };
 
 function sidebar(page: Page): Locator {
