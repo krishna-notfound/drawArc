@@ -36,7 +36,7 @@
 
 | State / input | Behaviour |
 |---|---|
-| Sidebar toggle (F01 navbar: `PanelLeftOpen`/`PanelLeftClose`, `aria-label` "Open projects sidebar" / "Close projects sidebar", `aria-expanded`, `aria-controls="project-sidebar"`) | opens/closes; state is client-only (F01 `EditorShell` / `useEditorChrome()`, extended here with `setSidebarOpen`/`setAiOpen`), default open ≥ 1024 px, closed below (overrides F01 D-F01-4 as F01 allowed). |
+| Sidebar toggle (F01 navbar: `PanelLeftOpen`/`PanelLeftClose`, `aria-label` "Open projects sidebar" / "Close projects sidebar", `aria-expanded`, `aria-controls="project-sidebar"`) | opens/closes; state is client-only (F01 `EditorShell` / `useEditorChrome()`, extended here with `setSidebarOpen`/`setAiOpen`), default open ≥ 1024 px on the editor home, closed below (overrides F01 D-F01-4 as F01 allowed); always closed by default on the workspace (D-050, 2026-10-24 — it covered F10's control bar). |
 | Tabs | shadcn `Tabs`; default "My Projects"; counts in a `Badge`. |
 | Item click | client navigation; sidebar closes on < 1024 px. |
 | Dropdown "Rename" | opens Rename dialog with that project. "Delete" opens Delete dialog. |

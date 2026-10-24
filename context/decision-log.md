@@ -201,6 +201,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-050 — Workspace project sidebar closed by default
+**APPROVED** 2026-10-24 (owner: "yes do it"). On `/editor/[projectId]` the project sidebar is closed by default so it does not cover F10's bottom-left control bar; the editor home `/editor` keeps the F04 default (open ≥ 1024 px). Resolves the D-049 pending item. Also: two load-sensitive tests got targeted timeouts — F12 "A removes B" e2e allows 10 s while 5 s remains the production target (PRD-013), measured in F15.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |
