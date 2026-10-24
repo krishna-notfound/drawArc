@@ -10,6 +10,7 @@ import type { EditorIslandProps } from '@/lib/editor/island-props';
 import { CanvasPersistence } from './canvas-persistence';
 import { FlowCanvas } from './flow-canvas';
 import { LiveCursors } from './live-cursors';
+import { NodeColorToolbar } from './node-color-toolbar';
 import { PresenceOthers } from './presence-stack';
 
 /**
@@ -36,6 +37,7 @@ export function CanvasEditor({ projectId, role }: EditorIslandProps) {
         <ProjectRoom projectId={projectId} role={role}>
           <FlowCanvas role={role}>
             <LiveCursors />
+            <NodeColorToolbar />
             <CanvasPersistence projectId={projectId} />
           </FlowCanvas>
           <PresenceOthers />

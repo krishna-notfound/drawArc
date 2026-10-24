@@ -20,6 +20,8 @@ export interface CanvasMutations {
   addNodes(items: CanvasNode[]): void;
   replaceNode(item: CanvasNode): void;
   updateNodeData(id: string, patch: Partial<CanvasNodeData>): void;
+  /** Merges `patch` into every listed node's data in one change set: one Liveblocks batch, one undo step (F08). */
+  updateNodesData(ids: readonly string[], patch: Partial<CanvasNodeData>): void;
   addEdge(item: CanvasEdge): void;
   replaceEdge(item: CanvasEdge): void;
   updateEdgeData(id: string, patch: Partial<CanvasEdgeData>): void;
@@ -98,6 +100,16 @@ export function useCanvasMutations(): CanvasMutations {
         const node = store.getState().nodeLookup.get(id)?.internals.userNode;
         if (!node) return;
         nodeChanges([{ type: 'replace', id, item: { ...node, data: { ...node.data, ...patch } } }]);
+      },
+      updateNodesData(ids, patch) {
+        if (!writable()) return;
+        const { nodeLookup } = store.getState();
+        const changes = ids.flatMap((id) => {
+          const node = nodeLookup.get(id)?.internals.userNode;
+          return node ? [{ type: 'replace' as const, id, item: { ...node, data: { ...node.data, ...patch } } }] : [];
+        });
+        // One `onNodesChange` call = one `useMutation` run in `useLiveblocksFlow`, which Liveblocks batches.
+        if (changes.length > 0) nodeChanges(changes);
       },
       addEdge(item) {
         if (!writable()) return;
