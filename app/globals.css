@@ -152,6 +152,34 @@
   }
 }
 
+/* F08 resizer (FR-005): 8px brand handles with a base-coloured border, kept at 8 screen px at every zoom
+   (`--canvas-handle-scale` = 1 / zoom, set by CanvasNodeResizer); lines brand at 60 %, 1px. */
+.react-flow__resize-control.handle.canvas-resize-handle {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-primary);
+  border: 1px solid var(--bg-base);
+  border-radius: 2px;
+  scale: var(--canvas-handle-scale, 1);
+}
+
+.react-flow__resize-control.line.canvas-resize-line {
+  border-color: var(--accent-primary);
+  opacity: 0.6;
+}
+
+/* The 1px edge lines are the side-resize targets; widen the pointer target without drawing anything. */
+.react-flow__resize-control.line.canvas-resize-line::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+/* F08 colour swatches (FR-011): hover ring in the swatch's text colour at 33 % alpha. */
+.canvas-swatch:hover {
+  box-shadow: 0 0 0 3px var(--swatch-glow);
+}
+
 /* F07 palette drag: the whole document shows a grabbing cursor while a shape is dragged. */
 html.shape-dragging,
 html.shape-dragging * {
