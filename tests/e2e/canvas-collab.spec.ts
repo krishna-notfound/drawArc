@@ -3,8 +3,8 @@ import { deleteRoom } from './helpers/liveblocks';
 import { addMember, createProjectFor, deleteProject } from './helpers/projects';
 
 // F06: the workspace mounts ProjectRoom + FlowCanvas; nodes live in Liveblocks Storage (cloud Development project,
-// since the Liveblocks dev server does not run on Windows — F05 Ruling). `dev-add-node` exists because the app
-// under test runs with NEXT_PUBLIC_E2E_HOOKS=1.
+// since the Liveblocks dev server does not run on Windows — F05 Ruling). Nodes are added with the F07 palette
+// (a click places the shape at the canvas centre).
 test('a node added by one editor appears for the other without a refresh, flush canvas, no viewport jump (F06 AC-012, AC-014, AC-020)', async ({
   twoUsers,
 }) => {
@@ -34,7 +34,7 @@ test('a node added by one editor appears for the other without a refresh, flush 
     const viewport = a.locator('.react-flow__viewport');
     const transformBefore = await viewport.getAttribute('style');
     const addedAt = Date.now();
-    await a.getByTestId('dev-add-node').click();
+    await a.getByRole('button', { name: 'Add rectangle' }).click();
     const nodeOnA = a.locator('.react-flow__node');
     await expect(nodeOnA).toHaveCount(1);
     const nodeId = await nodeOnA.getAttribute('data-id');
@@ -47,7 +47,7 @@ test('a node added by one editor appears for the other without a refresh, flush 
     expect(await viewport.getAttribute('style')).toBe(transformBefore);
 
     // And the other direction: B's node reaches A.
-    await b.getByTestId('dev-add-node').click();
+    await b.getByRole('button', { name: 'Add rectangle' }).click();
     await expect(a.locator('.react-flow__node')).toHaveCount(2, { timeout: 1_000 });
     await expect(b.locator('.react-flow__node')).toHaveCount(2);
   } finally {

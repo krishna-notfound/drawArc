@@ -17,11 +17,12 @@ import {
 import { type CSSProperties, type ReactNode, useCallback, useState } from 'react';
 
 import type { ProjectRole } from '@/lib/access';
-import { devHooksEnabled } from '@/lib/env.public';
+import { e2eHooksEnabled } from '@/lib/env.public';
 import type { CanvasEdge, CanvasNode } from '@/types/canvas';
 
-import { DevAddNode } from './dev-add-node';
+import { CanvasTestHooks } from './canvas-test-hooks';
 import { edgeTypes, nodeTypes } from './node-types';
+import { ShapePalette } from './shape-palette';
 import { ViewerBadge } from './viewer-badge';
 
 export interface FlowCanvasProps {
@@ -162,12 +163,10 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
           maskColor="rgb(8 8 9 / 0.6)"
           nodeColor="var(--border-subtle)"
         />
-        {devHooksEnabled && handlers?.onNodesChange ? (
-          <DevAddNode nodeCount={nodes.length} onNodesChange={handlers.onNodesChange} />
-        ) : null}
+        {e2eHooksEnabled ? <CanvasTestHooks /> : null}
         {children}
       </ReactFlow>
-      {canWrite ? null : <ViewerBadge />}
+      {canWrite ? <ShapePalette /> : <ViewerBadge />}
     </div>
   );
 }
