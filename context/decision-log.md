@@ -171,6 +171,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-044 — Parallel feature rounds adopted; F04 and F05 approved together
+**APPROVED** 2026-10-24 (owner: "move for further dev if it can be parallel"). Features with no dependency on each other are built concurrently by separate implementation agents, each in its own git worktree and branch, with a distinct Playwright port (`E2E_PORT`) and integration-test schema. Rounds (from features/README.md): R2 F04 ∥ F05 · R3 F06 ∥ F12 · R4 F07 ∥ F11 ∥ F13 · R5 F08 ∥ F09 · R6 F10 ∥ F14 · R7 F15. The coordinator merges each round in order, resolves conflicts, and re-runs the full gate before the next round. F04 and F05 specs approved with their local decisions; F05 adds no database migration.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

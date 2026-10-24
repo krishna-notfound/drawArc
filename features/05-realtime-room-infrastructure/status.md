@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | drafted |
-| Spec approved | — |
-| Implementation authorized | — |
+| Status | Approved (2026-10-24); implementation in progress (parallel round 2 with F04) |
+| Spec approved | 2026-10-24, owner (incl. its local decisions) |
+| Implementation authorized | 2026-10-24, owner — implementation agent in its own git worktree, in parallel |
 | Last verified | — |
 
 ## History
