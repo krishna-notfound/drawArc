@@ -196,6 +196,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-049 — Round 6: F10 and F14 approved
+**APPROVED** 2026-10-24 (owner: "yes"; push/PR/merge: "yess go ahead"). F10 (canvas ergonomics and keyboard) and F14 (starter templates) built in parallel and approved with their local decisions. F10 EC-011/AC-015 corrected: Space+drag on a node moves the node (React Flow 12); on the empty pane it pans. Known limitation: an undo within ~1 s of a delete can be lost (Liveblocks 3.24.4 delete-ack race). Pending owner decision: the default-open project sidebar covers the bottom-left control bar.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

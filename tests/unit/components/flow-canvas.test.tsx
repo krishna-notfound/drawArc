@@ -43,6 +43,11 @@ vi.mock('@/components/canvas/shape-palette', () => ({
   ShapePalette: () => <div role="toolbar" aria-label="Shape palette" />,
 }));
 
+// F10's control bar, menu and keyboard are covered by their own tests; here they only pass the flow through.
+vi.mock('@/components/canvas/canvas-ergonomics', () => ({
+  CanvasErgonomics: ({ children }: { children: ReactNode }) => children,
+}));
+
 vi.mock('@liveblocks/react-flow', () => ({
   useLiveblocksFlow: (options: unknown) => {
     captured.hookArgs.push(options);

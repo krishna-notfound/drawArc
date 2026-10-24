@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { CanvasEditor } from '@/components/canvas/canvas-editor';
 import { PresenceStack } from '@/components/canvas/presence-stack';
 import { AccessDenied } from '@/components/editor/access-denied';
+import { ImportTemplateSlot } from '@/components/editor/import-template-dialog';
 import { ProjectSidebarData } from '@/components/editor/project-sidebar-data';
 import { ShareButton } from '@/components/editor/share-button';
 import { SidebarSkeleton } from '@/components/editor/sidebar-skeleton';
@@ -71,6 +72,8 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
           <ProjectSidebarData currentProjectId={project.id} />
         </Suspense>
       }
+      // F14: owners and editors only; the in-canvas control also requires a writable room token.
+      importSlot={role === 'viewer' ? undefined : <ImportTemplateSlot />}
       canvas={<CanvasEditor {...islandProps} />}
       presenceSlot={<PresenceStack />}
     />

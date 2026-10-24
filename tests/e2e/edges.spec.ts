@@ -163,6 +163,10 @@ test('create, reconnect, label and delete are one undo entry each; an end droppe
 
   await deleteEdge(page, created.id);
   await expectEdgeCount(page, 0);
+  // Liveblocks 3.24.4 re-applies the server's acknowledgement of a delete after a local undo has re-created the
+  // same id, so an undo issued within ~1 s of the delete is lost (Ruling F10-R7). No test hook exposes the room's
+  // storage sync status, so let the acknowledgement land first, as F10's specs do.
+  await page.waitForTimeout(1_000);
 
   // Four undos, each reverting exactly one action; the nodes stay.
   await undo(page);

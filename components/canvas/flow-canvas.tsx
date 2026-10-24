@@ -24,6 +24,7 @@ import type { ProjectRole } from '@/lib/access';
 import { e2eHooksEnabled } from '@/lib/env.public';
 import { type CanvasEdge, type CanvasNode, EDGE_STROKE } from '@/types/canvas';
 
+import { CanvasErgonomics } from './canvas-ergonomics';
 import { CanvasTestHooks } from './canvas-test-hooks';
 import { edgeTypes, nodeTypes } from './node-types';
 import { ShapePalette } from './shape-palette';
@@ -137,6 +138,8 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
 
   return (
     <div data-slot="flow-canvas" data-can-write={String(canWrite)} className="fixed inset-0 bg-base">
+      {/* F10: keyboard, context menu, control bar and cheat-sheet around the flow. */}
+      <CanvasErgonomics>
       <ReactFlow<CanvasNode, CanvasEdge>
         nodes={nodes}
         edges={edges}
@@ -183,6 +186,7 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
         {e2eHooksEnabled ? <CanvasTestHooks /> : null}
         {children}
       </ReactFlow>
+      </CanvasErgonomics>
       {canWrite ? <ShapePalette /> : <ViewerBadge />}
     </div>
   );

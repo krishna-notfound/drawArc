@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — implemented and verified (combined with F08); PR open |
+| Status | Completed — merged to `main` via PR #14 (2026-10-24) |
 | Spec approved | 2026-10-24, owner (incl. its local decisions) |
 | Implementation authorized | 2026-10-24, owner — parallel round 5, own worktree |
 | Last verified | 2026-10-24, `beafa92` + merge `9bd1d62` + test fix |
@@ -32,3 +32,4 @@ Rulings: deleting a node also deletes its attached edges in the same onDelete (L
 - Known limitation: no keyboard-only way to draw an edge (React Flow has none); NFR-006 partial for edge creation.
 - Aligned with F06's drafted package (2026-10-22): registry in `components/canvas/node-types.ts` (F09 replaces `placeholder-edge.tsx`), schema already enforces handle ids/no self-loops (P-06-5) with a 500-char label bound (looser than the 100 UX cap), viewers have `elementsSelectable: false`, island is `flow-canvas.tsx`.
 - `1b1a4f7` alone does not type-check (bisect note).
+- "One undo entry each" e2e flake fixed in round 6 (`a449a35`): the test waits out the Liveblocks delete-ack race before undo.

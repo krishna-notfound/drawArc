@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    {
+      "id": "pill_0000000000000000000000MS01",
+      "type": "canvasNode",
+      "position": {
+        "x": 0,
+        "y": 238
+      },
+      "width": 180,
+      "height": 64,
+      "data": {
+        "label": "Client",
+        "shape": "pill",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "hexagon_0000000000000000000000MS02",
+      "type": "canvasNode",
+      "position": {
+        "x": 290,
+        "y": 215
+      },
+      "width": 160,
+      "height": 110,
+      "data": {
+        "label": "API Gateway",
+        "shape": "hexagon",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000MS03",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 30
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Auth Service",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000MS04",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 230
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Orders Service",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000MS05",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 430
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Payments Service",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "cylinder_0000000000000000000000MS06",
+      "type": "canvasNode",
+      "position": {
+        "x": 860,
+        "y": 15
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "Users DB",
+        "shape": "cylinder",
+        "color": "teal"
+      }
+    },
+    {
+      "id": "cylinder_0000000000000000000000MS07",
+      "type": "canvasNode",
+      "position": {
+        "x": 860,
+        "y": 215
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "Orders DB",
+        "shape": "cylinder",
+        "color": "teal"
+      }
+    },
+    {
+      "id": "cylinder_0000000000000000000000MS08",
+      "type": "canvasNode",
+      "position": {
+        "x": 860,
+        "y": 415
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "Payments DB",
+        "shape": "cylinder",
+        "color": "teal"
+      }
+    },
+    {
+      "id": "circle_0000000000000000000000MS09",
+      "type": "canvasNode",
+      "position": {
+        "x": 322,
+        "y": 422
+      },
+      "width": 96,
+      "height": 96,
+      "data": {
+        "label": "Cache",
+        "shape": "circle",
+        "color": "orange"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_000000000000000000000EMS01",
+      "type": "canvasEdge",
+      "source": "pill_0000000000000000000000MS01",
+      "target": "hexagon_0000000000000000000000MS02",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {
+        "label": "HTTPS"
+      }
+    },
+    {
+      "id": "e_000000000000000000000EMS02",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000MS02",
+      "target": "rectangle_0000000000000000000000MS03",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EMS03",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000MS02",
+      "target": "rectangle_0000000000000000000000MS04",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EMS04",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000MS02",
+      "target": "rectangle_0000000000000000000000MS05",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EMS05",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000MS03",
+      "target": "cylinder_0000000000000000000000MS06",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EMS06",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000MS04",
+      "target": "cylinder_0000000000000000000000MS07",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EMS07",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000MS05",
+      "target": "cylinder_0000000000000000000000MS08",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EMS08",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000MS02",
+      "target": "circle_0000000000000000000000MS09",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "data": {
+        "label": "session"
+      }
+    }
+  ]
+}
