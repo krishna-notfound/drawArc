@@ -9,12 +9,13 @@ import type { EditorIslandProps } from '@/lib/editor/island-props';
 
 import { FlowCanvas } from './flow-canvas';
 import { LiveCursors } from './live-cursors';
+import { PresenceOthers } from './presence-stack';
 
 /**
  * The workspace's canvas island (F04 slot contract D-028, FR-015): the project's Liveblocks room around the
  * collaborative canvas. The wrapper renders on the server (data attributes for tests) while the room connects.
  */
-export function CanvasEditor({ projectId, role }: EditorIslandProps) {
+export function CanvasEditor({ projectId, role, currentUser }: EditorIslandProps) {
   // Deleting the open project (F04 dialog) kicks every bound user including the owner (F03 FR-011), and the
   // KICK handler force-reloads onto AccessDenied before the dialog can navigate to /editor. The deleting tab
   // therefore leaves the room as soon as its delete is submitted and stays out until it navigates; a failed
@@ -35,6 +36,7 @@ export function CanvasEditor({ projectId, role }: EditorIslandProps) {
           <FlowCanvas role={role}>
             <LiveCursors />
           </FlowCanvas>
+          <PresenceOthers currentUserId={currentUser.id} />
         </ProjectRoom>
       )}
     </div>
