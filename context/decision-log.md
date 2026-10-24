@@ -191,6 +191,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-048 — Round 5: F08 and F09 approved
+**APPROVED** 2026-10-24 (owner: "yes"). F08 (node editing) and F09 (edges) built in parallel and approved with their local decisions.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |
