@@ -4,7 +4,7 @@ import { Liveblocks } from '@liveblocks/node';
 
 import type { KickEvent, RoleChangedEvent } from '@/types/liveblocks.config';
 
-import { env } from './env';
+import { env, publicEnv } from './env';
 import { logger } from './logger';
 
 export { userColor } from './user-color';
@@ -15,7 +15,8 @@ const globalForLiveblocks = globalThis as unknown as { liveblocks?: Liveblocks }
 export function getLiveblocks(): Liveblocks {
   globalForLiveblocks.liveblocks ??= new Liveblocks({
     secret: env.LIVEBLOCKS_SECRET_KEY,
-    ...(env.LIVEBLOCKS_BASE_URL ? { baseUrl: env.LIVEBLOCKS_BASE_URL } : {}),
+    // The local dev server (tests only) serves the browser and the node client from the same URL.
+    ...(publicEnv.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ? { baseUrl: publicEnv.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL } : {}),
   });
   return globalForLiveblocks.liveblocks;
 }

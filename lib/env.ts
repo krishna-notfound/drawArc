@@ -19,7 +19,6 @@ export const ServerEnvSchema = z.object({
   CLERK_WEBHOOK_SIGNING_SECRET: z.string().startsWith('whsec_'), // F02
   LIVEBLOCKS_SECRET_KEY: z.string().startsWith('sk_'), // F05
   LIVEBLOCKS_WEBHOOK_SECRET_KEY: z.string().startsWith('whsec_'), // F05
-  LIVEBLOCKS_BASE_URL: z.url().optional(), // tests only (F05): Liveblocks dev server for the node client
   BLOB_READ_WRITE_TOKEN: z.string().optional(), // F13 (local/CI only; OIDC on Vercel)
   TRIGGER_SECRET_KEY: z.string().optional(), // M2 (F17)
 });

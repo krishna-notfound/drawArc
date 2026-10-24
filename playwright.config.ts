@@ -8,6 +8,20 @@ const isCI = Boolean(process.env.CI);
 // Parallel feature worktrees each run their own dev server: E2E_PORT and E2E_WORKERS keep them apart.
 const port = Number(process.env.E2E_PORT ?? 3000);
 const workers = Number(process.env.E2E_WORKERS ?? 4);
+const liveblocksDevServer = process.env.E2E_LIVEBLOCKS === '1';
+const LIVEBLOCKS_DEV_URL = 'http://localhost:1153';
+
+// The app under test always exposes the test-only room page; with E2E_LIVEBLOCKS=1 it also talks to the local
+// Liveblocks dev server (which accepts only `sk_localdev`) instead of the project in LIVEBLOCKS_SECRET_KEY (F05).
+const appEnv: Record<string, string> = {
+  NEXT_PUBLIC_E2E_HOOKS: '1',
+  ...(liveblocksDevServer
+    ? {
+        LIVEBLOCKS_SECRET_KEY: 'sk_localdev',
+        NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: LIVEBLOCKS_DEV_URL,
+      }
+    : {}),
+};
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -33,13 +47,15 @@ export default defineConfig({
       url: `http://localhost:${port}`,
       reuseExistingServer: !isCI,
       timeout: 120_000,
+      env: appEnv,
     },
-    // Liveblocks local dev server for multi-user tests; F05 turns this on with E2E_LIVEBLOCKS=1.
-    ...(process.env.E2E_LIVEBLOCKS === '1'
+    // Liveblocks local dev server for multi-user tests (E2E_LIVEBLOCKS=1). The CLI needs the Bun runtime, so it is
+    // fetched with npx rather than required globally. CLI 1.9.0 fails to open room storage on Windows paths.
+    ...(liveblocksDevServer
       ? [
           {
-            command: 'npx liveblocks dev --no-persist --no-check --port 1153',
-            url: 'http://localhost:1153',
+            command: 'npx --yes -p bun@1.4.4 -c "bun x --bun liveblocks@1.9.0 dev --no-persist --no-check --port 1153"',
+            url: LIVEBLOCKS_DEV_URL,
             reuseExistingServer: !isCI,
           },
         ]
