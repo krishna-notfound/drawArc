@@ -1,6 +1,6 @@
 'use client';
 
-import { useClient, useEventListener, useStatus } from '@liveblocks/react/suspense';
+import { useClient, useEventListener, useRoom, useSelf, useStatus } from '@liveblocks/react/suspense';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { checkMyAccess } from '@/app/editor/[projectId]/actions';
@@ -86,4 +86,11 @@ export function useKickListener({ projectId, currentUserId, role, onReconnected 
   });
 
   return { kicked };
+}
+
+/** `useKickListener` for the current room and the connected user (what `KickListener` hosts). */
+export function useRoomKickListener({ role, onReconnected }: Pick<UseKickListenerArgs, 'role' | 'onReconnected'>): { kicked: boolean } {
+  const projectId = useRoom().id;
+  const selfId = useSelf((me) => me.id);
+  return useKickListener({ projectId, currentUserId: selfId, role, onReconnected });
 }

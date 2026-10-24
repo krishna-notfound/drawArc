@@ -1,8 +1,6 @@
 'use client';
 
-import { useRoom, useSelf } from '@liveblocks/react/suspense';
-
-import { useKickListener } from '@/hooks/useKickListener';
+import { useRoomKickListener } from '@/hooks/useKickListener';
 import type { ProjectRole } from '@/lib/access';
 
 export { RELOAD_DELAY_MS } from '@/hooks/useKickListener';
@@ -20,8 +18,6 @@ export interface KickListenerProps {
  * full reload; after a reconnect, `checkMyAccess` re-verifies the role.
  */
 export function KickListener({ role, onReconnected }: KickListenerProps) {
-  const projectId = useRoom().id;
-  const currentUserId = useSelf((me) => me.id);
-  useKickListener({ projectId, currentUserId, role, onReconnected });
+  useRoomKickListener({ role, onReconnected });
   return null;
 }

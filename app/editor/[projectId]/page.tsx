@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { CanvasPlaceholder } from '@/components/canvas/canvas-placeholder';
 import { AccessDenied } from '@/components/editor/access-denied';
 import { ProjectSidebarData } from '@/components/editor/project-sidebar-data';
+import { ShareButton } from '@/components/editor/share-button';
 import { SidebarSkeleton } from '@/components/editor/sidebar-skeleton';
 import { Workspace } from '@/components/editor/workspace';
 import { WorkspaceSkeleton } from '@/components/editor/workspace-skeleton';
@@ -12,6 +13,7 @@ import { signInUrl } from '@/lib/auth';
 import { seedRoomIfEmpty } from '@/lib/editor/seed-hook';
 import { toIslandProps } from '@/lib/editor/island-props';
 import { AccessError } from '@/lib/errors';
+import { listProjectMembers, membersVisibleTo } from '@/lib/projects/members';
 
 // `params` is awaited only inside the Suspense child (code-standards rule 1), so the skeleton is the static shell.
 export default function WorkspacePage(props: PageProps<'/editor/[projectId]'>) {
@@ -47,6 +49,8 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
     canvasSchemaVersion: project.canvasSchemaVersion,
   });
   const islandProps = toIslandProps(user, project, role);
+  // F12: only after the gate above (listProjectMembers performs no authorization itself).
+  const members = membersVisibleTo(await listProjectMembers(project.id), role);
 
   return (
     <Workspace
@@ -54,6 +58,7 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
       role={role}
       currentUser={islandProps.currentUser}
       seed={seed}
+      shareSlot={<ShareButton projectId={project.id} projectStatus={project.status} role={role} members={members} />}
       sidebar={
         <Suspense fallback={<SidebarSkeleton />}>
           <ProjectSidebarData currentProjectId={project.id} />
