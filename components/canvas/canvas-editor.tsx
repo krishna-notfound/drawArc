@@ -8,6 +8,7 @@ import { RoomLoading } from '@/components/editor/room-fallbacks';
 import type { EditorIslandProps } from '@/lib/editor/island-props';
 
 import { FlowCanvas } from './flow-canvas';
+import { LiveCursors } from './live-cursors';
 
 /**
  * The workspace's canvas island (F04 slot contract D-028, FR-015): the project's Liveblocks room around the
@@ -31,7 +32,9 @@ export function CanvasEditor({ projectId, role }: EditorIslandProps) {
         <RoomLoading />
       ) : (
         <ProjectRoom projectId={projectId} role={role}>
-          <FlowCanvas role={role} />
+          <FlowCanvas role={role}>
+            <LiveCursors />
+          </FlowCanvas>
         </ProjectRoom>
       )}
     </div>
