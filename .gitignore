@@ -20,6 +20,9 @@
 # production
 /build
 
+# room exports from scripts/export-room.mjs (may contain user content)
+/exports/
+
 # misc
 .DS_Store
 *.pem
