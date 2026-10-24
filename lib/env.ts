@@ -8,6 +8,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 // Service keys stay optional until the feature that installs the service activates them (D-F00-1).
 // F02 activated the database and Clerk keys: nothing can authenticate or persist users without them.
+// F05 activated the Liveblocks keys: no project room can be joined without a minted token.
 export const ServerEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
@@ -16,8 +17,9 @@ export const ServerEnvSchema = z.object({
   DATABASE_URL_TEST: z.url().optional(), // L2 tests only
   CLERK_SECRET_KEY: z.string().startsWith('sk_'), // F02
   CLERK_WEBHOOK_SIGNING_SECRET: z.string().startsWith('whsec_'), // F02
-  LIVEBLOCKS_SECRET_KEY: z.string().startsWith('sk_').optional(), // F05 activates
-  LIVEBLOCKS_WEBHOOK_SECRET_KEY: z.string().startsWith('whsec_').optional(), // F05 activates
+  LIVEBLOCKS_SECRET_KEY: z.string().startsWith('sk_'), // F05
+  LIVEBLOCKS_WEBHOOK_SECRET_KEY: z.string().startsWith('whsec_'), // F05
+  LIVEBLOCKS_BASE_URL: z.url().optional(), // tests only (F05): Liveblocks dev server for the node client
   BLOB_READ_WRITE_TOKEN: z.string().optional(), // F13 (local/CI only; OIDC on Vercel)
   TRIGGER_SECRET_KEY: z.string().optional(), // M2 (F17)
 });

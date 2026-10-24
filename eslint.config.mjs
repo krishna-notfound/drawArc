@@ -58,6 +58,19 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    // The Liveblocks node client holds the secret key: UI code talks to rooms only through @liveblocks/react.
+    files: ["components/**", "hooks/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [{ name: "@/lib/liveblocks", message: "lib/liveblocks is server-only; use lib/user-color for colours." }],
+          patterns: [{ group: ["@liveblocks/node"], message: "The Liveblocks node client is server-only." }],
+        },
+      ],
+    },
+  },
+  {
     files: [
       "lib/env.ts",
       "next.config.ts",

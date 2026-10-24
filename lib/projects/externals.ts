@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { deleteRoom, ensureRoom, kickUser } from '@/lib/liveblocks';
 import { logger } from '@/lib/logger';
 
 /**
@@ -25,8 +26,11 @@ function notWired(op: keyof ProjectExternals) {
 }
 
 export const defaultExternals: ProjectExternals = {
-  ensureRoom: notWired('ensureRoom'),
-  deleteRoom: notWired('deleteRoom'),
-  kickUsers: notWired('kickUsers'),
+  ensureRoom,
+  deleteRoom,
+  // kickUser never throws and logs its own failures; the delete action goes on to delete the room either way.
+  kickUsers: async (projectId, userIds) => {
+    await Promise.all(userIds.map((userId) => kickUser(projectId, userId)));
+  },
   deleteSnapshot: notWired('deleteSnapshot'),
 };
