@@ -5,16 +5,19 @@ import { config } from 'dotenv';
 config({ path: ['.env.local', '.env'], quiet: true });
 
 const isCI = Boolean(process.env.CI);
+// Parallel feature worktrees each run their own dev server: E2E_PORT and E2E_WORKERS keep them apart.
+const port = Number(process.env.E2E_PORT ?? 3000);
+const workers = Number(process.env.E2E_WORKERS ?? 4);
 
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
   // Every context round-trips to the Clerk development instance (handshake, Frontend API); with one worker per
   // core a cold dev server plus Clerk's throttling timed out page loads, so parallelism is capped.
-  workers: 4,
+  workers,
   retries: isCI ? 2 : 0,
   reporter: isCI ? 'github' : 'list',
-  use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },
+  use: { baseURL: `http://localhost:${port}`, trace: 'on-first-retry' },
   projects: [
     { name: 'setup', testMatch: /global\.setup\.ts/ },
     // Specs run signed in as E2E user A unless they reset storageState (see tests/e2e/auth.spec.ts).
@@ -26,8 +29,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: isCI ? 'npm run start' : 'npm run dev',
-      url: 'http://localhost:3000',
+      command: isCI ? `npm run start -- --port ${port}` : `npm run dev -- --port ${port}`,
+      url: `http://localhost:${port}`,
       reuseExistingServer: !isCI,
       timeout: 120_000,
     },
