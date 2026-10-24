@@ -63,7 +63,8 @@ test('an import replaces the canvas for both users in one step, with one undo fo
   const eventIds = await nodeIds(a);
   await expect.poll(() => nodeIds(b)).toEqual(eventIds);
   await expect(replacedToast(b, 'Event-driven system')).toBeVisible();
-  await expect(b.getByRole('button', { name: 'Fit view' })).toBeVisible();
+  // Scoped to the toast: F10's control bar has its own "Fit view" button.
+  await expect(b.locator('[data-sonner-toast]').getByRole('button', { name: 'Fit view' })).toBeVisible();
   await expect(replacedToast(a, 'Event-driven system')).toHaveCount(0);
 
   // Non-empty canvas: Cancel changes nothing; "Replace diagram" swaps the diagram in one batch.
