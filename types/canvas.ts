@@ -39,6 +39,11 @@ export const DEFAULT_SIZES: Record<NodeShape, { width: number; height: number }>
 
 export const MIN_SIZE = { width: 48, height: 32 } as const;
 
+/** Edge stroke and arrowhead colour (ui-context "Edges"); SVG marker attributes cannot read CSS variables. */
+export const EDGE_STROKE = '#f8fafc';
+/** UX cap of the inline edge label input; the schema bound at the persistence boundary is looser (MAX_LABEL). */
+export const EDGE_LABEL_MAX_LENGTH = 100;
+
 // Type aliases (not interfaces) so they satisfy React Flow's `Record<string, unknown>` data constraint.
 export type CanvasNodeData = { label: string; shape: NodeShape; color: NodeColorId };
 export type CanvasNode = Node<CanvasNodeData, 'canvasNode'>;
