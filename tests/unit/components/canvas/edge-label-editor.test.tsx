@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EdgeLabelEditor } from '@/components/canvas/edges/edge-label-editor';
@@ -6,7 +7,12 @@ import { EdgeLabelEditor } from '@/components/canvas/edges/edge-label-editor';
 function open(initial = 'HTTPS') {
   const onCommit = vi.fn();
   const onCancel = vi.fn();
-  const view = render(<EdgeLabelEditor initial={initial} onCommit={onCommit} onCancel={onCancel} />);
+  // Strict Mode, as in `next dev`: effects run mount → cleanup → mount.
+  const view = render(
+    <StrictMode>
+      <EdgeLabelEditor initial={initial} onCommit={onCommit} onCancel={onCancel} />
+    </StrictMode>,
+  );
   const input = screen.getByRole('textbox', { name: 'Edge label' }) as HTMLInputElement;
   return { onCommit, onCancel, input, view };
 }

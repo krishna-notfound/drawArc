@@ -30,13 +30,14 @@ export function EdgeLabelEditor({ initial, onCommit, onCancel }: EdgeLabelEditor
     input.current?.focus();
     input.current?.select();
   }, []);
-  // Layout cleanup runs before the input leaves the DOM, so a blur fired by the removal is ignored.
-  useLayoutEffect(
-    () => () => {
+  // Layout cleanup runs before the input leaves the DOM, so a blur fired by the removal is ignored. The setup
+  // re-arms it: Strict Mode runs mount → cleanup → mount in development.
+  useLayoutEffect(() => {
+    finished.current = false;
+    return () => {
       finished.current = true;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const finish = (commit: boolean) => {
     if (finished.current) return;
