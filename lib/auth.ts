@@ -5,10 +5,10 @@ import { redirect } from 'next/navigation';
 
 import { AccessError, AppError } from './errors';
 import { type Logger, logger } from './logger';
+import { bindPendingMemberships } from './memberships';
 import { prisma } from './prisma';
 import {
   type BackendUserLike,
-  bindPendingMemberships,
   EmailConflictError,
   EmailHeldError,
   isTombstone,

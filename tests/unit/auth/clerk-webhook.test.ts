@@ -29,7 +29,12 @@ function deletedEvent(data: Record<string, unknown> = { id: 'user_clerk_1', dele
 
 function setup() {
   const fake = createFakeUserDb();
-  const deps = { db: fake.db, logger: createFakeLogger(), bindPendingMemberships: vi.fn(async () => ({ bound: 0 })) };
+  const deps = {
+    db: fake.db,
+    logger: createFakeLogger(),
+    bindPendingMemberships: vi.fn(async () => ({ bound: 0 })),
+    removeMemberships: vi.fn(async () => ({ removed: 0 })),
+  };
   return { fake, deps, handle: (evt: WebhookEvent) => handleClerkEvent(evt, deps) };
 }
 
@@ -51,9 +56,10 @@ describe('handleClerkEvent — idempotent and order-tolerant (AC-021)', () => {
   });
 
   it('keeps deletedAt when a stale updated follows deleted (EC-006)', async () => {
-    const { fake, handle } = setup();
+    const { fake, deps, handle } = setup();
     await handle(userEvent('user.created'));
     await expect(handle(deletedEvent())).resolves.toEqual({ handled: true });
+    expect(deps.removeMemberships).toHaveBeenCalledExactlyOnceWith('user_clerk_1');
     await handle(userEvent('user.updated', { first_name: 'Stale' }));
     expect(fake.rows()).toHaveLength(1);
     expect(fake.rows()[0]?.deletedAt).toBeInstanceOf(Date);

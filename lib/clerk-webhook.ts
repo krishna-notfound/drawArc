@@ -27,6 +27,8 @@ export interface ClerkEventDeps {
   db: UserDb;
   logger: Logger;
   bindPendingMemberships: (user: AuthUser) => Promise<{ bound: number }>;
+  /** Removes a deleted user's memberships (security-model deletion lifecycle, F03). */
+  removeMemberships: (clerkId: string) => Promise<{ removed: number }>;
   /** Clock for the deleted-email hold and deletion timestamps (FR-018); defaults to the system clock. */
   now?: () => Date;
 }
@@ -86,8 +88,8 @@ export async function handleClerkEvent(evt: WebhookEvent, deps: ClerkEventDeps):
         logger.warn({ type: evt.type }, 'clerk user.deleted without an id');
         return { handled: false, reason: 'missing-id' };
       }
-      // Membership removal for deleted users is owed by F03/F12 once ProjectMember exists.
       await markUserDeleted(db, clerkId, now());
+      await deps.removeMemberships(clerkId);
       return { handled: true };
     }
     default:
