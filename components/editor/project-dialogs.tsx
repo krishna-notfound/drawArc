@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Plus } from 'lucide-react';
-import { type FormEvent, type RefObject, useLayoutEffect, useRef } from 'react';
+import { type FormEvent, type RefObject, useId, useLayoutEffect, useRef } from 'react';
 
 import { AppDialog } from '@/components/editor/app-dialog';
 import { useProjectDialogsContext } from '@/components/editor/project-dialogs-context';
@@ -10,8 +10,6 @@ import { Input } from '@/components/ui/input';
 import type { ActionError } from '@/lib/errors';
 
 const FOCUS_RING = 'focus-visible:ring-2 focus-visible:ring-brand';
-const NAME_INPUT_ID = 'project-name';
-const NAME_ERROR_ID = 'project-name-error';
 
 function ErrorBanner({ message, bannerRef }: { message: string; bannerRef: RefObject<HTMLDivElement | null> }) {
   return (
@@ -56,6 +54,9 @@ function PendingLabel({ pending, idle, busy }: { pending: boolean; idle: string;
 function NameDialog({ kind }: { kind: 'create' | 'rename' }) {
   const { dialog, name, pending, error, close, restoreFocus, setName, submit } = useProjectDialogsContext();
   const { bannerRef, inputRef, fieldError, bannerMessage } = useErrorFocus(error);
+  // Unique per instance: Next keeps the previous page mounted (hidden) after navigation, so fixed ids collide.
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
   const open = dialog?.kind === kind;
   const current = dialog?.kind === 'rename' ? dialog.project.name : '';
 
@@ -81,12 +82,12 @@ function NameDialog({ kind }: { kind: 'create' | 'rename' }) {
       <form className="grid gap-4" onSubmit={onSubmit} noValidate>
         {bannerMessage ? <ErrorBanner message={bannerMessage} bannerRef={bannerRef} /> : null}
         <div className="grid gap-2">
-          <label htmlFor={NAME_INPUT_ID} className="text-sm font-medium">
+          <label htmlFor={inputId} className="text-sm font-medium">
             Project name
           </label>
           <Input
             ref={inputRef}
-            id={NAME_INPUT_ID}
+            id={inputId}
             name="name"
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -97,11 +98,11 @@ function NameDialog({ kind }: { kind: 'create' | 'rename' }) {
             autoFocus
             disabled={pending}
             aria-invalid={fieldError ? true : undefined}
-            aria-describedby={fieldError ? NAME_ERROR_ID : undefined}
+            aria-describedby={fieldError ? errorId : undefined}
             className={FOCUS_RING}
           />
           {fieldError ? (
-            <p id={NAME_ERROR_ID} className="text-sm text-error">
+            <p id={errorId} className="text-sm text-error">
               {fieldError}
             </p>
           ) : null}
