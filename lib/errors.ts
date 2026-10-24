@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { logger } from './logger';
+
 export const ERROR_CODES = [
   'UNAUTHENTICATED',
   'FORBIDDEN',
@@ -95,4 +97,59 @@ export function errorResponse(err: unknown): NextResponse {
     return NextResponse.json({ error: { code: err.code, message: err.message } }, { status: err.status });
   }
   throw err;
+}
+
+/** User-safe messages for Server Action results; the UI may show them verbatim (F03 design). */
+const ACTION_MESSAGES: Record<ErrorCode, string> = {
+  UNAUTHENTICATED: 'Please sign in to continue.',
+  FORBIDDEN: "You don't have permission to do that.",
+  NOT_FOUND: 'That project no longer exists.',
+  VALIDATION: 'Please check the highlighted fields.',
+  CONFLICT: 'That conflicts with the current state. Please refresh and try again.',
+  RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
+  UPSTREAM: 'Something went wrong. Please try again.',
+  INTERNAL: 'Something went wrong. Please try again.',
+};
+
+export const PROJECT_ARCHIVED = 'PROJECT_ARCHIVED';
+const ARCHIVED_MESSAGE = 'This project is archived. Unarchive it to make changes.';
+
+function prismaErrorCode(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null || !('code' in err)) return undefined;
+  return typeof err.code === 'string' && /^P\d{4}$/.test(err.code) ? err.code : undefined;
+}
+
+function reasonOf(err: AppError): string | undefined {
+  if (err instanceof AccessError) return err.reason;
+  const details = err.details;
+  if (typeof details === 'object' && details !== null && 'reason' in details && typeof details.reason === 'string') {
+    return details.reason;
+  }
+  return undefined;
+}
+
+/**
+ * Maps any error thrown inside a Server Action to its `ActionError` (code-standards rule 5): expected
+ * failures keep their code, unknown ones become `UPSTREAM` and are logged with the action context.
+ */
+export function toActionError(err: unknown, ctx: { userId?: string; projectId?: string; op: string }): ActionError {
+  if (err instanceof z.ZodError) {
+    const fieldErrors = z.flattenError(err).fieldErrors as Record<string, string[]>;
+    return { code: 'VALIDATION', message: ACTION_MESSAGES.VALIDATION, fieldErrors };
+  }
+  if (isAppError(err)) {
+    const reason = reasonOf(err);
+    const message =
+      reason === PROJECT_ARCHIVED
+        ? ARCHIVED_MESSAGE
+        : err instanceof AccessError || err.message === DEFAULT_MESSAGES[err.code]
+          ? ACTION_MESSAGES[err.code]
+          : err.message;
+    return reason ? { code: err.code, message, reason } : { code: err.code, message };
+  }
+  const prismaCode = prismaErrorCode(err);
+  if (prismaCode === 'P2002') return { code: 'CONFLICT', message: ACTION_MESSAGES.CONFLICT };
+  if (prismaCode === 'P2025') return { code: 'NOT_FOUND', message: ACTION_MESSAGES.NOT_FOUND };
+  logger.error({ ...ctx, err }, 'server action failed');
+  return { code: 'UPSTREAM', message: ACTION_MESSAGES.UPSTREAM };
 }
