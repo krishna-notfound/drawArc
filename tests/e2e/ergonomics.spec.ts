@@ -23,7 +23,7 @@ async function open(page: Page, name: string): Promise<void> {
   await closeProjectSidebar(page);
 }
 
-/** The desktop workspace opens with the project sidebar floating over the canvas's left edge (F04). */
+/** Guard: the project sidebar floats over the canvas's left edge when open (closed by default in the workspace). */
 async function closeProjectSidebar(page: Page): Promise<void> {
   const close = page.getByRole('complementary', { name: 'Projects' }).getByRole('button', { name: 'Close projects sidebar' });
   if (await close.isVisible()) await close.click();

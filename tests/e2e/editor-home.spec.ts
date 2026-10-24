@@ -81,6 +81,8 @@ test('owner flow: create → workspace → rename → delete, lists update witho
     await expect(page.getByRole('banner').getByRole('heading', { name })).toBeVisible(NAVIGATION);
     const canvas = page.locator('[data-slot="canvas"]');
     await expect(canvas).toHaveAttribute('data-role', 'owner');
+    // The workspace sidebar starts closed (it would cover the canvas control bar), so open it to reach the row.
+    await page.getByRole('button', { name: 'Open projects sidebar' }).click();
     await expect(sidebarRow(page, name).getByRole('link')).toHaveAttribute('aria-current', 'page');
     await expect(sidebarRow(page, name).getByRole('link')).toHaveAttribute('href', `/editor/${projectId}`);
 

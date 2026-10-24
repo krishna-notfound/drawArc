@@ -28,7 +28,8 @@ function dialogsApi(): ProjectDialogsApi {
 }
 
 describe('ProjectList owner-only actions (AC-005, FR-003)', () => {
-  it('renders the actions menu only on owned rows and opens Rename/Delete for that project', async () => {
+  // Two Radix menu round trips through userEvent: under a fully loaded `vitest run` this exceeded the default 5 s.
+  it('renders the actions menu only on owned rows and opens Rename/Delete for that project', { timeout: 15_000 }, async () => {
     const api = dialogsApi();
     render(
       <TooltipProvider>

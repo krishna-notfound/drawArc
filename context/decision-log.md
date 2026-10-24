@@ -201,6 +201,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-050 — Workspace project sidebar closed by default
+**APPROVED** 2026-10-24 (owner: "yes do it"). On `/editor/[projectId]` the project sidebar is closed by default so it does not cover F10's bottom-left control bar; the editor home `/editor` keeps the F04 default (open ≥ 1024 px). Resolves the D-049 pending item. Also: two load-sensitive tests got targeted timeouts — F12 "A removes B" e2e allows 10 s while 5 s remains the production target (PRD-013), measured in F15.
+
+---
+
 ### D-051 — F15 approved; Liveblocks plan and preview e2e
 **APPROVED** 2026-10-24 (owner). F15 implemented locally (code, config, runbooks) and merged; each external/production step needs its own approval. O-2: stay on Liveblocks Free while drawArc is non-commercial; upgrade to Pro before any commercial launch. Preview e2e (F15 AC-025): the `deployment_status` workflow stays but is not a required check; run it manually against a preview for M1 sign-off — no `neonctl`, no Vercel protection bypass for now.
 
