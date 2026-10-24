@@ -4,3 +4,5 @@
 export const ownedTag = (userId: string) => `projects:owned:${userId}`;
 export const sharedTag = (userId: string) => `projects:shared:${userId}`;
 export const projectTag = (projectId: string) => `project:${projectId}`;
+/** The project's member list (F12 Share dialog). */
+export const membersTag = (projectId: string) => `project:${projectId}:members`;
