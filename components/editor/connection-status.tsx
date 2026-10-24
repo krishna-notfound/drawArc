@@ -12,9 +12,9 @@ export const CONNECTION_TOASTS = {
   failed: 'Could not reconnect. Reload the page.',
 } as const;
 
-type PillState = 'reconnecting' | 'disconnected' | 'syncing' | null;
+export type PillState = 'reconnecting' | 'disconnected' | 'syncing' | null;
 
-function pillState(status: ReturnType<typeof useStatus>, sync: ReturnType<typeof useSyncStatus>): PillState {
+export function pillState(status: ReturnType<typeof useStatus>, sync: ReturnType<typeof useSyncStatus>): PillState {
   if (status === 'reconnecting' || status === 'connecting') return 'reconnecting';
   if (status === 'disconnected') return 'disconnected';
   if (sync === 'synchronizing') return 'syncing';

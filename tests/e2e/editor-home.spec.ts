@@ -79,8 +79,7 @@ test('owner flow: create → workspace → rename → delete, lists update witho
     await expect(page).toHaveURL(CUID_URL, NAVIGATION);
     projectId = new URL(page.url()).pathname.split('/').pop();
     await expect(page.getByRole('banner').getByRole('heading', { name })).toBeVisible(NAVIGATION);
-    const canvas = page.locator('[data-slot="canvas-placeholder"]');
-    await expect(canvas).toHaveText('Your canvas will appear here.');
+    const canvas = page.locator('[data-slot="canvas"]');
     await expect(canvas).toHaveAttribute('data-role', 'owner');
     await expect(sidebarRow(page, name).getByRole('link')).toHaveAttribute('aria-current', 'page');
     await expect(sidebarRow(page, name).getByRole('link')).toHaveAttribute('href', `/editor/${projectId}`);
