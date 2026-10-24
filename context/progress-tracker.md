@@ -58,7 +58,7 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 12 | sharing-and-access-control | M1 | Completed — merged to `main` via PR #9 (2026-10-24) |
 | 13 | persistence-and-recovery | M1 | Completed — merged to `main` via PR #12 (2026-10-24) |
 | 14 | starter-templates | M1 | Verification (2026-10-24): verified incl. combined check with F10; PR open |
-| 15 | observability-and-deployment | M1 | drafted |
+| 15 | observability-and-deployment | M1 | In Progress (2026-10-24): code verified locally, PR open; production steps await owner authorization |
 | 16 | ai-sidebar-and-room-chat | M2 | drafted |
 | 17 | ai-design-agent | M2 | drafted |
 | 18 | spec-generation | M3 | drafted |
