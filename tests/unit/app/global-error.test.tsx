@@ -16,7 +16,7 @@ it('renders its own html and body (F00 AC-024)', () => {
 it('loads the global stylesheet and uses tokens and a shadcn Button (F01 AC-024)', () => {
   expect(readFileSync('app/global-error.tsx', 'utf8')).toMatch(/import ['"]\.\/globals\.css['"]/);
   const markup = renderToStaticMarkup(<GlobalError error={new Error('x')} retry={() => {}} />);
-  expect(markup).toContain('drawArc could not load');
+  expect(markup).toContain('Something went wrong');
   expect(markup).toMatch(/<body[^>]*class="[^"]*\bbg-base\b[^"]*\btext-copy-primary\b/);
-  expect(markup).toMatch(/<button[^>]*class="[^"]*\binline-flex\b[^"]*"[^>]*>Reload<\/button>/);
+  expect(markup).toMatch(/<button[^>]*class="[^"]*\binline-flex\b[^"]*"[^>]*>Retry<\/button>/);
 });

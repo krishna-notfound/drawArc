@@ -1,8 +1,8 @@
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { CanvasEditor } from '@/components/canvas/canvas-editor';
+import { throwIfProbed } from '@/components/e2e/boundary-probe';
 import { PresenceStack } from '@/components/canvas/presence-stack';
 import { AccessDenied } from '@/components/editor/access-denied';
 import { ImportTemplateSlot } from '@/components/editor/import-template-dialog';
@@ -17,12 +17,13 @@ import { seedRoomIfEmpty } from '@/lib/editor/seed-hook';
 import { toIslandProps } from '@/lib/editor/island-props';
 import { AccessError } from '@/lib/errors';
 import { listProjectMembers, membersVisibleTo } from '@/lib/projects/members';
+import { newRequestId } from '@/lib/request-id';
 
 // `params` is awaited only inside the Suspense child (code-standards rule 1), so the skeleton is the static shell.
 export default function WorkspacePage(props: PageProps<'/editor/[projectId]'>) {
   return (
     <Suspense fallback={<WorkspaceSkeleton />}>
-      <WorkspaceGate params={props.params} />
+      <WorkspaceGate params={props.params} searchParams={props.searchParams} />
     </Suspense>
   );
 }
@@ -32,7 +33,7 @@ export default function WorkspacePage(props: PageProps<'/editor/[projectId]'>) {
  * AccessDenied for malformed / missing / foreign projects, and the workspace for members. Only `AccessError`
  * is handled; anything else propagates to error.tsx.
  */
-async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 'params'>) {
+async function WorkspaceGate({ params, searchParams }: Pick<PageProps<'/editor/[projectId]'>, 'params' | 'searchParams'>) {
   const { projectId } = await params;
   let access: Awaited<ReturnType<typeof requireProjectRole>>;
   try {
@@ -44,6 +45,8 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
     throw err;
   }
   const { user, project, role } = access;
+  // E2E-only segment-boundary probe (F15 AC-013): members only, after the gate; a no-op in production builds.
+  await throwIfProbed(searchParams, 'segment');
 
   // Seed step (F13, D-034): restores an empty room from the Blob snapshot before rendering, for any role.
   // Never throws; a Liveblocks/Blob failure becomes `seed.warning` and the next open retries (P-13-8).
@@ -54,7 +57,7 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
       canvasSchemaVersion: project.canvasSchemaVersion,
       canvasSavedAt: project.canvasSavedAt,
     },
-    { userId: user.id, requestId: (await headers()).get('x-vercel-id') ?? undefined },
+    { userId: user.id, requestId: newRequestId() },
   );
   const islandProps = toIslandProps(user, project, role);
   // F12: only after the gate above (listProjectMembers performs no authorization itself).
