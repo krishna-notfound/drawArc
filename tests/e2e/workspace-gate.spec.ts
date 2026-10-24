@@ -53,10 +53,12 @@ test('a viewer member opens the workspace with island role viewer, without owner
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`/editor/${shared}`);
   await expect(page.getByRole('banner').getByRole('heading', { name })).toBeVisible(NAVIGATION);
-  const canvas = page.locator('[data-slot="canvas-placeholder"]');
-  await expect(canvas).toHaveText('Your canvas will appear here.');
+  const canvas = page.locator('[data-slot="canvas"]');
   await expect(canvas).toHaveAttribute('data-role', 'viewer');
   await expect(canvas).toHaveAttribute('data-project-id', shared);
+  // F06: a viewer opening a room nobody has edited yet gets a read-only canvas, not a crash (no Storage write).
+  await expect(canvas.locator('[data-slot="flow-canvas"]')).toHaveAttribute('data-can-write', 'false', NAVIGATION);
+  await expect(canvas.getByText('View only')).toBeVisible();
   // Default-open desktop sidebar; the row (if this user's cached shared list already includes it) never has
   // an actions menu — only owned rows do.
   await expect(page.locator('#project-sidebar')).toHaveAttribute('data-state', 'open');
@@ -71,7 +73,7 @@ test('an archived project opens read-only with the Archived badge (AC-021, AC-02
   const archived = await db.createProject(userAId, 'E2E F04 archived', 'ARCHIVED');
   await page.goto(`/editor/${archived}`);
   await expect(page.getByRole('banner').getByText('Archived', { exact: true })).toBeVisible(NAVIGATION);
-  await expect(page.locator('[data-slot="canvas-placeholder"]')).toHaveAttribute('data-role', 'viewer');
+  await expect(page.locator('[data-slot="canvas"]')).toHaveAttribute('data-role', 'viewer');
 });
 
 test('axe finds no serious/critical violations in the workspace with the AI panel open (F01 AC-027 carry-over, FR-016)', async ({
@@ -82,7 +84,7 @@ test('axe finds no serious/critical violations in the workspace with the AI pane
   await db.addMember(project, { id: userAId, email: userA().email }, stranger.id, 'EDITOR');
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`/editor/${project}`);
-  await expect(page.locator('[data-slot="canvas-placeholder"]')).toHaveAttribute('data-role', 'editor', NAVIGATION);
+  await expect(page.locator('[data-slot="canvas"]')).toHaveAttribute('data-role', 'editor', NAVIGATION);
 
   const toggle = page.getByRole('button', { name: 'Toggle AI sidebar' });
   await toggle.click();
