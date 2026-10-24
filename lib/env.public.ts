@@ -41,7 +41,7 @@ export const publicEnv: PublicEnv = parseEnv(PublicEnvSchema, publicRaw, 'public
 
 /**
  * E2E-only canvas test hooks (F07: `window.__rf`, `window.__canvasMutations`): on only in builds with
- * `NEXT_PUBLIC_E2E_HOOKS=1`. A literal reference (not `publicEnv`) so the value is a build-time constant and
- * production bundles drop the hooks.
+ * `NEXT_PUBLIC_E2E_HOOKS=1`. A literal reference (not `publicEnv`): Next inlines it when the variable is set at
+ * build time; in a production build without it the reference reads `undefined`, so the hooks never mount.
  */
 export const e2eHooksEnabled: boolean = process.env.NEXT_PUBLIC_E2E_HOOKS === '1';
