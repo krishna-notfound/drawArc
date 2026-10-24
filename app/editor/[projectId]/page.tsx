@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
-import { CanvasPlaceholder } from '@/components/canvas/canvas-placeholder';
+import { CanvasEditor } from '@/components/canvas/canvas-editor';
 import { AccessDenied } from '@/components/editor/access-denied';
 import { ProjectSidebarData } from '@/components/editor/project-sidebar-data';
 import { ShareButton } from '@/components/editor/share-button';
@@ -64,7 +64,7 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
           <ProjectSidebarData currentProjectId={project.id} />
         </Suspense>
       }
-      canvas={<CanvasPlaceholder {...islandProps} />}
+      canvas={<CanvasEditor {...islandProps} />}
     />
   );
 }
