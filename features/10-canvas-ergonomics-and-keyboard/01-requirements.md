@@ -69,6 +69,6 @@
 | EC-008 | Delete pressed while another user is editing the label of a selected node | Node and edges removed; F08 closes the remote editor without a write | F08/AC-014; here AC-008 |
 | EC-009 | Undo when history was cleared by reload | `useCanUndo()` false → button disabled; shortcut no-op (documented: history is per connection) | AC-004 |
 | EC-010 | Shortcut while focus is inside the AI sidebar's textarea (M2) or the share dialog's email input | Ignored by the editable-target rule | AC-006 |
-| EC-011 | Holding Space then dragging on a node | Pans (React Flow `panActivationKeyCode`); no node move | AC-015 |
+| EC-011 | Holding Space then dragging on a node | Moves the node (React Flow 12 behaviour; corrected 2026-10-24, D-049); Space+drag on the empty pane pans | AC-015 |
 | EC-012 | 200 selected elements duplicated | One batch; one undo; copies selected; completes < 500 ms on the perf fixture | AC-013 |
 | EC-013 | Context menu opened on a node, then that node is deleted remotely | Menu closes (state cleared when the target id disappears from the store) | AC-016 (unit case) |

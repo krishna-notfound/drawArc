@@ -2,17 +2,25 @@
 
 | Field | Value |
 |---|---|
-| Status | drafted |
-| Spec approved | — |
-| Implementation authorized | — |
-| Last verified | — |
+| Status | Verification — implemented and verified (combined with F10); PR open |
+| Spec approved | 2026-10-24, owner (incl. its local decisions) |
+| Implementation authorized | 2026-10-24, owner — parallel round 6, own worktree |
+| Last verified | 2026-10-24, `09da5ef` + merge `d009507` + test fixes |
 
 ## History
 - 2026-10-22 — drafted by planning session (spec writer), from F06/F07/F09 contracts, `research/liveblocks.md` §1–§3, `research/react-flow.md` §8, §12, reference prompt 18.
 - 2026-10-22 — Gate 4 audit fixes applied (`RoomEvent` owned by F05, `sonner` from F05, F06/FR-009 exemption, FR/TC links, Manual TC-024). See `features/AUDIT-2026-10-22.md`.
 
 ## Evidence
-- (none yet) — `npm run check` logs, preview URL, AC-022 screenshots, F05 auth-matrix run on the same commit.
+
+Commits (author/committer `krishna <krishnagtkr@gmail.com>`, no AI trailers): `e38da0a` three schema-v1 templates, id regeneration, overlap check, fixtures + unit test · `26fa53a` import hook, navbar Import button (not for viewers), dialog with previews, CANVAS_REPLACED toast · `09da5ef` two-user import / undo / viewer-gate e2e.
+
+| Check | Result |
+|---|---|
+| Agent gate | check 486/486, build OK, e2e 57/58 (pre-existing F09 undo flake), audit 0 |
+| Round-6 combined (F14 merged into F10, merge `d009507` + test fixes `a449a35`, `aa2f741`) | typecheck/lint/prisma pass, unit 496/497 (project-list 5 s timeout under load, passes alone), build OK, e2e 64/65 (F12 `sharing.spec.ts:130` removal flake, passes alone), F09 undo test 3/3 repeated, audit 0 |
+
+Rulings: import runs in one `room.batch` = one undo step; Import button portalled from the canvas into the navbar slot; reused ConfirmDialog for the replace confirmation; template node positions adjusted to pass the overlap check; fixtures regenerated with `vitest -u`. Round-6 test fix: the toast's "Fit view" locator is scoped to the toast (F10's control bar has its own).
 
 ## Open issues
 - D-14a relies on `room.batch()` wrapping the hook handlers (shared UNVERIFIED assumption with F07/F08); fallback `history.pause/resume` may allow a ≤ 1-frame empty flash for collaborators — AC-011 would need relaxing with owner approval.
@@ -22,3 +30,4 @@
 - `useEventListener` payload shape (`user.info`) UNVERIFIED in the notes; fallback via `useOthers` documented.
 - Resolved at Gate 4: F06/FR-009 now exempts `hooks/useImportTemplate.ts` (one `fitView` after a `CANVAS_REPLACED` import, importer only) and F06's grep guard allowlists it; the drop prohibition (F07/FR-006) is unchanged.
 - Aligned with F06/F04 drafted packages (2026-10-22): island is `components/canvas/flow-canvas.tsx`, navbar is `components/editor/editor-navbar.tsx` (slot), E2E flag is `NEXT_PUBLIC_E2E_HOOKS`; no toast component exists in F01–F05, so `sonner` is added here.
+- None blocking.
