@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
@@ -43,12 +44,17 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
   }
   const { user, project, role } = access;
 
-  // Seed step — hook point owned by F13 (D-034); a no-op stub until F13 lands. Runs before rendering.
-  const seed = await seedRoomIfEmpty({
-    id: project.id,
-    canvasBlobPath: project.canvasBlobPath,
-    canvasSchemaVersion: project.canvasSchemaVersion,
-  });
+  // Seed step (F13, D-034): restores an empty room from the Blob snapshot before rendering, for any role.
+  // Never throws; a Liveblocks/Blob failure becomes `seed.warning` and the next open retries (P-13-8).
+  const seed = await seedRoomIfEmpty(
+    {
+      id: project.id,
+      canvasBlobPath: project.canvasBlobPath,
+      canvasSchemaVersion: project.canvasSchemaVersion,
+      canvasSavedAt: project.canvasSavedAt,
+    },
+    { userId: user.id, requestId: (await headers()).get('x-vercel-id') ?? undefined },
+  );
   const islandProps = toIslandProps(user, project, role);
   // F12: only after the gate above (listProjectMembers performs no authorization itself).
   const members = membersVisibleTo(await listProjectMembers(project.id), role);

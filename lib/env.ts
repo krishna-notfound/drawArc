@@ -9,19 +9,27 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 // Service keys stay optional until the feature that installs the service activates them (D-F00-1).
 // F02 activated the database and Clerk keys: nothing can authenticate or persist users without them.
 // F05 activated the Liveblocks keys: no project room can be joined without a minted token.
-export const ServerEnvSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
-  DATABASE_URL: z.url(), // F02 (pooled; runtime queries)
-  DATABASE_URL_UNPOOLED: z.url(), // F02 (direct; Prisma CLI)
-  DATABASE_URL_TEST: z.url().optional(), // L2 tests only
-  CLERK_SECRET_KEY: z.string().startsWith('sk_'), // F02
-  CLERK_WEBHOOK_SIGNING_SECRET: z.string().startsWith('whsec_'), // F02
-  LIVEBLOCKS_SECRET_KEY: z.string().startsWith('sk_'), // F05
-  LIVEBLOCKS_WEBHOOK_SECRET_KEY: z.string().startsWith('whsec_'), // F05
-  BLOB_READ_WRITE_TOKEN: z.string().optional(), // F13 (local/CI only; OIDC on Vercel)
-  TRIGGER_SECRET_KEY: z.string().optional(), // M2 (F17)
-});
+// F13 activated the Blob token off Vercel (local/CI); on Vercel the attached store authenticates with OIDC.
+export const ServerEnvSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
+    DATABASE_URL: z.url(), // F02 (pooled; runtime queries)
+    DATABASE_URL_UNPOOLED: z.url(), // F02 (direct; Prisma CLI)
+    DATABASE_URL_TEST: z.url().optional(), // L2 tests only
+    CLERK_SECRET_KEY: z.string().startsWith('sk_'), // F02
+    CLERK_WEBHOOK_SIGNING_SECRET: z.string().startsWith('whsec_'), // F02
+    LIVEBLOCKS_SECRET_KEY: z.string().startsWith('sk_'), // F05
+    LIVEBLOCKS_WEBHOOK_SECRET_KEY: z.string().startsWith('whsec_'), // F05
+    BLOB_READ_WRITE_TOKEN: z.string().optional(), // F13 (local/CI only; OIDC on Vercel)
+    TRIGGER_SECRET_KEY: z.string().optional(), // M2 (F17)
+  })
+  .superRefine((value, ctx) => {
+    // `VERCEL=1` is set by the Vercel runtime; it is a platform flag, not a service key, so it stays out of the schema.
+    if (process.env.VERCEL !== '1' && !value.BLOB_READ_WRITE_TOKEN) {
+      ctx.addIssue({ code: 'custom', path: ['BLOB_READ_WRITE_TOKEN'], message: 'Required outside Vercel' });
+    }
+  });
 
 export type ServerEnv = Omit<z.infer<typeof ServerEnvSchema>, 'LOG_LEVEL'> & { LOG_LEVEL: LogLevel };
 

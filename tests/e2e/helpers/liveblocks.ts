@@ -23,3 +23,25 @@ export function notifyRoleChanged(projectId: string, userId: string, role: 'edit
 export function deleteRoom(projectId: string): Promise<void> {
   return testLiveblocks().deleteRoom(projectId);
 }
+
+/** Empties the room's Storage (F13 recovery tests): the room survives, its `flow` subtree is gone. */
+export function clearRoomStorage(projectId: string): Promise<void> {
+  return testLiveblocks().deleteStorageDocument(projectId);
+}
+
+/** Node and edge ids in the room's React Flow subtree (`{ flow: { nodes: { [id] }, edges: { [id] } } }`). */
+export async function roomFlowIds(projectId: string): Promise<{ nodes: string[]; edges: string[] }> {
+  const storage = (await testLiveblocks().getStorageDocument(projectId, 'json')) as {
+    flow?: { nodes?: Record<string, unknown>; edges?: Record<string, unknown> };
+  };
+  return { nodes: Object.keys(storage.flow?.nodes ?? {}), edges: Object.keys(storage.flow?.edges ?? {}) };
+}
+
+/** True when the room's `flow` subtree is stored as Live structures (what `useLiveblocksFlow` can mutate). */
+export async function roomFlowIsLive(projectId: string): Promise<boolean> {
+  const lson = (await testLiveblocks().getStorageDocument(projectId, 'plain-lson')) as {
+    data?: { flow?: { liveblocksType?: string; data?: { nodes?: { liveblocksType?: string } } } };
+  };
+  const flow = lson.data?.flow;
+  return flow?.liveblocksType === 'LiveObject' && flow.data?.nodes?.liveblocksType === 'LiveMap';
+}

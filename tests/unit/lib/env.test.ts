@@ -12,7 +12,6 @@ const REQUIRED_SERVER_KEYS = [
 ] as const;
 const OPTIONAL_SERVER_KEYS = [
   'DATABASE_URL_TEST',
-  'BLOB_READ_WRITE_TOKEN',
   'TRIGGER_SECRET_KEY',
 ] as const;
 const VALID: Record<(typeof REQUIRED_SERVER_KEYS)[number], string> = {
@@ -36,6 +35,8 @@ beforeEach(() => {
   vi.unstubAllEnvs();
   REQUIRED_SERVER_KEYS.forEach((key) => vi.stubEnv(key, VALID[key]));
   OPTIONAL_SERVER_KEYS.forEach((key) => vi.stubEnv(key, undefined));
+  vi.stubEnv('BLOB_READ_WRITE_TOKEN', 'vercel_blob_rw_value');
+  vi.stubEnv('VERCEL', undefined);
   vi.stubEnv('LOG_LEVEL', undefined);
 });
 
@@ -70,6 +71,14 @@ describe('lib/env (F00 FR-003, F02 FR-007)', () => {
   it('rejects a Liveblocks public key in LIVEBLOCKS_SECRET_KEY (F05 AC-020)', async () => {
     vi.stubEnv('LIVEBLOCKS_SECRET_KEY', 'pk_x');
     expect((await importError('@/lib/env'))?.message).toContain('LIVEBLOCKS_SECRET_KEY');
+  });
+
+  it('requires BLOB_READ_WRITE_TOKEN off Vercel and not on Vercel, where OIDC is used (F13 AC-001)', async () => {
+    vi.stubEnv('BLOB_READ_WRITE_TOKEN', undefined);
+    expect((await importError('@/lib/env'))?.message).toContain('BLOB_READ_WRITE_TOKEN');
+    vi.resetModules();
+    vi.stubEnv('VERCEL', '1');
+    expect(await importError('@/lib/env')).toBeNull();
   });
 
   it('honours an explicit LOG_LEVEL', async () => {

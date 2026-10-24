@@ -9,16 +9,26 @@ import { logger } from './logger';
 
 export { userColor } from './user-color';
 
-const globalForLiveblocks = globalThis as unknown as { liveblocks?: Liveblocks };
+const globalForLiveblocks = globalThis as unknown as { liveblocksClients?: WeakMap<typeof Liveblocks, Liveblocks> };
 
-/** The one node client (FR-003); cached on `globalThis` so dev hot reloads do not create new ones. */
+/**
+ * The one node client (FR-003); cached on `globalThis` so dev hot reloads do not create new ones. The cache is
+ * keyed by the `Liveblocks` class because Next bundles each server layer (route handlers, RSC) with its own copy
+ * of `@liveblocks/core`: a client created in another layer would not recognise this layer's `LiveObject`s, and
+ * `mutateFlow` (F13 seed, F17) would then write plain JSON instead of Live structures.
+ */
 export function getLiveblocks(): Liveblocks {
-  globalForLiveblocks.liveblocks ??= new Liveblocks({
-    secret: env.LIVEBLOCKS_SECRET_KEY,
-    // The local dev server (tests only) serves the browser and the node client from the same URL.
-    ...(publicEnv.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ? { baseUrl: publicEnv.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL } : {}),
-  });
-  return globalForLiveblocks.liveblocks;
+  const clients = (globalForLiveblocks.liveblocksClients ??= new WeakMap());
+  let client = clients.get(Liveblocks);
+  if (!client) {
+    client = new Liveblocks({
+      secret: env.LIVEBLOCKS_SECRET_KEY,
+      // The local dev server (tests only) serves the browser and the node client from the same URL.
+      ...(publicEnv.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ? { baseUrl: publicEnv.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL } : {}),
+    });
+    clients.set(Liveblocks, client);
+  }
+  return client;
 }
 
 /**

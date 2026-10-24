@@ -1,7 +1,7 @@
 import 'server-only';
 
+import { deleteCanvas } from '@/lib/blob';
 import { deleteRoom, ensureRoom, kickUser } from '@/lib/liveblocks';
-import { logger } from '@/lib/logger';
 
 /**
  * Side effects of the project lifecycle in systems Postgres does not own (D-025). Project actions call
@@ -19,12 +19,6 @@ export interface ProjectExternals {
   deleteSnapshot(projectId: string): Promise<void>;
 }
 
-function notWired(op: keyof ProjectExternals) {
-  return async (projectId: string): Promise<void> => {
-    logger.warn({ op, projectId }, 'externals not wired');
-  };
-}
-
 export const defaultExternals: ProjectExternals = {
   ensureRoom,
   deleteRoom,
@@ -32,5 +26,5 @@ export const defaultExternals: ProjectExternals = {
   kickUsers: async (projectId, userIds) => {
     await Promise.all(userIds.map((userId) => kickUser(projectId, userId)));
   },
-  deleteSnapshot: notWired('deleteSnapshot'),
+  deleteSnapshot: deleteCanvas,
 };

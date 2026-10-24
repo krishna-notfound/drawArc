@@ -23,6 +23,8 @@ const PLACEHOLDER_ENV: Record<string, string> = {
   // F05 made the Liveblocks keys required.
   LIVEBLOCKS_SECRET_KEY: 'sk_test_placeholder',
   LIVEBLOCKS_WEBHOOK_SECRET_KEY: 'whsec_cGxhY2Vob2xkZXItbGl2ZWJsb2Nrcy1zZWNyZXQ=',
+  // F13 requires the Blob token outside Vercel; L1/L2 mock `lib/blob.ts`, so it is never used.
+  BLOB_READ_WRITE_TOKEN: 'vercel_blob_rw_placeholder',
 };
 for (const [key, value] of Object.entries(PLACEHOLDER_ENV)) {
   if (!process.env[key]) process.env[key] = value;
