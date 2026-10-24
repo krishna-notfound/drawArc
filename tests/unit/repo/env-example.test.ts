@@ -20,7 +20,7 @@ const CLERK_ROUTING: Record<string, string> = {
   NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: '/editor',
 };
 
-describe('.env.example (F00 AC-007)', () => {
+describe('.env.example (F00 AC-007, F15 AC-007)', () => {
   it('contains only comments, blank lines, and empty assignments (except Clerk routing)', () => {
     lines
       .filter((line) => !Object.keys(CLERK_ROUTING).some((key) => line.startsWith(`${key}=`)))
@@ -39,6 +39,19 @@ describe('.env.example (F00 AC-007)', () => {
     exampleKeys
       .filter((key) => !schemaKeys.includes(key) && !(key in CLERK_ROUTING))
       .forEach((key) => expect(key).toMatch(/^E2E_[A-Z0-9_]+$/));
+  });
+
+  // F15 AC-007: the inventory table in the F15 design, the Zod schemas and .env.example agree.
+  it('validates every inventory row marked "validated: yes" in the env schemas (F15 AC-007)', () => {
+    const design = readFileSync('features/15-observability-and-deployment/02-design.md', 'utf8');
+    const inventory = design.slice(design.indexOf('## Environment inventory'), design.indexOf('Preview webhook note'));
+    const validated = inventory
+      .split(/\r?\n/)
+      .map((row) => row.split('|').map((cell) => cell.trim()))
+      .filter((cells) => cells.length > 5 && /^yes\b/.test(cells[5] ?? ''))
+      .map((cells) => (cells[1] ?? '').replaceAll('`', ''));
+    expect(validated.length).toBeGreaterThan(0);
+    validated.forEach((key) => expect(schemaKeys).toContain(key));
   });
 
   it('precedes every key with a comment naming the activating feature', () => {

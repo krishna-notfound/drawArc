@@ -32,15 +32,17 @@ Environment variables are validated at startup by `lib/env.ts` (server) and `lib
 | `test` | Unit tests once (Vitest) |
 | `test:watch` | Unit tests in watch mode |
 | `check` | The quality gate: route types + typecheck, lint, unit and integration tests, `prisma validate` |
-| `check:bundle` | After a build, fail if a sentinel server secret appears in `.next/static` |
+| `check:bundle` | After a build, fail if a server secret value or a secret-shaped string appears in `.next/static` |
+| `check:pins` | Fail if `package.json` breaks the dependency pin policy (D-023) |
 | `e2e` | End-to-end tests (Playwright; starts the dev server) |
+| `e2e:preview` | End-to-end and performance tests against the deployed preview in `E2E_BASE_URL` |
 | `e2e:install` | Download the Chromium browser Playwright uses |
 | `postinstall` | Runs `prisma generate` after every install (the client lives in git-ignored `lib/generated/prisma`) |
 | `db:generate` | Regenerate the Prisma client after editing `prisma/schema.prisma` |
 | `db:migrate` | Create and apply a migration on a development database (`prisma migrate dev`) |
 | `db:deploy` | Apply committed migrations (`prisma migrate deploy`) |
 
-`npm run check` must pass before any task is reported complete. CI (`.github/workflows/ci.yml`) runs `check`, `build`, `check:bundle`, and `npm audit --audit-level=high`.
+`npm run check` must pass before any task is reported complete. CI (`.github/workflows/ci.yml`) runs three jobs: `check`, `build` (with `check:bundle`), and `audit` (`npm audit --audit-level=high` and `check:pins`); `.github/workflows/e2e-preview.yml` runs `e2e:preview` against each ready Vercel preview. Deployment, release and recovery procedures live in `docs/runbooks/`.
 
 ## Authentication setup
 

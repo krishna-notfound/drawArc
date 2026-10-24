@@ -9,6 +9,10 @@ const isCI = Boolean(process.env.CI);
 const port = Number(process.env.E2E_PORT ?? 3000);
 const workers = Number(process.env.E2E_WORKERS ?? 4);
 const liveblocksDevServer = process.env.E2E_LIVEBLOCKS === '1';
+// F15 `e2e-on-preview`: E2E_BASE_URL points the suite at a deployed preview; no local server is started and the
+// `preview` project (which also runs perf.spec.ts) replaces `chromium`.
+const previewUrl = process.env.E2E_BASE_URL;
+const baseURL = previewUrl ?? `http://localhost:${port}`;
 const LIVEBLOCKS_DEV_URL = 'http://localhost:1153';
 
 // The app under test always exposes the test-only room page; with E2E_LIVEBLOCKS=1 it also talks to the local
@@ -31,17 +35,25 @@ export default defineConfig({
   workers,
   retries: isCI ? 2 : 0,
   reporter: isCI ? 'github' : 'list',
-  use: { baseURL: `http://localhost:${port}`, trace: 'on-first-retry' },
+  use: { baseURL, trace: 'on-first-retry' },
   projects: [
     { name: 'setup', testMatch: /global\.setup\.ts/ },
     // Specs run signed in as E2E user A unless they reset storageState (see tests/e2e/auth.spec.ts).
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user-a.json' },
-      dependencies: ['setup'],
-    },
+    previewUrl
+      ? {
+          name: 'preview',
+          use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user-a.json' },
+          dependencies: ['setup'],
+        }
+      : {
+          name: 'chromium',
+          // NFR-003/NFR-004 numbers are only meaningful on a deployment (F15 EC-010).
+          testIgnore: /perf\.spec\.ts/,
+          use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user-a.json' },
+          dependencies: ['setup'],
+        },
   ],
-  webServer: [
+  webServer: previewUrl ? [] : [
     {
       command: isCI ? `npm run start -- --port ${port}` : `npm run dev -- --port ${port}`,
       url: `http://localhost:${port}`,

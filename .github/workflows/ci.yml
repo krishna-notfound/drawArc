@@ -8,8 +8,10 @@ on:
 permissions:
   contents: read
 
+# Three independent jobs (F15 FR-014, AC-025); `check`, `build` and `audit` are the required status checks.
+# `e2e-on-preview` lives in e2e-preview.yml because it is triggered by Vercel's deployment status, not the push.
 jobs:
-  quality-gate:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,35 +25,48 @@ jobs:
 
       - run: npm run check
 
-      # Sentinel values (not real secrets) let check:bundle prove no server secret reaches .next/static.
-      # F02 made the database and Clerk keys required at boot. The publishable key is public by design; a
-      # syntactically valid sentinel (base64 of "sentinel.clerk.accounts.dev$") is enough to build.
-      - name: Build with sentinel secrets
-        run: npm run build
-        env:
-          DATABASE_URL: postgresql://SENTINEL@localhost/db
-          DATABASE_URL_UNPOOLED: postgresql://SENTINEL@localhost/db_unpooled
-          DATABASE_URL_TEST: postgresql://SENTINEL@localhost/db_test
-          CLERK_SECRET_KEY: sk_SENTINEL_clerk
-          CLERK_WEBHOOK_SIGNING_SECRET: whsec_SENTINEL_clerk
-          LIVEBLOCKS_SECRET_KEY: sk_SENTINEL_liveblocks
-          LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
-          BLOB_READ_WRITE_TOKEN: SENTINEL_blob
-          TRIGGER_SECRET_KEY: SENTINEL_trigger
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2VudGluZWwuY2xlcmsuYWNjb3VudHMuZGV2JA
+  build:
+    runs-on: ubuntu-latest
+    # Sentinel values (not real secrets) let check:bundle prove no server secret reaches .next/static.
+    # F02 made the database and Clerk keys required at boot. The publishable key is public by design; a
+    # syntactically valid sentinel (base64 of "sentinel.clerk.accounts.dev$") is enough to build.
+    env:
+      DATABASE_URL: postgresql://SENTINEL@localhost/db
+      DATABASE_URL_UNPOOLED: postgresql://SENTINEL@localhost/db_unpooled
+      DATABASE_URL_TEST: postgresql://SENTINEL@localhost/db_test
+      CLERK_SECRET_KEY: sk_SENTINEL_clerk
+      CLERK_WEBHOOK_SIGNING_SECRET: whsec_SENTINEL_clerk
+      LIVEBLOCKS_SECRET_KEY: sk_SENTINEL_liveblocks
+      LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
+      BLOB_READ_WRITE_TOKEN: SENTINEL_blob
+      TRIGGER_SECRET_KEY: SENTINEL_trigger
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2VudGluZWwuY2xlcmsuYWNjb3VudHMuZGV2JA
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
 
       - name: Bundle secret check
         run: npm run check:bundle
-        env:
-          DATABASE_URL: postgresql://SENTINEL@localhost/db
-          DATABASE_URL_UNPOOLED: postgresql://SENTINEL@localhost/db_unpooled
-          DATABASE_URL_TEST: postgresql://SENTINEL@localhost/db_test
-          CLERK_SECRET_KEY: sk_SENTINEL_clerk
-          CLERK_WEBHOOK_SIGNING_SECRET: whsec_SENTINEL_clerk
-          LIVEBLOCKS_SECRET_KEY: sk_SENTINEL_liveblocks
-          LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
-          BLOB_READ_WRITE_TOKEN: SENTINEL_blob
-          TRIGGER_SECRET_KEY: SENTINEL_trigger
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2VudGluZWwuY2xlcmsuYWNjb3VudHMuZGV2JA
 
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # Both read only package.json / package-lock.json; no install needed. A high finding without a fix needs
+      # a dated exception in context/decision-log.md (F15 EC-016).
       - run: npm audit --audit-level=high
+
+      - run: npm run check:pins

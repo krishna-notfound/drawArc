@@ -1,0 +1,51 @@
+name: E2E on preview
+
+# F15 FR-014 (AC-025): runs the Playwright suite, including perf.spec.ts, against the Vercel preview of a pull
+# request once Vercel reports the deployment ready. Vercel posts GitHub deployment statuses; their environment
+# is named "Preview" (or "Preview – <project>"), and the ready URL is the status's environment/target URL.
+on: deployment_status
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-on-preview:
+    if: github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      E2E_BASE_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+      # Test users and the Clerk Development instance keys (clerkSetup needs the secret key).
+      E2E_USER_A_EMAIL: ${{ secrets.E2E_USER_A_EMAIL }}
+      E2E_USER_A_PASSWORD: ${{ secrets.E2E_USER_A_PASSWORD }}
+      E2E_USER_B_EMAIL: ${{ secrets.E2E_USER_B_EMAIL }}
+      E2E_USER_B_PASSWORD: ${{ secrets.E2E_USER_B_PASSWORD }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_DEV_SECRET_KEY }}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_DEV_PUBLISHABLE_KEY }}
+      # Test helpers seed rows directly, so they need the database the preview reads: the Neon preview branch
+      # for this pull request (see docs/runbooks/release.md, "E2E on preview").
+      DATABASE_URL: ${{ secrets.E2E_PREVIEW_DATABASE_URL }}
+      LIVEBLOCKS_SECRET_KEY: ${{ secrets.LIVEBLOCKS_DEV_SECRET_KEY }}
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run e2e:preview
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 14

@@ -53,6 +53,8 @@ describe('lib/env (F00 FR-003, F02 FR-007)', () => {
     vi.stubEnv(key, '');
     const error = await importError('@/lib/env');
     expect(error?.message).toContain(key);
+    // F15 AC-008: names the key only, never any other variable's value.
+    Object.values(VALID).forEach((value) => expect(error?.message).not.toContain(value));
   });
 
   it('fails naming NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY when it is missing (F02 AC-010)', async () => {
