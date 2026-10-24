@@ -6,8 +6,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { ClerkDeletedSchema, ClerkWebhookUserSchema } from '@/schemas/clerk';
 
 import type { AuthUser } from './auth';
-import { httpStatusFor } from './errors';
+import { AppError, errorResponse } from './errors';
 import type { Logger } from './logger';
+import { newRequestId } from './request-id';
 import {
   EmailConflictError,
   EmailHeldError,
@@ -104,18 +105,16 @@ export interface ClerkWebhookRouteDeps extends ClerkEventDeps {
 /** The `POST /api/webhooks/clerk` handler: authenticate (Svix signature) → validate → act. */
 export function createClerkWebhookRoute(deps: ClerkWebhookRouteDeps) {
   return async function POST(request: NextRequest): Promise<NextResponse> {
-    const requestId = request.headers.get('svix-id') ?? undefined;
-    const log = deps.logger.child({ requestId });
+    // Our own id (F15-D1); Svix's message id is logged beside it to match a delivery in the Clerk dashboard (EC-003).
+    const requestId = newRequestId();
+    const log = deps.logger.child({ requestId, svixId: request.headers.get('svix-id') ?? undefined });
 
     let evt: WebhookEvent;
     try {
       evt = await verifyWebhook(request, { signingSecret: deps.signingSecret });
     } catch (err) {
       log.warn({ err }, 'clerk webhook signature rejected');
-      return NextResponse.json(
-        { error: { code: 'VALIDATION', message: 'Invalid webhook signature' } },
-        { status: httpStatusFor('VALIDATION') },
-      );
+      return errorResponse(new AppError('VALIDATION', 'Invalid webhook signature'), { requestId });
     }
 
     try {
@@ -124,10 +123,7 @@ export function createClerkWebhookRoute(deps: ClerkWebhookRouteDeps) {
       return NextResponse.json({ ok: true, ...result });
     } catch (err) {
       log.error({ type: evt.type, err }, 'clerk webhook failed; Svix will retry');
-      return NextResponse.json(
-        { error: { code: 'UPSTREAM', message: 'Could not process the event.' } },
-        { status: httpStatusFor('UPSTREAM') },
-      );
+      return errorResponse(new AppError('UPSTREAM', 'Could not process the event.'), { requestId });
     }
   };
 }

@@ -74,6 +74,8 @@ export class AccessError extends AppError {
 export interface ActionError {
   code: ErrorCode;
   message: string;
+  /** Correlates the failure with its server log lines (F15-D1); set on every server-produced error. */
+  requestId?: string;
   reason?: string;
   fieldErrors?: Record<string, string[]>;
 }
@@ -84,17 +86,49 @@ export function isAppError(err: unknown): err is AppError {
   return err instanceof AppError;
 }
 
+export interface ErrorResponseOptions {
+  /** Echoed as `error.requestId` (F15-D1). */
+  requestId?: string;
+  headers?: HeadersInit;
+}
+
+type PublicDetails = { reason?: string; issues?: unknown[]; retryAfterSeconds?: number };
+
+/**
+ * Client-safe extras an `AppError` carries in `details`: `reason` (a stable machine code), `issues` (validation
+ * paths) and `retryAfterSeconds` (sent as `Retry-After`). `AccessError.reason` is never echoed: it would tell a
+ * missing project from a foreign one (security-model).
+ */
+function publicDetails(err: AppError): PublicDetails {
+  const details = err.details;
+  if (err instanceof AccessError || typeof details !== 'object' || details === null) return {};
+  const out: PublicDetails = {};
+  if ('reason' in details && typeof details.reason === 'string') out.reason = details.reason;
+  if ('issues' in details && Array.isArray(details.issues)) out.issues = details.issues;
+  if ('retryAfterSeconds' in details && typeof details.retryAfterSeconds === 'number') {
+    out.retryAfterSeconds = details.retryAfterSeconds;
+  }
+  return out;
+}
+
 /** Maps expected errors to a JSON response; anything else is rethrown so Next.js handles it as a 500. */
-export function errorResponse(err: unknown): NextResponse {
+export function errorResponse(err: unknown, opts: ErrorResponseOptions = {}): NextResponse {
+  const headers = new Headers(opts.headers);
+  const { requestId } = opts;
   if (err instanceof z.ZodError) {
     const { fieldErrors } = z.flattenError(err);
     return NextResponse.json(
-      { error: { code: 'VALIDATION', message: DEFAULT_MESSAGES.VALIDATION, fieldErrors } },
-      { status: HTTP_STATUS_BY_CODE.VALIDATION },
+      { error: { code: 'VALIDATION', message: DEFAULT_MESSAGES.VALIDATION, requestId, fieldErrors } },
+      { status: HTTP_STATUS_BY_CODE.VALIDATION, headers },
     );
   }
   if (isAppError(err)) {
-    return NextResponse.json({ error: { code: err.code, message: err.message } }, { status: err.status });
+    const { retryAfterSeconds, ...extras } = publicDetails(err);
+    if (retryAfterSeconds !== undefined) headers.set('Retry-After', String(retryAfterSeconds));
+    return NextResponse.json(
+      { error: { code: err.code, message: err.message, requestId, ...extras } },
+      { status: err.status, headers },
+    );
   }
   throw err;
 }
@@ -132,10 +166,14 @@ function reasonOf(err: AppError): string | undefined {
  * Maps any error thrown inside a Server Action to its `ActionError` (code-standards rule 5): expected
  * failures keep their code, unknown ones become `UPSTREAM` and are logged with the action context.
  */
-export function toActionError(err: unknown, ctx: { userId?: string; projectId?: string; op: string }): ActionError {
+export function toActionError(
+  err: unknown,
+  ctx: { requestId: string; userId?: string; projectId?: string; op: string },
+): ActionError {
+  const { requestId } = ctx;
   if (err instanceof z.ZodError) {
     const fieldErrors = z.flattenError(err).fieldErrors as Record<string, string[]>;
-    return { code: 'VALIDATION', message: ACTION_MESSAGES.VALIDATION, fieldErrors };
+    return { code: 'VALIDATION', message: ACTION_MESSAGES.VALIDATION, requestId, fieldErrors };
   }
   if (isAppError(err)) {
     const reason = reasonOf(err);
@@ -145,11 +183,11 @@ export function toActionError(err: unknown, ctx: { userId?: string; projectId?: 
         : err instanceof AccessError || err.message === DEFAULT_MESSAGES[err.code]
           ? ACTION_MESSAGES[err.code]
           : err.message;
-    return reason ? { code: err.code, message, reason } : { code: err.code, message };
+    return reason ? { code: err.code, message, requestId, reason } : { code: err.code, message, requestId };
   }
   const prismaCode = prismaErrorCode(err);
-  if (prismaCode === 'P2002') return { code: 'CONFLICT', message: ACTION_MESSAGES.CONFLICT };
-  if (prismaCode === 'P2025') return { code: 'NOT_FOUND', message: ACTION_MESSAGES.NOT_FOUND };
+  if (prismaCode === 'P2002') return { code: 'CONFLICT', message: ACTION_MESSAGES.CONFLICT, requestId };
+  if (prismaCode === 'P2025') return { code: 'NOT_FOUND', message: ACTION_MESSAGES.NOT_FOUND, requestId };
   logger.error({ ...ctx, err }, 'server action failed');
-  return { code: 'UPSTREAM', message: ACTION_MESSAGES.UPSTREAM };
+  return { code: 'UPSTREAM', message: ACTION_MESSAGES.UPSTREAM, requestId };
 }

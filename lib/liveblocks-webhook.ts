@@ -3,7 +3,9 @@ import 'server-only';
 import { WebhookHandler } from '@liveblocks/node';
 import { z } from 'zod';
 
+import { AppError, errorResponse } from './errors';
 import type { Logger } from './logger';
+import { newRequestId } from './request-id';
 
 // `verifyRequest` checks the signature and timestamp first and only then rejects event types this SDK version
 // does not know. Those errors therefore mean "verified, but new": answer 200 so Liveblocks neither retries nor
@@ -29,7 +31,9 @@ export function createLiveblocksWebhookRoute(deps: LiveblocksWebhookDeps) {
 
   return async function POST(request: Request): Promise<Response> {
     const rawBody = await request.text();
-    const log = deps.logger.child({ requestId: request.headers.get('webhook-id') ?? undefined });
+    // Our own id (F15-D1); the delivery id is logged beside it to match the Liveblocks dashboard.
+    const requestId = newRequestId();
+    const log = deps.logger.child({ requestId, webhookId: request.headers.get('webhook-id') ?? undefined });
 
     let event: unknown;
     try {
@@ -40,7 +44,7 @@ export function createLiveblocksWebhookRoute(deps: LiveblocksWebhookDeps) {
         return Response.json({ received: true });
       }
       log.warn({ reason: err instanceof Error ? err.message.split(',')[0] : 'invalid' }, 'liveblocks webhook rejected');
-      return Response.json({ error: { code: 'VALIDATION', message: 'invalid signature' } }, { status: 400 });
+      return errorResponse(new AppError('VALIDATION', 'invalid signature'), { requestId });
     }
 
     const parsed = HandledEvent.safeParse(event);

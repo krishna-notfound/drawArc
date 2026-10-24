@@ -105,19 +105,22 @@ describe.skipIf(!hasTestDatabase)('POST /api/liveblocks-auth (L2, AUTHZ-MATRIX)'
     h.requireUser.mockRejectedValueOnce(new AccessError('UNAUTHENTICATED'));
     const signedOut = await post({ room: project.id });
     expect(signedOut.status).toBe(401);
-    expect(await signedOut.json()).toEqual({ error: 'forbidden', reason: 'unauthenticated' });
+    expect(await signedOut.json()).toEqual({ error: 'forbidden', reason: 'unauthenticated', requestId: expect.any(String) });
 
     asUser(stranger);
     const nonMember = await post({ room: project.id });
     const missing = await post({ room: missingProjectId() });
     expect([nonMember.status, missing.status]).toEqual([403, 403]);
-    expect(await nonMember.text()).toBe(await missing.text());
+    // Identical apart from each response's own requestId (F15 FR-007): no existence leak.
+    const nonMemberBody = (await nonMember.json()) as Record<string, unknown>;
+    const missingBody = (await missing.json()) as Record<string, unknown>;
+    expect({ ...nonMemberBody, requestId: undefined }).toEqual({ ...missingBody, requestId: undefined });
 
     const findUnique = vi.spyOn(prisma.project, 'findUnique');
     for (const body of [{ room: 'not-a-cuid' }, {}, 'garbage']) {
       const res = await post(body);
       expect(res.status).toBe(403);
-      expect(await res.json()).toEqual({ error: 'forbidden', reason: 'invalid_room' });
+      expect(await res.json()).toEqual({ error: 'forbidden', reason: 'invalid_room', requestId: expect.any(String) });
     }
     expect(findUnique).not.toHaveBeenCalled();
     expect(h.prepareSession).not.toHaveBeenCalled();

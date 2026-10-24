@@ -4,9 +4,9 @@ import { z } from 'zod';
 import { requireProjectRole } from '@/lib/access';
 import { BlobCorruptError, getCanvas, putCanvas } from '@/lib/blob';
 import { migrate, validateDocument } from '@/lib/canvas/schema';
-import { AppError, errorResponse } from '@/lib/errors';
-import { logger } from '@/lib/logger';
+import { AppError } from '@/lib/errors';
 import { prisma } from '@/lib/prisma';
+import { withRequest } from '@/lib/request-id';
 
 /** Snapshot size cap (D-009); below Vercel's 4.5 MB function body limit. */
 const MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024;
@@ -19,10 +19,6 @@ const NO_STORE = { 'Cache-Control': 'no-store' } as const;
 
 type Ctx = RouteContext<'/api/projects/[projectId]/canvas'>;
 
-function requestIdOf(request: Request): string | undefined {
-  return request.headers.get('x-vercel-id') ?? undefined;
-}
-
 /** `['nodes', 0, 'width']` → `nodes[0].width`. */
 function formatPath(path: readonly PropertyKey[]): string {
   return path.reduce<string>((acc, key) => {
@@ -31,66 +27,56 @@ function formatPath(path: readonly PropertyKey[]): string {
   }, '');
 }
 
-function validationError(status: 400 | 422, message: string, issues?: { path: string; message: string }[]): NextResponse {
-  return NextResponse.json({ error: { code: 'VALIDATION', message, ...(issues ? { issues } : {}) } }, { status, headers: NO_STORE });
-}
-
-function routeError(err: unknown): Response {
-  const response = errorResponse(err);
-  response.headers.set('Cache-Control', 'no-store');
-  return response;
-}
+const tooLarge = () => new AppError('VALIDATION', 'Diagram too large to save.', { status: 422 });
 
 /**
  * Writes the project's canvas snapshot (FR-003). Binding order: role → size → envelope → migrate → validate →
  * empty-guard → minimum interval → put → pointer update. The put and the pointer update are not atomic (R-04);
- * GET reads by pathname, so a failed pointer update only leaves a stale `savedAt` (P-13-4).
+ * GET reads by pathname, so a failed pointer update only leaves a stale `savedAt` (P-13-4). Every failure is a
+ * typed error, so `withRequest` answers with the standard body plus `requestId` and logs it (F15 FR-007).
  */
-export async function PUT(request: Request, ctx: Ctx): Promise<Response> {
-  const requestId = requestIdOf(request);
-  const { projectId } = await ctx.params;
-  try {
+export const PUT = withRequest(
+  async (ctx, request: Request, { params }: Ctx) => {
+    const { projectId } = await params;
     const { user, project } = await requireProjectRole(projectId, 'editor');
-    const log = { projectId: project.id, userId: user.id, requestId };
+    ctx.bind({ projectId: project.id, userId: user.id });
 
     const declared = Number(request.headers.get('content-length') ?? '0');
-    if (declared > MAX_SNAPSHOT_BYTES) return validationError(422, 'Diagram too large to save.');
+    if (declared > MAX_SNAPSHOT_BYTES) throw tooLarge();
     const text = await request.text();
-    if (Buffer.byteLength(text) > MAX_SNAPSHOT_BYTES) return validationError(422, 'Diagram too large to save.');
+    if (Buffer.byteLength(text) > MAX_SNAPSHOT_BYTES) throw tooLarge();
 
     let raw: unknown;
     try {
       raw = JSON.parse(text);
     } catch {
-      return validationError(400, 'Malformed JSON body.');
+      throw new AppError('VALIDATION', 'Malformed JSON body.');
     }
     const body = PutBodySchema.safeParse(raw);
-    if (!body.success) return validationError(400, 'Invalid request body.');
+    if (!body.success) throw new AppError('VALIDATION', 'Invalid request body.');
 
     const result = validateDocument(migrate(body.data.document));
     if (!result.ok) {
-      const issues = result.error.issues.slice(0, 50).map((issue) => ({ path: formatPath(issue.path), message: issue.message }));
-      return validationError(422, 'The diagram failed validation.', issues);
+      const issues = result.error.issues
+        .slice(0, 50)
+        .map((issue) => ({ path: formatPath(issue.path), message: issue.message }));
+      throw new AppError('VALIDATION', 'The diagram failed validation.', { status: 422, details: { issues } });
     }
     const doc = result.doc;
 
     // P-13-1: an empty document never silently replaces an existing snapshot.
     if (doc.nodes.length === 0 && doc.edges.length === 0 && project.canvasBlobPath && !body.data.allowEmpty) {
-      return NextResponse.json(
-        { error: { code: 'CONFLICT', message: 'Refusing to replace the saved diagram with an empty canvas.', reason: 'empty_document' } },
-        { status: 409, headers: NO_STORE },
-      );
+      throw new AppError('CONFLICT', 'Refusing to replace the saved diagram with an empty canvas.', {
+        details: { reason: 'empty_document' },
+      });
     }
 
     const now = Date.now();
     if (project.canvasSavedAt) {
       const elapsed = now - project.canvasSavedAt.getTime();
       if (elapsed < MIN_SAVE_INTERVAL_MS) {
-        const retryAfter = Math.max(1, Math.ceil((MIN_SAVE_INTERVAL_MS - elapsed) / 1000));
-        return NextResponse.json(
-          { error: { code: 'RATE_LIMITED', message: 'Saved moments ago; retry shortly.' } },
-          { status: 429, headers: { ...NO_STORE, 'Retry-After': String(retryAfter) } },
-        );
+        const retryAfterSeconds = Math.max(1, Math.ceil((MIN_SAVE_INTERVAL_MS - elapsed) / 1000));
+        throw new AppError('RATE_LIMITED', 'Saved moments ago; retry shortly.', { details: { retryAfterSeconds } });
       }
     }
 
@@ -98,7 +84,7 @@ export async function PUT(request: Request, ctx: Ctx): Promise<Response> {
     try {
       stored = await putCanvas(project.id, doc);
     } catch (err) {
-      logger.error({ ...log, op: 'putCanvas', err }, 'canvas snapshot put failed');
+      ctx.log.error({ op: 'putCanvas', err }, 'canvas snapshot put failed');
       throw new AppError('UPSTREAM');
     }
 
@@ -112,39 +98,38 @@ export async function PUT(request: Request, ctx: Ctx): Promise<Response> {
       });
     } catch (err) {
       pointerUpdated = false;
-      logger.error({ ...log, op: 'updatePointer', err }, 'canvas pointer update failed after a successful put');
+      ctx.log.error({ op: 'updatePointer', err }, 'canvas pointer update failed after a successful put');
     }
 
     return NextResponse.json(
       { savedAt: savedAt.toISOString(), schemaVersion: doc.schemaVersion, size: stored.size, pointerUpdated },
       { headers: NO_STORE },
     );
-  } catch (err) {
-    return routeError(err);
-  }
-}
+  },
+  { headers: NO_STORE },
+);
 
 /**
  * Reads the snapshot by its deterministic pathname (FR-004, P-13-3/P-13-4), migrated and re-validated. An
  * unparseable or invalid snapshot is a 200 with `warning`, distinct from an unreachable store (502).
  */
-export async function GET(request: Request, ctx: Ctx): Promise<Response> {
-  const requestId = requestIdOf(request);
-  const { projectId } = await ctx.params;
-  try {
+export const GET = withRequest(
+  async (ctx, _request: Request, { params }: Ctx) => {
+    const { projectId } = await params;
     const { user, project } = await requireProjectRole(projectId, 'viewer');
-    const log = { projectId: project.id, userId: user.id, requestId };
+    ctx.bind({ projectId: project.id, userId: user.id });
     const savedAt = project.canvasSavedAt?.toISOString() ?? null;
+    const invalid = { document: null, savedAt, schemaVersion: null, warning: 'SNAPSHOT_INVALID' } as const;
 
     let stored: Awaited<ReturnType<typeof getCanvas>>;
     try {
       stored = await getCanvas(project.id);
     } catch (err) {
       if (err instanceof BlobCorruptError) {
-        logger.error({ ...log, op: 'getCanvas', err }, 'stored canvas snapshot is not JSON');
-        return NextResponse.json({ document: null, savedAt, schemaVersion: null, warning: 'SNAPSHOT_INVALID' }, { headers: NO_STORE });
+        ctx.log.error({ op: 'getCanvas', err }, 'stored canvas snapshot is not JSON');
+        return NextResponse.json(invalid, { headers: NO_STORE });
       }
-      logger.error({ ...log, op: 'getCanvas', err }, 'canvas snapshot read failed');
+      ctx.log.error({ op: 'getCanvas', err }, 'canvas snapshot read failed');
       throw new AppError('UPSTREAM');
     }
     if (!stored) return NextResponse.json({ document: null, savedAt: null, schemaVersion: null }, { headers: NO_STORE });
@@ -152,11 +137,13 @@ export async function GET(request: Request, ctx: Ctx): Promise<Response> {
     const result = validateDocument(migrate(stored.json));
     if (!result.ok) {
       const issues = result.error.issues.slice(0, 5).map((issue) => `${formatPath(issue.path)}: ${issue.message}`);
-      logger.error({ ...log, op: 'validateSnapshot', issues }, 'stored canvas snapshot is invalid');
-      return NextResponse.json({ document: null, savedAt, schemaVersion: null, warning: 'SNAPSHOT_INVALID' }, { headers: NO_STORE });
+      ctx.log.error({ op: 'validateSnapshot', issues }, 'stored canvas snapshot is invalid');
+      return NextResponse.json(invalid, { headers: NO_STORE });
     }
-    return NextResponse.json({ document: result.doc, savedAt, schemaVersion: result.doc.schemaVersion }, { headers: NO_STORE });
-  } catch (err) {
-    return routeError(err);
-  }
-}
+    return NextResponse.json(
+      { document: result.doc, savedAt, schemaVersion: result.doc.schemaVersion },
+      { headers: NO_STORE },
+    );
+  },
+  { headers: NO_STORE },
+);

@@ -25,8 +25,9 @@ vi.mock('@/lib/prisma', async () => {
 const actions = await import('@/app/editor/[projectId]/actions');
 
 const PREFIX = 'l2_mauthz_';
-const FORBIDDEN = { ok: false, error: { code: 'FORBIDDEN', message: "You don't have permission to do that." } };
-const UNAUTHENTICATED = { ok: false, error: { code: 'UNAUTHENTICATED', message: 'Please sign in to continue.' } };
+// Every failure carries its own requestId (F15 FR-007); the rest of the body is identical across callers.
+const FORBIDDEN = { ok: false, error: { code: 'FORBIDDEN', message: "You don't have permission to do that.", requestId: expect.any(String) } };
+const UNAUTHENTICATED = { ok: false, error: { code: 'UNAUTHENTICATED', message: 'Please sign in to continue.', requestId: expect.any(String) } };
 
 // AUTHZ-MATRIX (05-test-plan.md): every sharing action × unauthenticated / non-member (foreign and missing id)
 // / viewer / editor / owner. Failures must be byte-identical and leave the member rows untouched.
