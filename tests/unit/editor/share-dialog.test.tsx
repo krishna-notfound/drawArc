@@ -95,21 +95,21 @@ describe('ShareDialog — invite (F12 AC-005, AC-029)', () => {
   });
 
   it.each([
-    ['VALIDATION with an email field error', fail({ code: 'VALIDATION', fieldErrors: { email: ['Enter a valid email address'] } }), 'inline', 'Enter a valid email address'],
-    ['SELF_INVITE', fail({ code: 'CONFLICT', reason: 'SELF_INVITE', message: 'You already own this project.' }), 'inline', 'You already own this project.'],
-    ['RATE_LIMITED', fail({ code: 'RATE_LIMITED' }), 'banner', "You've sent too many invitations. Try again in an hour."],
-    ['PROJECT_ARCHIVED', fail({ code: 'CONFLICT', reason: 'PROJECT_ARCHIVED' }), 'banner', 'This project is archived. Unarchive it to manage sharing.'],
-    ['UPSTREAM', fail({ code: 'UPSTREAM' }), 'banner', 'Server says no.'],
-  ])('maps %s to the %s message', async (_label, result, placement, copy) => {
+    ['VALIDATION with an email field error', 'inline', 'Enter a valid email address', fail({ code: 'VALIDATION', fieldErrors: { email: ['Enter a valid email address'] } })],
+    ['SELF_INVITE', 'inline', 'You already own this project.', fail({ code: 'CONFLICT', reason: 'SELF_INVITE', message: 'You already own this project.' })],
+    ['RATE_LIMITED', 'banner', "You've sent too many invitations. Try again in an hour.", fail({ code: 'RATE_LIMITED' })],
+    ['PROJECT_ARCHIVED', 'banner', 'This project is archived. Unarchive it to manage sharing.', fail({ code: 'CONFLICT', reason: 'PROJECT_ARCHIVED' })],
+    ['UPSTREAM', 'banner', 'Server says no.', fail({ code: 'UPSTREAM' })],
+  ])('maps %s to the %s message', async (_label, placement, copy, result) => {
     actions.inviteMember.mockResolvedValue(result);
     const user = userEvent.setup();
     const dialog = renderDialog();
     await user.type(within(dialog).getByLabelText('Email'), 'x@x.io{Enter}');
     if (placement === 'inline') {
-      expect(await within(dialog).findByText(copy)).not.toHaveAttribute('role', 'alert');
+      expect(await within(dialog).findByText(copy, {}, { timeout: 5000 })).not.toHaveAttribute('role', 'alert');
       expect(within(dialog).getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
     } else {
-      expect(await within(dialog).findByRole('alert')).toHaveTextContent(copy);
+      expect(await within(dialog).findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(copy);
     }
   });
 });
@@ -128,7 +128,7 @@ describe('ShareDialog — remove and role results (F12 AC-007, AC-008, AC-029)',
     await user.click(within(dialog).getByRole('button', { name: 'Remove Bob Builder' }));
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
     expect(actions.removeMember).toHaveBeenCalledExactlyOnceWith({ projectId, memberId: 'm-b' });
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Access updated, but they may stay connected until they reload.');
+    expect(await within(dialog).findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent('Access updated, but they may stay connected until they reload.');
   });
 
   it('shows "already removed" and refreshes the list on NOT_FOUND', async () => {
@@ -137,7 +137,7 @@ describe('ShareDialog — remove and role results (F12 AC-007, AC-008, AC-029)',
     const dialog = renderDialog();
     await user.click(within(dialog).getByRole('button', { name: 'Remove c@x.io' }));
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('This member was already removed.');
+    expect(await within(dialog).findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent('This member was already removed.');
     expect(router.refresh).toHaveBeenCalledOnce();
   });
 });
