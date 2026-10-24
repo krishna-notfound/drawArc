@@ -8,12 +8,13 @@ import { AccessError, type ActionResult, toActionError } from '@/lib/errors';
 import { changeMemberRoleCore, inviteMemberCore, removeMemberCore } from '@/lib/projects/member-service';
 import type { MemberListItem } from '@/lib/projects/members';
 import { membersTag, sharedTag } from '@/lib/projects/tags';
+import { newRequestId } from '@/lib/request-id';
 import { ChangeMemberRoleInput, CheckMyAccessInput, InviteMemberInput, RemoveMemberInput } from '@/schemas/member';
 
 // Same skeleton as app/editor/actions.ts: authenticate → parse → authorize (owner) → mutate → updateTag, and
 // never throw for an expected failure. Inputs are `unknown`: a Server Action is a public endpoint.
 
-type Ctx = { op: string; userId?: string; projectId?: string };
+type Ctx = { op: string; requestId: string; userId?: string; projectId?: string };
 
 function invalidate(projectId: string, boundUserId: string | null): void {
   updateTag(membersTag(projectId));
@@ -21,7 +22,7 @@ function invalidate(projectId: string, boundUserId: string | null): void {
 }
 
 export async function inviteMember(raw: unknown): Promise<ActionResult<MemberListItem>> {
-  const ctx: Ctx = { op: 'inviteMember' };
+  const ctx: Ctx = { op: 'inviteMember', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;
@@ -39,7 +40,7 @@ export async function inviteMember(raw: unknown): Promise<ActionResult<MemberLis
 export async function changeMemberRole(
   raw: unknown,
 ): Promise<ActionResult<{ member: MemberListItem; kickDelivered: boolean }>> {
-  const ctx: Ctx = { op: 'changeMemberRole' };
+  const ctx: Ctx = { op: 'changeMemberRole', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;
@@ -55,7 +56,7 @@ export async function changeMemberRole(
 }
 
 export async function removeMember(raw: unknown): Promise<ActionResult<{ memberId: string; kickDelivered: boolean }>> {
-  const ctx: Ctx = { op: 'removeMember' };
+  const ctx: Ctx = { op: 'removeMember', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;
@@ -75,7 +76,7 @@ export async function removeMember(raw: unknown): Promise<ActionResult<{ memberI
  * and a foreign project. Read-only; POST-only with session auth by virtue of being a Server Action.
  */
 export async function checkMyAccess(raw: unknown): Promise<ActionResult<{ role: ProjectRole }>> {
-  const ctx: Ctx = { op: 'checkMyAccess' };
+  const ctx: Ctx = { op: 'checkMyAccess', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;

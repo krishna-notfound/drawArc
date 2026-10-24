@@ -36,6 +36,10 @@ const ULID_TAIL = (i: number) => String(i).padStart(26, '0').replace(/[ILOU]/g, 
 
 type Ctx = Parameters<typeof PUT>[1];
 const ctxFor = (projectId: string) => ({ params: Promise.resolve({ projectId }) }) as unknown as Ctx;
+/** An error body without its per-request id, to compare two error bodies for equality. */
+function withoutRequestId(body: { error: Record<string, unknown> }): unknown {
+  return { ...body, error: { ...body.error, requestId: undefined } };
+}
 
 function put(projectId: string, body: unknown, raw = false): Promise<Response> {
   const init = { method: 'PUT', body: raw ? (body as string) : JSON.stringify(body) };
@@ -110,7 +114,8 @@ describe.skipIf(!hasTestDatabase)('/api/projects/[projectId]/canvas (L2)', { tim
       const signedOut = await put(project.id, { document: small });
 
       expect([asViewer.status, asStranger.status, missing.status, signedOut.status]).toEqual([403, 403, 403, 401]);
-      expect(await missing.text()).toBe(await asStranger.text());
+      // Identical apart from each response's own requestId (F15 FR-007): no existence leak.
+      expect(withoutRequestId(await missing.json())).toEqual(withoutRequestId(await asStranger.json()));
       expect(h.putCanvas).not.toHaveBeenCalled();
     });
 
@@ -128,7 +133,8 @@ describe.skipIf(!hasTestDatabase)('/api/projects/[projectId]/canvas (L2)', { tim
       h.requireUser.mockRejectedValueOnce(new AccessError('UNAUTHENTICATED'));
       const signedOut = await get(project.id);
       expect([asStranger.status, missing.status, signedOut.status]).toEqual([403, 403, 401]);
-      expect(await missing.text()).toBe(await asStranger.text());
+      // Identical apart from each response's own requestId (F15 FR-007): no existence leak.
+      expect(withoutRequestId(await missing.json())).toEqual(withoutRequestId(await asStranger.json()));
     });
   });
 

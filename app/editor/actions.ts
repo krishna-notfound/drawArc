@@ -9,16 +9,17 @@ import type { ProjectStatus } from '@/lib/generated/prisma/client';
 import { defaultExternals } from '@/lib/projects/externals';
 import { createProjectCore, deleteProjectCore, renameProjectCore, setProjectStatusCore } from '@/lib/projects/service';
 import { ownedTag, projectTag } from '@/lib/projects/tags';
+import { newRequestId } from '@/lib/request-id';
 import { CreateProjectInput, ProjectIdInput, RenameProjectInput } from '@/schemas/project';
 
 // Every action: authenticate → parse → authorize → mutate → updateTag, and never throws for an expected
 // failure (code-standards rule 5). Inputs are `unknown`: a Server Action is a public endpoint.
 
-type Ctx = { op: string; userId?: string; projectId?: string };
+type Ctx = { op: string; requestId: string; userId?: string; projectId?: string };
 type StatusResult = ActionResult<{ id: string; status: ProjectStatus }>;
 
 export async function createProject(raw: unknown): Promise<ActionResult<{ id: string }>> {
-  const ctx: Ctx = { op: 'createProject' };
+  const ctx: Ctx = { op: 'createProject', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;
@@ -34,7 +35,7 @@ export async function createProject(raw: unknown): Promise<ActionResult<{ id: st
 export async function renameProject(
   raw: unknown,
 ): Promise<ActionResult<{ id: string; name: string; description: string | null }>> {
-  const ctx: Ctx = { op: 'renameProject' };
+  const ctx: Ctx = { op: 'renameProject', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;
@@ -50,7 +51,7 @@ export async function renameProject(
 }
 
 async function setStatus(op: string, raw: unknown, status: ProjectStatus): Promise<StatusResult> {
-  const ctx: Ctx = { op };
+  const ctx: Ctx = { op, requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;
@@ -75,7 +76,7 @@ export async function unarchiveProject(raw: unknown): Promise<StatusResult> {
 }
 
 export async function deleteProject(raw: unknown): Promise<ActionResult<{ id: string }>> {
-  const ctx: Ctx = { op: 'deleteProject' };
+  const ctx: Ctx = { op: 'deleteProject', requestId: newRequestId() };
   try {
     const { user } = await requireUser();
     ctx.userId = user.id;

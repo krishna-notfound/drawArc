@@ -1,6 +1,7 @@
 import { cache, Suspense } from 'react';
 
 import { RecentlyDeletedScreen } from '@/components/auth/recently-deleted-screen';
+import { BoundaryProbe } from '@/components/e2e/boundary-probe';
 import { EditorHomeBody } from '@/components/editor/editor-home-body';
 import { EditorShell } from '@/components/editor/editor-shell';
 import { ProjectDialogsHost } from '@/components/editor/project-dialogs';
@@ -9,6 +10,7 @@ import { SidebarSkeleton } from '@/components/editor/sidebar-skeleton';
 import { UserMenu, UserMenuPlaceholder } from '@/components/editor/user-menu';
 import { ProjectDialogsProvider } from '@/hooks/useProjectDialogs';
 import { requireUser } from '@/lib/auth';
+import { e2eHooksEnabled } from '@/lib/env.public';
 import { EmailHeldError } from '@/lib/users';
 
 // One gate per request, shared by both boundaries below (React `cache` is request-scoped). requireUser()
@@ -37,7 +39,7 @@ async function EditorHomeContent() {
 // Session reads happen only in Suspense children (code-standards rule 2). The shell stays mounted while the
 // gate resolves; the body's fallback is the same static content, so nothing visibly changes for most users.
 // The project lists stream into the sidebar from their own gated Suspense child (FR-001, EC-011).
-export default function EditorHomePage() {
+export default function EditorHomePage(props: PageProps<'/editor'>) {
   return (
     <ProjectDialogsProvider>
       <EditorShell
@@ -60,6 +62,12 @@ export default function EditorHomePage() {
         </Suspense>
       </EditorShell>
       <ProjectDialogsHost />
+      {/* E2E-only error-boundary probe (F15 AC-012); absent from production builds. */}
+      {e2eHooksEnabled ? (
+        <Suspense fallback={null}>
+          <BoundaryProbe searchParams={props.searchParams} target="page" />
+        </Suspense>
+      ) : null}
     </ProjectDialogsProvider>
   );
 }

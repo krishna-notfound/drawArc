@@ -14,7 +14,7 @@ import { createTestPrisma, hasTestDatabase, migrateTestDatabase } from '@/tests/
 // and verified by the real `verifyWebhook` from @clerk/nextjs/webhooks.
 const SECRET = `whsec_${Buffer.from('drawarc-f02-test-signing-secret').toString('base64')}`;
 const WRONG_SECRET = `whsec_${Buffer.from('some-other-signing-secret-value').toString('base64')}`;
-const INVALID_SIGNATURE = { error: { code: 'VALIDATION', message: 'Invalid webhook signature' } };
+const INVALID_SIGNATURE = { error: { code: 'VALIDATION', message: 'Invalid webhook signature', requestId: expect.any(String) } };
 
 function userPayload(id: string, email: string, firstName = 'Ada') {
   return JSON.stringify({

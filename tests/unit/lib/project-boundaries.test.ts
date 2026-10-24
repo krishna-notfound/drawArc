@@ -12,7 +12,7 @@ const { AccessError, toActionError } = await import('@/lib/errors');
 
 describe('toActionError (F03 AC-024)', () => {
   it('keeps expected codes, maps Zod and Prisma errors, and logs only the unknown one', () => {
-    const ctx = { op: 'renameProject', userId: 'u1', projectId: 'p1' };
+    const ctx = { op: 'renameProject', requestId: 'req-1', userId: 'u1', projectId: 'p1' };
     const zod = RenameProjectInput.safeParse({ projectId: 'cjld2cjxh0000qzrmn831i7rn', name: ' ' }).error;
     const results = [
       new AccessError('FORBIDDEN'),
@@ -23,7 +23,9 @@ describe('toActionError (F03 AC-024)', () => {
     ].map((err) => toActionError(err, ctx));
 
     expect(results.map((r) => r.code)).toEqual(['FORBIDDEN', 'VALIDATION', 'CONFLICT', 'NOT_FOUND', 'UPSTREAM']);
-    expect(results[0]).toStrictEqual({ code: 'FORBIDDEN', message: "You don't have permission to do that." });
+    expect(results[0]).toStrictEqual({ code: 'FORBIDDEN', message: "You don't have permission to do that.", requestId: 'req-1' });
+    // F15 FR-007: every failure carries the action's requestId.
+    results.forEach((r) => expect(r.requestId).toBe('req-1'));
     expect(results[1]?.fieldErrors?.name).toEqual(['Name is required']);
     expect(logger.error).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ ...ctx, err: expect.any(Error) }), expect.any(String));
   });

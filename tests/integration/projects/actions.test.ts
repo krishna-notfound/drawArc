@@ -33,8 +33,9 @@ const { listMyProjects, listSharedProjects } = await import('@/lib/projects/quer
 const { prisma } = await import('@/lib/prisma');
 
 const PREFIX = 'l2_actions_';
-const FORBIDDEN = { ok: false, error: { code: 'FORBIDDEN', message: "You don't have permission to do that." } };
-const UNAUTHENTICATED = { ok: false, error: { code: 'UNAUTHENTICATED', message: 'Please sign in to continue.' } };
+// Every failure carries its own requestId (F15 FR-007); the rest of the body is identical across callers.
+const FORBIDDEN = { ok: false, error: { code: 'FORBIDDEN', message: "You don't have permission to do that.", requestId: expect.any(String) } };
+const UNAUTHENTICATED = { ok: false, error: { code: 'UNAUTHENTICATED', message: 'Please sign in to continue.', requestId: expect.any(String) } };
 
 describe.skipIf(!hasTestDatabase)('project Server Actions and lists against Postgres (L2)', { timeout: 60_000 }, () => {
   let db: PrismaClient;
@@ -199,7 +200,7 @@ describe.skipIf(!hasTestDatabase)('project Server Actions and lists against Post
     const update = vi.spyOn(prisma.project, 'update').mockRejectedValueOnce(new Error('connect ECONNREFUSED'));
     expect(await actions.renameProject({ projectId: project.id, name: 'x' })).toStrictEqual({
       ok: false,
-      error: { code: 'UPSTREAM', message: 'Something went wrong. Please try again.' },
+      error: { code: 'UPSTREAM', message: 'Something went wrong. Please try again.', requestId: expect.any(String) },
     });
     expect(h.logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ op: 'renameProject', userId: owner.id, projectId: project.id }),

@@ -31,7 +31,7 @@ function builtTree(): string {
   return dir;
 }
 
-describe('scripts/check-bundle-secrets.mjs (F00 AC-028)', () => {
+describe('scripts/check-bundle-secrets.mjs (F00 AC-028, F15 AC-021)', () => {
   it('passes on a clean build output', () => {
     expect(run(builtTree()).status).toBe(0);
   });
@@ -43,6 +43,19 @@ describe('scripts/check-bundle-secrets.mjs (F00 AC-028)', () => {
     expect(result.status).toBe(1);
     expect(result.stdout + result.stderr).toContain('CLERK_SECRET_KEY');
     expect(result.stdout + result.stderr).not.toContain(SENTINEL);
+  });
+
+  it('allows publishable keys but fails on a secret-shaped string, naming the pattern only (F15 AC-021, EC-012)', () => {
+    const dir = builtTree();
+    writeFileSync(join(dir, '.next', 'static', 'chunks', 'pk.js'), 'const pk = "pk_test_c2VudGluZWwuY2xlcmsuYWNjb3VudHMuZGV2JA";');
+    expect(run(dir).status).toBe(0);
+
+    const leaked = 'whsec_' + 'A'.repeat(32);
+    writeFileSync(join(dir, '.next', 'static', 'chunks', 'leak.js'), `const s = "${leaked}";`);
+    const result = run(dir);
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toContain('webhook signing secret');
+    expect(result.stdout + result.stderr).not.toContain(leaked);
   });
 
   it('asks for a build when .next/static is missing', () => {
