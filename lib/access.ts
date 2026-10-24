@@ -21,6 +21,9 @@ export interface AccessProject {
   ownerId: string;
   name: string;
   status: ProjectStatus;
+  /** Snapshot pointer (F13), read by the workspace gate's seed step (D-034). */
+  canvasBlobPath: string | null;
+  canvasSchemaVersion: number | null;
 }
 
 const MEMBER_ROLE = { EDITOR: 'editor', VIEWER: 'viewer' } as const satisfies Record<string, ProjectRole>;
@@ -39,10 +42,25 @@ export async function resolveProjectAccess(
 
   const row = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { id: true, ownerId: true, name: true, status: true, owner: { select: { deletedAt: true } } },
+    select: {
+      id: true,
+      ownerId: true,
+      name: true,
+      status: true,
+      canvasBlobPath: true,
+      canvasSchemaVersion: true,
+      owner: { select: { deletedAt: true } },
+    },
   });
   if (!row || row.owner.deletedAt) return null;
-  const project: AccessProject = { id: row.id, ownerId: row.ownerId, name: row.name, status: row.status };
+  const project: AccessProject = {
+    id: row.id,
+    ownerId: row.ownerId,
+    name: row.name,
+    status: row.status,
+    canvasBlobPath: row.canvasBlobPath,
+    canvasSchemaVersion: row.canvasSchemaVersion,
+  };
   if (project.ownerId === user.id) return { project, role: 'owner' };
 
   const email = user.email.toLowerCase();
