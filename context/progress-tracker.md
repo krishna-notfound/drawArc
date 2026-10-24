@@ -53,11 +53,11 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 07 | shapes-and-node-creation | M1 | Completed — merged to `main` via PR #10 (2026-10-24) |
 | 08 | node-editing | M1 | Completed — merged to `main` via PR #13 (2026-10-24) |
 | 09 | edges-and-connections | M1 | Completed — merged to `main` via PR #14 (2026-10-24) |
-| 10 | canvas-ergonomics-and-keyboard | M1 | Verification (2026-10-24): verified incl. combined check with F14; PR open |
+| 10 | canvas-ergonomics-and-keyboard | M1 | Completed — merged to `main` via PR #15 (2026-10-24) |
 | 11 | presence-and-cursors | M1 | Completed — merged to `main` via PR #11 (2026-10-24) |
 | 12 | sharing-and-access-control | M1 | Completed — merged to `main` via PR #9 (2026-10-24) |
 | 13 | persistence-and-recovery | M1 | Completed — merged to `main` via PR #12 (2026-10-24) |
-| 14 | starter-templates | M1 | Verification (2026-10-24): verified incl. combined check with F10; PR open |
+| 14 | starter-templates | M1 | Completed — merged to `main` via PR #15 (2026-10-24) |
 | 15 | observability-and-deployment | M1 | drafted |
 | 16 | ai-sidebar-and-room-chat | M2 | drafted |
 | 17 | ai-design-agent | M2 | drafted |

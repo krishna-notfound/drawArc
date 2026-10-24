@@ -116,6 +116,8 @@ test('collaborators see each other: cursor with name in flow coordinates, avatar
     await expect(b.locator(`[data-testid="remote-cursor"][data-user-id="${userA.id}"]`)).toBeVisible({ timeout: 2_000 });
 
     // B moves onto the open project sidebar, off the pane (AC-006): B's cursor leaves A's canvas within 1 s.
+    // The workspace sidebar starts closed; B opens it from the keyboard so the pointer stays on the pane.
+    await b.getByRole('button', { name: 'Open projects sidebar' }).press('Enter');
     await expect(b.locator('aside[data-side="left"][data-state="open"]')).toBeVisible();
     await b.mouse.move(120, 400, { steps: 5 });
     await expect(cursorB).toBeHidden({ timeout: 1_000 });

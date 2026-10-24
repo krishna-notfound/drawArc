@@ -32,3 +32,4 @@ Rulings: sidebar lists stream as one region; sidebar default-open ≥1024px with
 - **D-029** adds a dev dependency not in `architecture-context.md`'s test row; decline → TC-025 becomes keyboard-only assertions.
 - **AC-023** needs a dedicated Playwright project with a broken `DATABASE_URL`; if CI cannot provide it, downgrade to Manual (reviewer stops the DB locally and records the screenshot).
 - Hidden previous pages kept by Next after client navigation duplicate fixed ids (`project-sidebar`, `ai-sidebar`), so `aria-controls` may target a hidden copy — revisit in F06/F16.
+- 2026-10-24 (D-050, `4173ecc`): the workspace project sidebar is now closed by default (it covered F10's bottom-left control bar); the editor home keeps open ≥ 1024 px.

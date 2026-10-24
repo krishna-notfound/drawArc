@@ -58,8 +58,8 @@ export function Workspace({
     <ProjectDialogsProvider currentProjectId={project.id}>
       {/* F13: the canvas island's autosave and the navbar Save button share this provider. */}
       <SaveProvider initial={seed} role={role}>
+        {/* The project sidebar stays closed by default here: open, it covers the canvas control bar (owner, M1 polish). */}
         <EditorShell
-          openSidebarOnDesktop
           navbarCenter={<ProjectTitle name={project.name} archived={project.status === 'ARCHIVED'} />}
           navbarRight={
             <>
