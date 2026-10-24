@@ -50,13 +50,13 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 04 | editor-home-and-workspace-shell | M1 | Completed — merged to `main` via PR #6 (2026-10-24) |
 | 05 | realtime-room-infrastructure | M1 | Completed — merged to `main` via PR #7 (2026-10-24) |
 | 06 | base-collaborative-canvas | M1 | Completed — merged to `main` via PR #8 (2026-10-24) |
-| 07 | shapes-and-node-creation | M1 | drafted |
+| 07 | shapes-and-node-creation | M1 | Completed — merged to `main` via PR #10 (2026-10-24) |
 | 08 | node-editing | M1 | drafted |
 | 09 | edges-and-connections | M1 | drafted |
 | 10 | canvas-ergonomics-and-keyboard | M1 | drafted |
-| 11 | presence-and-cursors | M1 | drafted |
-| 12 | sharing-and-access-control | M1 | Verification (2026-10-24): verified incl. combined check with F06; PR open |
-| 13 | persistence-and-recovery | M1 | drafted |
+| 11 | presence-and-cursors | M1 | Verification (2026-10-24): verified incl. combined check with F07; PR open |
+| 12 | sharing-and-access-control | M1 | Completed — merged to `main` via PR #9 (2026-10-24) |
+| 13 | persistence-and-recovery | M1 | Approved (2026-10-24); starts after round 4 (needs BLOB_READ_WRITE_TOKEN from owner) |
 | 14 | starter-templates | M1 | drafted |
 | 15 | observability-and-deployment | M1 | drafted |
 | 16 | ai-sidebar-and-room-chat | M2 | drafted |

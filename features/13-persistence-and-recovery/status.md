@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Status | drafted |
-| Spec approved | — |
+| Status | Approved (2026-10-24); implementation follows round 4 |
+| Spec approved | 2026-10-24, owner (incl. its local decisions) |
 | Implementation authorized | — |
 | Last verified | — |
 

@@ -29,6 +29,14 @@ describe('stylesheet ordering (AC-003)', () => {
     expect(lines[1]).toBe('@import "@xyflow/react/dist/style.css";');
   });
 
+  it('imports the Liveblocks UI then React Flow cursor stylesheets after React Flow (F11 AC-001)', () => {
+    const xyflow = css.indexOf('@import "@xyflow/react/dist/style.css";');
+    const ui = css.indexOf('@import "@liveblocks/react-ui/styles.css";');
+    const flow = css.indexOf('@import "@liveblocks/react-flow/styles.css";');
+    expect(ui).toBeGreaterThan(xyflow);
+    expect(flow).toBeGreaterThan(ui);
+  });
+
   it('pins @xyflow/react to ~12.12 as a dependency (D-023)', () => {
     expect(pkg.dependencies?.['@xyflow/react']).toMatch(/^~12\.12/);
   });

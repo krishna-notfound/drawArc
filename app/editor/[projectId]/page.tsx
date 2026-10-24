@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { CanvasEditor } from '@/components/canvas/canvas-editor';
+import { PresenceStack } from '@/components/canvas/presence-stack';
 import { AccessDenied } from '@/components/editor/access-denied';
 import { ProjectSidebarData } from '@/components/editor/project-sidebar-data';
 import { ShareButton } from '@/components/editor/share-button';
@@ -65,6 +66,7 @@ async function WorkspaceGate({ params }: Pick<PageProps<'/editor/[projectId]'>, 
         </Suspense>
       }
       canvas={<CanvasEditor {...islandProps} />}
+      presenceSlot={<PresenceStack />}
     />
   );
 }

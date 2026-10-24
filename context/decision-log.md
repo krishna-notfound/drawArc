@@ -181,6 +181,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-046 — Round 4: F07, F11, F13 approved; F13 sequenced after F07+F11; private Blob store created
+**APPROVED** 2026-10-24 (owner chose "F07 + F11 now, F13 right after"). F07 and F11 built in parallel; F13 starts after they merge (memory headroom). Vercel Blob store `drawarc-blob` (id `store_L1dpXXVFhT6P36T3`, access private, region `sin1`, personal account) created via the Vercel MCP; its `BLOB_READ_WRITE_TOKEN` is copied by the owner from the dashboard into `.env.local` only. No Vercel project created yet (F15).
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |
