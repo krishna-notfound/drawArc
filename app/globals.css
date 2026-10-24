@@ -33,6 +33,7 @@
   --state-error: #ff4d4f;
   --state-success: #34d399;
   --state-warning: #fbbf24;
+  --edge-stroke: #f8fafc; /* F09 edges; mirrored by EDGE_STROKE for the SVG arrowhead */
 
   /* shadcn/ui variables — token references only */
   --background: var(--bg-base);
@@ -138,7 +139,7 @@
   transition: opacity 120ms ease-out;
 }
 
-.react-flow__node:hover .canvas-handle,
+.react-flow__node:hover .canvas-handle.connectable,
 .canvas-handle.connectingfrom,
 .canvas-handle.connectingto,
 .canvas-handle.valid,
@@ -150,6 +151,46 @@
   .react-flow__handle.canvas-handle {
     transition: none;
   }
+}
+
+/* F09 connection feedback: brand ring on a valid target handle, error ring on an invalid one (self-loop,
+   duplicate). */
+.react-flow__handle.canvas-handle.connectingto.valid {
+  box-shadow: 0 0 0 3px var(--accent-primary);
+}
+
+.react-flow__handle.canvas-handle.connectingto:not(.valid) {
+  box-shadow: 0 0 0 3px var(--state-error);
+}
+
+/* F09 edges (FR-002): light stroke at 60 % at rest, 100 % on hover, 100 % and 2px when selected or keyboard
+   focused. The colour goes through React Flow's own variables so its focus/selected rules agree. */
+.react-flow__edge.react-flow__edge-canvasEdge {
+  --xy-edge-stroke: var(--edge-stroke);
+  --xy-edge-stroke-selected: var(--edge-stroke);
+}
+
+.react-flow__edge.react-flow__edge-canvasEdge .react-flow__edge-path {
+  stroke-opacity: 0.6;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.react-flow__edge.react-flow__edge-canvasEdge:hover .react-flow__edge-path {
+  stroke-opacity: 1;
+}
+
+.react-flow__edge.react-flow__edge-canvasEdge.selected .react-flow__edge-path,
+.react-flow__edge.react-flow__edge-canvasEdge:focus-visible .react-flow__edge-path {
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+.react-flow__connection-path {
+  stroke: var(--edge-stroke);
+  stroke-opacity: 0.6;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
 }
 
 /* F07 palette drag: the whole document shows a grabbing cursor while a shape is dragged. */
