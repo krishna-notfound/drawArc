@@ -176,6 +176,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-045 — Round 3: F06 and F12 approved; Clerk dev test user B
+**APPROVED** 2026-10-24 (owner: "proceed"). F06 (canvas schema v1 frozen on merge) and F12 approved with their local decisions; a second Clerk development-instance test user drawarc-e2e-b+clerk_test@example.com created for two-user tests (credentials only in .env.local).
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

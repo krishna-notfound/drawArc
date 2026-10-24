@@ -9,15 +9,18 @@ const lb = vi.hoisted(() => ({
   logout: vi.fn(),
   status: 'connected' as string,
   onEvent: null as null | ((e: { event: unknown }) => void),
+  checkMyAccess: vi.fn(),
 }));
 vi.mock('@liveblocks/react/suspense', () => ({
   useClient: () => ({ logout: lb.logout }),
+  useRoom: () => ({ id: 'p1' }),
   useSelf: (select: (me: { id: string }) => unknown) => select({ id: 'me' }),
   useStatus: () => lb.status,
   useEventListener: (cb: (e: { event: unknown }) => void) => {
     lb.onEvent = cb;
   },
 }));
+vi.mock('@/app/editor/[projectId]/actions', () => ({ checkMyAccess: lb.checkMyAccess }));
 
 const reload = vi.fn();
 const realLocation = window.location;
@@ -26,6 +29,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   lb.logout.mockClear();
   lb.status = 'connected';
+  lb.checkMyAccess.mockReset().mockResolvedValue({ ok: true, data: { role: 'editor' } });
   reload.mockClear();
   Object.defineProperty(window, 'location', { configurable: true, value: { ...realLocation, reload } });
 });
@@ -35,12 +39,14 @@ afterEach(() => {
   Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
 });
 
+const listener = (onReconnected?: () => void) => (
+  <UnloadGuardProvider>
+    <KickListener role="editor" onReconnected={onReconnected} />
+  </UnloadGuardProvider>
+);
+
 function mount(onReconnected?: () => void) {
-  return render(
-    <UnloadGuardProvider>
-      <KickListener onReconnected={onReconnected} />
-    </UnloadGuardProvider>,
-  );
+  return render(listener(onReconnected));
 }
 
 const emit = (event: unknown) => act(() => lb.onEvent?.({ event }));
@@ -85,11 +91,7 @@ describe('KickListener (F05 FR-013, FR-014)', () => {
     const view = mount(onReconnected);
     const step = (status: string) => {
       lb.status = status;
-      view.rerender(
-        <UnloadGuardProvider>
-          <KickListener onReconnected={onReconnected} />
-        </UnloadGuardProvider>,
-      );
+      view.rerender(listener(onReconnected));
     };
     step('connected');
     expect(onReconnected).not.toHaveBeenCalled();
@@ -98,5 +100,24 @@ describe('KickListener (F05 FR-013, FR-014)', () => {
     step('reconnecting');
     step('connected');
     expect(onReconnected).toHaveBeenCalledTimes(2);
+  });
+
+  // F12 FR-016 / D-032: a KICK missed while offline is caught by re-checking the role after the reconnect.
+  it.each([
+    ['the role is unchanged', { ok: true, data: { role: 'editor' } }, false],
+    ['the role changed', { ok: true, data: { role: 'viewer' } }, true],
+    ['access was revoked', { ok: false, error: { code: 'FORBIDDEN', message: 'x' } }, true],
+  ])('re-verifies with checkMyAccess after a reconnect; reloads only when %s (F12 AC-022, AC-026)', async (_label, result, ejects) => {
+    lb.checkMyAccess.mockResolvedValue(result);
+    const view = mount();
+    for (const status of ['reconnecting', 'connected']) {
+      lb.status = status;
+      view.rerender(listener());
+    }
+    await act(async () => {});
+    expect(lb.checkMyAccess).toHaveBeenCalledExactlyOnceWith({ projectId: 'p1' });
+    act(() => vi.advanceTimersByTime(RELOAD_DELAY_MS));
+    expect(lb.logout).toHaveBeenCalledTimes(ejects ? 1 : 0);
+    expect(reload).toHaveBeenCalledTimes(ejects ? 1 : 0);
   });
 });

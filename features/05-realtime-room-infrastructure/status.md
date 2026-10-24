@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — implemented and verified (combined with F04); PR open |
+| Status | Completed — merged to `main` via PR #7 (2026-10-24) |
 | Spec approved | 2026-10-24, owner (incl. its local decisions) |
 | Implementation authorized | 2026-10-24, owner — implementation agent in its own git worktree, in parallel |
 | Last verified | 2026-10-24, `a41af14`; combined round-2 check at `0dff1a6` |

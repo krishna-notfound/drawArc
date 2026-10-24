@@ -88,7 +88,7 @@ function ConnectedRoom({ role, onReconnected, children }: Omit<ProjectRoomProps,
       data-connection-status={status}
       className="relative flex h-full w-full flex-1 flex-col"
     >
-      <KickListener onReconnected={onReconnected} />
+      <KickListener role={role} onReconnected={onReconnected} />
       <ConnectionStatus />
       {children}
     </div>
