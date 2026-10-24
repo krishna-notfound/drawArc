@@ -196,12 +196,3 @@ export async function markUserDeleted(db: UserDb, clerkId: string, now: Date = n
     return 'marked';
   }
 }
-
-/**
- * Binds `ProjectMember` rows invited by `user.email` to `user.id` (PRD-011). F02 fixes the call contract —
- * `requireUser` and the user webhooks call it — and F03 supplies the body once `ProjectMember` exists.
- */
-export async function bindPendingMemberships(user: AuthUser): Promise<{ bound: number }> {
-  void user;
-  return { bound: 0 };
-}

@@ -37,7 +37,8 @@ describe.skipIf(!hasTestDatabase)('User sync against Postgres (L2)', { timeout: 
     const migrations = await db.$queryRawUnsafe<{ migration_name: string }[]>(
       `SELECT migration_name FROM "${testSchema}"."_prisma_migrations" WHERE finished_at IS NOT NULL`,
     );
-    expect(migrations.map((m) => m.migration_name)).toEqual([expect.stringMatching(/^\d{14}_user$/)]);
+    // Later migrations (F03 onwards) follow; migration 1 must stay the first and only User migration.
+    expect(migrations.map((m) => m.migration_name).sort()[0]).toMatch(/^\d{14}_user$/);
 
     const columns = await db.$queryRaw<{ column_name: string }[]>`
       SELECT column_name::text AS column_name FROM information_schema.columns
@@ -181,6 +182,7 @@ describe.skipIf(!hasTestDatabase)('User sync against Postgres (L2)', { timeout: 
         db,
         logger: createFakeLogger(),
         bindPendingMemberships: async () => ({ bound: 0 }),
+        removeMemberships: async () => ({ removed: 0 }),
         now: () => NOW,
       });
       expect(webhook).toEqual({ handled: false, reason: 'email-held' });
@@ -208,7 +210,12 @@ describe.skipIf(!hasTestDatabase)('User sync against Postgres (L2)', { timeout: 
 
   it('user.deleted before user.created leaves only a tombstone (AC-036)', async () => {
     const clerkId = `${PREFIX}out_of_order`;
-    const deps = { db, logger: createFakeLogger(), bindPendingMemberships: async () => ({ bound: 0 }) };
+    const deps = {
+      db,
+      logger: createFakeLogger(),
+      bindPendingMemberships: async () => ({ bound: 0 }),
+      removeMemberships: async () => ({ removed: 0 }),
+    };
     const deleted = { type: 'user.deleted', object: 'event', data: { id: clerkId, deleted: true } };
     const created = {
       type: 'user.created',

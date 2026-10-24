@@ -21,4 +21,59 @@ model User {
   updatedAt DateTime  @updatedAt
   /// Set by the `user.deleted` webhook; the row is kept for audit.
   deletedAt DateTime?
+
+  ownedProjects Project[]       @relation("OwnedProjects")
+  memberships   ProjectMember[] @relation("Memberships")
+  sentInvites   ProjectMember[] @relation("SentInvites")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum MemberRole {
+  EDITOR
+  VIEWER
+}
+
+/// A user-owned workspace; its id is also the Liveblocks room id (D-015).
+model Project {
+  id                  String          @id @default(cuid())
+  ownerId             String
+  owner               User            @relation("OwnedProjects", fields: [ownerId], references: [id])
+  name                String          @default("Untitled Project") @db.VarChar(100)
+  description         String?         @db.VarChar(500)
+  status              ProjectStatus   @default(ACTIVE)
+  /// Snapshot pointer fields, written by F13.
+  canvasBlobPath      String?
+  canvasSchemaVersion Int?
+  canvasSavedAt       DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  members             ProjectMember[]
+
+  @@index([ownerId, createdAt])
+  @@index([status])
+}
+
+/// A per-project grant, keyed by email so invites work before sign-up; `userId` binds lazily (D-011).
+model ProjectMember {
+  id          String     @id @default(cuid())
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// Stored lowercase (F12 normalises at write time).
+  email       String
+  userId      String?
+  user        User?      @relation("Memberships", fields: [userId], references: [id], onDelete: SetNull)
+  role        MemberRole
+  invitedById String
+  invitedBy   User       @relation("SentInvites", fields: [invitedById], references: [id])
+  invitedAt   DateTime   @default(now())
+  acceptedAt  DateTime?
+
+  @@unique([projectId, email])
+  @@index([email])
+  @@index([userId])
+  @@index([projectId, role])
 }

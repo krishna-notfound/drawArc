@@ -68,7 +68,7 @@ function counting(db: UserDb) {
 function route(db: UserDb, logger = createFakeLogger()) {
   return {
     logger,
-    POST: createClerkWebhookRoute({ db, logger, signingSecret: SECRET, bindPendingMemberships: async () => ({ bound: 0 }) }),
+    POST: createClerkWebhookRoute({ db, logger, signingSecret: SECRET, bindPendingMemberships: async () => ({ bound: 0 }), removeMemberships: async () => ({ removed: 0 }) }),
   };
 }
 

@@ -45,8 +45,8 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 |---|---|---|---|
 | 00 | product-foundation | M1 | Completed — merged to `main` via PR #1 (2026-10-23) |
 | 01 | app-shell-and-design-system | M1 | Completed — merged to `main` via PR #2 (2026-10-23) |
-| 02 | authentication-and-users | M1 | Verification (2026-10-24): `506989f..fa0c580` verified; PR open |
-| 03 | projects-data-layer-and-api | M1 | drafted |
+| 02 | authentication-and-users | M1 | Completed — merged to `main` via PR #3 (2026-10-24) |
+| 03 | projects-data-layer-and-api | M1 | Verification (2026-10-24): `46eaf29..46d8037` verified; PR open |
 | 04 | editor-home-and-workspace-shell | M1 | drafted |
 | 05 | realtime-room-infrastructure | M1 | drafted |
 | 06 | base-collaborative-canvas | M1 | drafted |
