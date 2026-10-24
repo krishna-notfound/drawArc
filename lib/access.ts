@@ -24,6 +24,8 @@ export interface AccessProject {
   /** Snapshot pointer (F13), read by the workspace gate's seed step (D-034). */
   canvasBlobPath: string | null;
   canvasSchemaVersion: number | null;
+  /** Time of the last successful snapshot write; drives the PUT minimum interval (P-13-2) and "Saved HH:MM". */
+  canvasSavedAt: Date | null;
 }
 
 const MEMBER_ROLE = { EDITOR: 'editor', VIEWER: 'viewer' } as const satisfies Record<string, ProjectRole>;
@@ -49,6 +51,7 @@ export async function resolveProjectAccess(
       status: true,
       canvasBlobPath: true,
       canvasSchemaVersion: true,
+      canvasSavedAt: true,
       owner: { select: { deletedAt: true } },
     },
   });
@@ -60,6 +63,7 @@ export async function resolveProjectAccess(
     status: row.status,
     canvasBlobPath: row.canvasBlobPath,
     canvasSchemaVersion: row.canvasSchemaVersion,
+    canvasSavedAt: row.canvasSavedAt,
   };
   if (project.ownerId === user.id) return { project, role: 'owner' };
 
