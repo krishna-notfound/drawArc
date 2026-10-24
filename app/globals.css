@@ -120,3 +120,38 @@
     color: var(--text-primary);
   }
 }
+
+/* F07 node handles (FR-010): white 8px dots, hidden with opacity at rest (never display:none, which breaks React
+   Flow measurement), shown on node hover and while any connection is being dragged.
+   Unlayered so it outranks React Flow's own unlayered handle styles. */
+.react-flow__handle.canvas-handle {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  background: #ffffff;
+  border: 1px solid var(--bg-base);
+  border-radius: 9999px;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.react-flow__node:hover .canvas-handle,
+.canvas-handle.connectingfrom,
+.canvas-handle.connectingto,
+.canvas-handle.valid,
+.react-flow:has(.react-flow__connectionline) .canvas-handle {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__handle.canvas-handle {
+    transition: none;
+  }
+}
+
+/* F07 palette drag: the whole document shows a grabbing cursor while a shape is dragged. */
+html.shape-dragging,
+html.shape-dragging * {
+  cursor: grabbing !important;
+}
