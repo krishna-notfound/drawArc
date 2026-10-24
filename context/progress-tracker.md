@@ -48,14 +48,14 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 02 | authentication-and-users | M1 | Completed — merged to `main` via PR #3 (2026-10-24) |
 | 03 | projects-data-layer-and-api | M1 | Completed — merged to `main` via PR #4 (2026-10-24) |
 | 04 | editor-home-and-workspace-shell | M1 | Completed — merged to `main` via PR #6 (2026-10-24) |
-| 05 | realtime-room-infrastructure | M1 | Verification (2026-10-24): verified incl. combined check with F04; PR open |
-| 06 | base-collaborative-canvas | M1 | drafted |
+| 05 | realtime-room-infrastructure | M1 | Completed — merged to `main` via PR #7 (2026-10-24) |
+| 06 | base-collaborative-canvas | M1 | Completed — merged to `main` via PR #8 (2026-10-24) |
 | 07 | shapes-and-node-creation | M1 | drafted |
 | 08 | node-editing | M1 | drafted |
 | 09 | edges-and-connections | M1 | drafted |
 | 10 | canvas-ergonomics-and-keyboard | M1 | drafted |
 | 11 | presence-and-cursors | M1 | drafted |
-| 12 | sharing-and-access-control | M1 | drafted |
+| 12 | sharing-and-access-control | M1 | Verification (2026-10-24): verified incl. combined check with F06; PR open |
 | 13 | persistence-and-recovery | M1 | drafted |
 | 14 | starter-templates | M1 | drafted |
 | 15 | observability-and-deployment | M1 | drafted |
