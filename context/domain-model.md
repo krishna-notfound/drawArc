@@ -149,7 +149,7 @@ declare global {
   interface Liveblocks {
     Presence: { cursor: { x: number; y: number } | null; thinking: boolean };
     Storage: { flow: LiveObject<{ nodes: LiveMap<...>; edges: LiveMap<...> }> };   // managed by @liveblocks/react-flow; do not hand-edit
-    UserMeta: { id: string; info: { name: string; avatar: string | null; color: string } };
+    UserMeta: { id: string; info: { name: string; avatar?: string; color: string }   // avatar omitted (Liveblocks rejects null) };
     RoomEvent:
       | { type: 'KICK'; userId: string }
       | { type: 'ROLE_CHANGED'; userId: string; role: 'editor' | 'viewer' }

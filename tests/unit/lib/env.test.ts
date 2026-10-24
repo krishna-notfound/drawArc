@@ -1,17 +1,17 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Activated by F02 (FR-007): required at boot. The rest stay optional until their feature.
+// Activated by F02 (FR-007) and F05 (FR-016): required at boot. The rest stay optional until their feature.
 const REQUIRED_SERVER_KEYS = [
   'DATABASE_URL',
   'DATABASE_URL_UNPOOLED',
   'CLERK_SECRET_KEY',
   'CLERK_WEBHOOK_SIGNING_SECRET',
+  'LIVEBLOCKS_SECRET_KEY',
+  'LIVEBLOCKS_WEBHOOK_SECRET_KEY',
 ] as const;
 const OPTIONAL_SERVER_KEYS = [
   'DATABASE_URL_TEST',
-  'LIVEBLOCKS_SECRET_KEY',
-  'LIVEBLOCKS_WEBHOOK_SECRET_KEY',
   'BLOB_READ_WRITE_TOKEN',
   'TRIGGER_SECRET_KEY',
 ] as const;
@@ -20,6 +20,8 @@ const VALID: Record<(typeof REQUIRED_SERVER_KEYS)[number], string> = {
   DATABASE_URL_UNPOOLED: 'postgresql://user:pw@db-direct.example.test/app',
   CLERK_SECRET_KEY: 'sk_test_value',
   CLERK_WEBHOOK_SIGNING_SECRET: 'whsec_value',
+  LIVEBLOCKS_SECRET_KEY: 'sk_dev_value',
+  LIVEBLOCKS_WEBHOOK_SECRET_KEY: 'whsec_value',
 };
 
 async function importError(path: string): Promise<Error | null> {
@@ -63,6 +65,11 @@ describe('lib/env (F00 FR-003, F02 FR-007)', () => {
     const error = await importError('@/lib/env');
     expect(error?.message).toContain('CLERK_SECRET_KEY');
     expect(error?.message).not.toContain('notaprefix');
+  });
+
+  it('rejects a Liveblocks public key in LIVEBLOCKS_SECRET_KEY (F05 AC-020)', async () => {
+    vi.stubEnv('LIVEBLOCKS_SECRET_KEY', 'pk_x');
+    expect((await importError('@/lib/env'))?.message).toContain('LIVEBLOCKS_SECRET_KEY');
   });
 
   it('honours an explicit LOG_LEVEL', async () => {
