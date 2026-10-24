@@ -21,6 +21,11 @@ export interface AppDialogProps {
   description?: string;
   children?: ReactNode;
   footer?: ReactNode;
+  /**
+   * Radix focuses the Dialog.Trigger on close; dialogs opened programmatically (no trigger) pass this to
+   * restore focus to their opener instead (F04).
+   */
+  onCloseAutoFocus?: (event: Event) => void;
 }
 
 export interface ConfirmDialogProps {
@@ -42,13 +47,14 @@ const FOCUS_RING = 'focus-visible:ring-2 focus-visible:ring-brand';
  * `DialogContent`, which renders its own un-blurred overlay and a corner close button.
  * Focus trap, focus restore and Esc stay the Radix defaults.
  */
-export function AppDialog({ open, onOpenChange, title, description, children, footer }: AppDialogProps) {
+export function AppDialog({ open, onOpenChange, title, description, children, footer, onCloseAutoFocus }: AppDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay className="bg-base/60 backdrop-blur-sm motion-reduce:animate-none" />
         <DialogPrimitive.Content
           data-slot="dialog-content"
+          onCloseAutoFocus={onCloseAutoFocus}
           // Without a description Radix expects aria-describedby to be explicitly absent.
           {...(description ? {} : { 'aria-describedby': undefined })}
           className="fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-3xl border border-surface-border bg-elevated p-6 text-copy-primary shadow-xl outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg motion-reduce:animate-none"

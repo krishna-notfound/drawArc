@@ -3,7 +3,11 @@ import { cache, Suspense } from 'react';
 import { RecentlyDeletedScreen } from '@/components/auth/recently-deleted-screen';
 import { EditorHomeBody } from '@/components/editor/editor-home-body';
 import { EditorShell } from '@/components/editor/editor-shell';
+import { ProjectDialogsHost } from '@/components/editor/project-dialogs';
+import { ProjectSidebarData } from '@/components/editor/project-sidebar-data';
+import { SidebarSkeleton } from '@/components/editor/sidebar-skeleton';
 import { UserMenu, UserMenuPlaceholder } from '@/components/editor/user-menu';
+import { ProjectDialogsProvider } from '@/hooks/useProjectDialogs';
 import { requireUser } from '@/lib/auth';
 import { EmailHeldError } from '@/lib/users';
 
@@ -32,19 +36,30 @@ async function EditorHomeContent() {
 
 // Session reads happen only in Suspense children (code-standards rule 2). The shell stays mounted while the
 // gate resolves; the body's fallback is the same static content, so nothing visibly changes for most users.
-// F04 replaces the body and must keep user data inside gated Suspense children.
+// The project lists stream into the sidebar from their own gated Suspense child (FR-001, EC-011).
 export default function EditorHomePage() {
   return (
-    <EditorShell
-      navbarRight={
-        <Suspense fallback={<UserMenuPlaceholder />}>
-          <EditorHomeUserSlot />
+    <ProjectDialogsProvider>
+      <EditorShell
+        openSidebarOnDesktop
+        navbarRight={
+          <Suspense fallback={<UserMenuPlaceholder />}>
+            <EditorHomeUserSlot />
+          </Suspense>
+        }
+        sidebar={{
+          lists: (
+            <Suspense fallback={<SidebarSkeleton />}>
+              <ProjectSidebarData />
+            </Suspense>
+          ),
+        }}
+      >
+        <Suspense fallback={<EditorHomeBody />}>
+          <EditorHomeContent />
         </Suspense>
-      }
-    >
-      <Suspense fallback={<EditorHomeBody />}>
-        <EditorHomeContent />
-      </Suspense>
-    </EditorShell>
+      </EditorShell>
+      <ProjectDialogsHost />
+    </ProjectDialogsProvider>
   );
 }
