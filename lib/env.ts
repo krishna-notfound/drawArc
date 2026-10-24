@@ -22,11 +22,11 @@ export const ServerEnvSchema = z
     LIVEBLOCKS_SECRET_KEY: z.string().startsWith('sk_'), // F05
     LIVEBLOCKS_WEBHOOK_SECRET_KEY: z.string().startsWith('whsec_'), // F05
     BLOB_READ_WRITE_TOKEN: z.string().optional(), // F13 (local/CI only; OIDC on Vercel)
-    VERCEL: z.string().optional(), // set to '1' by the Vercel runtime
     TRIGGER_SECRET_KEY: z.string().optional(), // M2 (F17)
   })
   .superRefine((value, ctx) => {
-    if (value.VERCEL !== '1' && !value.BLOB_READ_WRITE_TOKEN) {
+    // `VERCEL=1` is set by the Vercel runtime; it is a platform flag, not a service key, so it stays out of the schema.
+    if (process.env.VERCEL !== '1' && !value.BLOB_READ_WRITE_TOKEN) {
       ctx.addIssue({ code: 'custom', path: ['BLOB_READ_WRITE_TOKEN'], message: 'Required outside Vercel' });
     }
   });

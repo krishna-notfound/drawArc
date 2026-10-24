@@ -7,6 +7,7 @@ import { ProjectRoom } from '@/components/editor/project-room';
 import { RoomLoading } from '@/components/editor/room-fallbacks';
 import type { EditorIslandProps } from '@/lib/editor/island-props';
 
+import { CanvasPersistence } from './canvas-persistence';
 import { FlowCanvas } from './flow-canvas';
 import { LiveCursors } from './live-cursors';
 import { PresenceOthers } from './presence-stack';
@@ -35,6 +36,7 @@ export function CanvasEditor({ projectId, role }: EditorIslandProps) {
         <ProjectRoom projectId={projectId} role={role}>
           <FlowCanvas role={role}>
             <LiveCursors />
+            <CanvasPersistence projectId={projectId} />
           </FlowCanvas>
           <PresenceOthers />
         </ProjectRoom>
