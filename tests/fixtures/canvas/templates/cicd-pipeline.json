@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    {
+      "id": "pill_0000000000000000000000CD01",
+      "type": "canvasNode",
+      "position": {
+        "x": 0,
+        "y": 38
+      },
+      "width": 180,
+      "height": 64,
+      "data": {
+        "label": "Developer",
+        "shape": "pill",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000CD02",
+      "type": "canvasNode",
+      "position": {
+        "x": 280,
+        "y": 30
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Git Push",
+        "shape": "rectangle",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000CD03",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 30
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Build",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "diamond_0000000000000000000000CD04",
+      "type": "canvasNode",
+      "position": {
+        "x": 860,
+        "y": 0
+      },
+      "width": 140,
+      "height": 140,
+      "data": {
+        "label": "Tests pass?",
+        "shape": "diamond",
+        "color": "orange"
+      }
+    },
+    {
+      "id": "cylinder_0000000000000000000000CD05",
+      "type": "canvasNode",
+      "position": {
+        "x": 1140,
+        "y": 15
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "Container Registry",
+        "shape": "cylinder",
+        "color": "teal"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000CD06",
+      "type": "canvasNode",
+      "position": {
+        "x": 1120,
+        "y": 230
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Deploy Staging",
+        "shape": "rectangle",
+        "color": "green"
+      }
+    },
+    {
+      "id": "diamond_0000000000000000000000CD07",
+      "type": "canvasNode",
+      "position": {
+        "x": 1140,
+        "y": 400
+      },
+      "width": 140,
+      "height": 140,
+      "data": {
+        "label": "Smoke test OK?",
+        "shape": "diamond",
+        "color": "orange"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000CD08",
+      "type": "canvasNode",
+      "position": {
+        "x": 1120,
+        "y": 630
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Deploy Production",
+        "shape": "rectangle",
+        "color": "green"
+      }
+    },
+    {
+      "id": "circle_0000000000000000000000CD09",
+      "type": "canvasNode",
+      "position": {
+        "x": 882,
+        "y": 222
+      },
+      "width": 96,
+      "height": 96,
+      "data": {
+        "label": "Notify",
+        "shape": "circle",
+        "color": "red"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_000000000000000000000ECD01",
+      "type": "canvasEdge",
+      "source": "pill_0000000000000000000000CD01",
+      "target": "rectangle_0000000000000000000000CD02",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000ECD02",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000CD02",
+      "target": "rectangle_0000000000000000000000CD03",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000ECD03",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000CD03",
+      "target": "diamond_0000000000000000000000CD04",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000ECD04",
+      "type": "canvasEdge",
+      "source": "diamond_0000000000000000000000CD04",
+      "target": "cylinder_0000000000000000000000CD05",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {
+        "label": "yes"
+      }
+    },
+    {
+      "id": "e_000000000000000000000ECD05",
+      "type": "canvasEdge",
+      "source": "diamond_0000000000000000000000CD04",
+      "target": "circle_0000000000000000000000CD09",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "data": {
+        "label": "no"
+      }
+    },
+    {
+      "id": "e_000000000000000000000ECD06",
+      "type": "canvasEdge",
+      "source": "cylinder_0000000000000000000000CD05",
+      "target": "rectangle_0000000000000000000000CD06",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000ECD07",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000CD06",
+      "target": "diamond_0000000000000000000000CD07",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000ECD08",
+      "type": "canvasEdge",
+      "source": "diamond_0000000000000000000000CD07",
+      "target": "rectangle_0000000000000000000000CD08",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "data": {
+        "label": "yes"
+      }
+    },
+    {
+      "id": "e_000000000000000000000ECD09",
+      "type": "canvasEdge",
+      "source": "diamond_0000000000000000000000CD07",
+      "target": "circle_0000000000000000000000CD09",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "data": {
+        "label": "no"
+      }
+    },
+    {
+      "id": "e_000000000000000000000ECD10",
+      "type": "canvasEdge",
+      "source": "circle_0000000000000000000000CD09",
+      "target": "pill_0000000000000000000000CD01",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "data": {}
+    }
+  ]
+}

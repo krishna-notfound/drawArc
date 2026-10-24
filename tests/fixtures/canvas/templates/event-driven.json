@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    {
+      "id": "rectangle_0000000000000000000000EV01",
+      "type": "canvasNode",
+      "position": {
+        "x": 0,
+        "y": 30
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Order Service",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000EV02",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 630
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Inventory Service",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "hexagon_0000000000000000000000EV03",
+      "type": "canvasNode",
+      "position": {
+        "x": 290,
+        "y": 215
+      },
+      "width": 160,
+      "height": 110,
+      "data": {
+        "label": "Event Bus",
+        "shape": "hexagon",
+        "color": "purple"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000EV04",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 30
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Notification Consumer",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000EV05",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 230
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Analytics Consumer",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "rectangle_0000000000000000000000EV06",
+      "type": "canvasNode",
+      "position": {
+        "x": 560,
+        "y": 430
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "Fulfilment Consumer",
+        "shape": "rectangle",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "pill_0000000000000000000000EV07",
+      "type": "canvasNode",
+      "position": {
+        "x": 840,
+        "y": 38
+      },
+      "width": 180,
+      "height": 64,
+      "data": {
+        "label": "Email Provider",
+        "shape": "pill",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "cylinder_0000000000000000000000EV08",
+      "type": "canvasNode",
+      "position": {
+        "x": 860,
+        "y": 215
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "Analytics Store",
+        "shape": "cylinder",
+        "color": "teal"
+      }
+    },
+    {
+      "id": "cylinder_0000000000000000000000EV09",
+      "type": "canvasNode",
+      "position": {
+        "x": 860,
+        "y": 415
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "Warehouse DB",
+        "shape": "cylinder",
+        "color": "teal"
+      }
+    },
+    {
+      "id": "circle_0000000000000000000000EV10",
+      "type": "canvasNode",
+      "position": {
+        "x": 42,
+        "y": 422
+      },
+      "width": 96,
+      "height": 96,
+      "data": {
+        "label": "Dead-letter Queue",
+        "shape": "circle",
+        "color": "red"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_000000000000000000000EEV01",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000EV01",
+      "target": "hexagon_0000000000000000000000EV03",
+      "sourceHandle": "right",
+      "targetHandle": "top",
+      "data": {
+        "label": "order.created"
+      }
+    },
+    {
+      "id": "e_000000000000000000000EEV02",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000EV02",
+      "target": "hexagon_0000000000000000000000EV03",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "data": {
+        "label": "stock.changed"
+      }
+    },
+    {
+      "id": "e_000000000000000000000EEV03",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000EV03",
+      "target": "rectangle_0000000000000000000000EV04",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EEV04",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000EV03",
+      "target": "rectangle_0000000000000000000000EV05",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EEV05",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000EV03",
+      "target": "rectangle_0000000000000000000000EV06",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EEV06",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000EV04",
+      "target": "pill_0000000000000000000000EV07",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EEV07",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000EV05",
+      "target": "cylinder_0000000000000000000000EV08",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EEV08",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000EV06",
+      "target": "cylinder_0000000000000000000000EV09",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {}
+    },
+    {
+      "id": "e_000000000000000000000EEV09",
+      "type": "canvasEdge",
+      "source": "hexagon_0000000000000000000000EV03",
+      "target": "circle_0000000000000000000000EV10",
+      "sourceHandle": "bottom",
+      "targetHandle": "right",
+      "data": {
+        "label": "failed"
+      }
+    },
+    {
+      "id": "e_000000000000000000000EEV10",
+      "type": "canvasEdge",
+      "source": "circle_0000000000000000000000EV10",
+      "target": "hexagon_0000000000000000000000EV03",
+      "sourceHandle": "top",
+      "targetHandle": "left",
+      "data": {
+        "label": "retry"
+      }
+    },
+    {
+      "id": "e_000000000000000000000EEV11",
+      "type": "canvasEdge",
+      "source": "rectangle_0000000000000000000000EV06",
+      "target": "rectangle_0000000000000000000000EV02",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "data": {
+        "label": "reserve"
+      }
+    }
+  ]
+}
