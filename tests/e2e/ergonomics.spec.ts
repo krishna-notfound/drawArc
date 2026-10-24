@@ -368,11 +368,13 @@ test('context menu: node, edge and pane items, keyboard operation, right-drag pa
   ]) {
     await page.mouse.click(at.x, at.y, { button: 'right' });
     await expect(menu(page)).toBeVisible();
-    const box = (await menu(page).boundingBox())!;
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.y).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(1280);
-    expect(box.y + box.height).toBeLessThanOrEqual(800);
+    // Polled: the open animation scales the menu from 95 %, so a box read mid-animation is not its final one.
+    await expect
+      .poll(async () => {
+        const box = (await menu(page).boundingBox())!;
+        return box.x >= 0 && box.y >= 0 && box.x + box.width <= 1280 && box.y + box.height <= 800;
+      })
+      .toBe(true);
     await page.keyboard.press('Escape');
     await expect(menu(page)).toHaveCount(0);
   }
