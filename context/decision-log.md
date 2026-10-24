@@ -186,6 +186,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-047 — Vercel home for drawArc: team personal_project; project `drawarc`; Blob store via CLI
+**APPROVED** 2026-10-24 (owner chose "personal_project (CLI account) — automate it"). The Blob store created earlier through the Vercel MCP (`store_L1dpXXVFhT6P36T3`) turned out to belong to a different Vercel account than the local CLI login, and its token is not exposed via API; it is left unused (owner may delete). New private store `drawarc-blob` (`store_MqpS4uODwS26iU1T`, sin1) created with the Vercel CLI under team personal_project and linked to the new Vercel project `drawarc`; `BLOB_READ_WRITE_TOKEN` pulled into `.env.local` by `vercel env pull`. `vercel link` auto-connected the GitHub repo — disconnected immediately so pushes do not deploy before F15. Supersedes the store details in D-046.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — implemented and verified (combined with F07); PR open |
+| Status | Completed — merged to `main` via PR #11 (2026-10-24) |
 | Spec approved | 2026-10-24, owner (incl. its local decisions) |
 | Implementation authorized | 2026-10-24, owner — parallel round 4, own worktree |
 | Last verified | 2026-10-24, `c74c004`; combined round-4 check at `42becbf` |
