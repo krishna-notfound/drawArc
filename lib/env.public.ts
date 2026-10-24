@@ -38,3 +38,10 @@ export function parseEnv<S extends z.ZodObject>(
 }
 
 export const publicEnv: PublicEnv = parseEnv(PublicEnvSchema, publicRaw, 'public');
+
+/**
+ * Dev/test-only canvas affordances (F06 P-06-3: `DevAddNode`, removed by F07): on in development and in
+ * E2E builds (`NEXT_PUBLIC_E2E_HOOKS=1`), never in a production build without the flag.
+ */
+export const devHooksEnabled: boolean =
+  publicEnv.NEXT_PUBLIC_E2E_HOOKS === '1' || process.env.NODE_ENV !== 'production';
