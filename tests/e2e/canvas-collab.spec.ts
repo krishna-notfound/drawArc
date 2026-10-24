@@ -22,7 +22,7 @@ test('a node added by one editor appears for the other without a refresh, flush 
     }
 
     // Flush, full-viewport surface (reference bug "floating card"): the canvas is the whole window and its
-    // root has no border, radius, shadow or padding; the open sidebar overlaps it instead of shrinking it.
+    // root has no border, radius, shadow or padding; the sidebar, when open, overlaps it instead of shrinking it.
     expect(await a.locator('.react-flow').boundingBox()).toEqual({ x: 0, y: 0, width: 1280, height: 800 });
     const rootStyle = await a.locator('[data-slot="flow-canvas"]').evaluate((el) => {
       const s = getComputedStyle(el);

@@ -59,9 +59,9 @@ test('a viewer member opens the workspace with island role viewer, without owner
   // F06: a viewer opening a room nobody has edited yet gets a read-only canvas, not a crash (no Storage write).
   await expect(canvas.locator('[data-slot="flow-canvas"]')).toHaveAttribute('data-can-write', 'false', NAVIGATION);
   await expect(canvas.getByText('View only')).toBeVisible();
-  // Default-open desktop sidebar; the row (if this user's cached shared list already includes it) never has
-  // an actions menu — only owned rows do.
-  await expect(page.locator('#project-sidebar')).toHaveAttribute('data-state', 'open');
+  // The workspace sidebar is closed by default even on desktop, so it does not cover the canvas control bar. The
+  // row (if this user's cached shared list already includes it) never has an actions menu — only owned rows do.
+  await expect(page.locator('#project-sidebar')).toHaveAttribute('data-state', 'closed');
   await expect(page.locator(`#project-sidebar li[data-project-id="${shared}"] [aria-label="Project actions"]`)).toHaveCount(0);
 
   await db.removeMembers(shared);
