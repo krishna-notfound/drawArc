@@ -12,19 +12,32 @@ const keyLines = lines
   .filter(({ line }) => /^[A-Z0-9_]+=/.test(line));
 const exampleKeys = keyLines.map(({ line }) => line.slice(0, line.indexOf('=')));
 const schemaKeys = [...Object.keys(ServerEnvSchema.shape), ...Object.keys(PublicEnvSchema.shape)];
+// Read by Clerk itself, never by lib/env*; their values are public routes, so the example carries them (F02 FR-007).
+const CLERK_ROUTING: Record<string, string> = {
+  NEXT_PUBLIC_CLERK_SIGN_IN_URL: '/sign-in',
+  NEXT_PUBLIC_CLERK_SIGN_UP_URL: '/sign-up',
+  NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: '/editor',
+  NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: '/editor',
+};
 
 describe('.env.example (F00 AC-007)', () => {
-  it('contains only comments, blank lines, and empty assignments', () => {
-    lines.forEach((line) => expect(line).toMatch(/^(#.*|[A-Z0-9_]+=)?$/));
+  it('contains only comments, blank lines, and empty assignments (except Clerk routing)', () => {
+    lines
+      .filter((line) => !Object.keys(CLERK_ROUTING).some((key) => line.startsWith(`${key}=`)))
+      .forEach((line) => expect(line).toMatch(/^(#.*|[A-Z0-9_]+=)?$/));
+  });
+
+  it('documents the Clerk routing keys with their exact values (F02 AC-010)', () => {
+    Object.entries(CLERK_ROUTING).forEach(([key, value]) => expect(lines).toContain(`${key}=${value}`));
   });
 
   it('documents every schema key', () => {
     schemaKeys.forEach((key) => expect(exampleKeys).toContain(key));
   });
 
-  it('adds only test-only keys beyond the schema', () => {
+  it('adds only test-only and Clerk routing keys beyond the schema', () => {
     exampleKeys
-      .filter((key) => !schemaKeys.includes(key))
+      .filter((key) => !schemaKeys.includes(key) && !(key in CLERK_ROUTING))
       .forEach((key) => expect(key).toMatch(/^E2E_[A-Z0-9_]+$/));
   });
 

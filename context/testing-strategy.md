@@ -15,6 +15,10 @@ The minimum toolchain that can prove the acceptance criteria. Four layers; every
 
 Async Server Components cannot be unit-tested in Vitest (Next docs); anything that renders a page with auth is L3.
 
+## Test budget (owner policy, 2026-10-23)
+
+Write tests only where they guard real behaviour or risk: authentication and authorization boundaries, webhook signatures, secrets, data integrity, user-visible flows, and regressions that actually happened. No test per line, per config value, or per trivial render. One test may verify several acceptance criteria; trivial criteria are verified by `tsc`, lint, `next build`, or inspection, and the feature's `status.md` records which.
+
 ## Quality gate
 
 `npm run check` = `next typegen && tsc --noEmit && eslint . && vitest run && node scripts/check-prisma.mjs` (the script runs `prisma validate` once a schema exists). Required locally before any task is reported complete and in CI on every PR. `npm run build` is run in CI (catches Cache Components violations). `npm run e2e` runs L3 against a preview deployment or local stack; required before milestone sign-off and for any feature whose criteria name L3.

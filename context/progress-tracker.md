@@ -43,9 +43,9 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 
 | # | Feature | Milestone | Status |
 |---|---|---|---|
-| 00 | product-foundation | M1 | Verification (2026-10-23): implemented on `feat/f00-product-foundation` (`56e74e2..43ebf7e`), all checks green; awaiting owner review, merge decision, spec-contract update |
-| 01 | app-shell-and-design-system | M1 | drafted |
-| 02 | authentication-and-users | M1 | drafted |
+| 00 | product-foundation | M1 | Completed — merged to `main` via PR #1 (2026-10-23) |
+| 01 | app-shell-and-design-system | M1 | Completed — merged to `main` via PR #2 (2026-10-23) |
+| 02 | authentication-and-users | M1 | Verification (2026-10-24): `506989f..fa0c580` verified; PR open |
 | 03 | projects-data-layer-and-api | M1 | drafted |
 | 04 | editor-home-and-workspace-shell | M1 | drafted |
 | 05 | realtime-room-infrastructure | M1 | drafted |

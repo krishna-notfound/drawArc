@@ -1,20 +1,50 @@
-import { LayoutDashboard } from 'lucide-react';
+import { cache, Suspense } from 'react';
 
+import { RecentlyDeletedScreen } from '@/components/auth/recently-deleted-screen';
+import { EditorHomeBody } from '@/components/editor/editor-home-body';
 import { EditorShell } from '@/components/editor/editor-shell';
-import { EmptyState } from '@/components/editor/empty-state';
+import { UserMenu, UserMenuPlaceholder } from '@/components/editor/user-menu';
+import { requireUser } from '@/lib/auth';
+import { EmailHeldError } from '@/lib/users';
 
-// F01 placeholder (D-F01-5): F02 gates this route, F04 owns its final content.
+// One gate per request, shared by both boundaries below (React `cache` is request-scoped). requireUser()
+// redirects signed-out visitors to /sign-in; an email still held after an account deletion (FR-018) is an
+// expected outcome with its own screen, not an error page.
+const gateEditorHome = cache(async (): Promise<{ heldUntil: Date | null }> => {
+  try {
+    await requireUser({ unauthenticated: 'redirect' });
+    return { heldUntil: null };
+  } catch (err) {
+    if (err instanceof EmailHeldError) return { heldUntil: err.availableAt };
+    throw err;
+  }
+});
+
+async function EditorHomeUserSlot() {
+  await gateEditorHome();
+  return <UserMenu />;
+}
+
+async function EditorHomeContent() {
+  const { heldUntil } = await gateEditorHome();
+  return heldUntil ? <RecentlyDeletedScreen availableAt={heldUntil} /> : <EditorHomeBody />;
+}
+
+// Session reads happen only in Suspense children (code-standards rule 2). The shell stays mounted while the
+// gate resolves; the body's fallback is the same static content, so nothing visibly changes for most users.
+// F04 replaces the body and must keep user data inside gated Suspense children.
 export default function EditorHomePage() {
   return (
-    <EditorShell>
-      <div className="flex h-full items-center justify-center overflow-y-auto p-6">
-        <EmptyState
-          as="h1"
-          icon={LayoutDashboard}
-          title="Create a project or open an existing one"
-          description="Start a new architecture workspace, or choose a project from the sidebar."
-        />
-      </div>
+    <EditorShell
+      navbarRight={
+        <Suspense fallback={<UserMenuPlaceholder />}>
+          <EditorHomeUserSlot />
+        </Suspense>
+      }
+    >
+      <Suspense fallback={<EditorHomeBody />}>
+        <EditorHomeContent />
+      </Suspense>
     </EditorShell>
   );
 }

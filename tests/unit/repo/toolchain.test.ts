@@ -27,4 +27,10 @@ describe('toolchain (F00 AC-001)', () => {
     expect(pkg.scripts.typecheck).toMatch(/^next typegen && tsc --noEmit/);
     expect(pkg.scripts.check).toMatch(/^next typegen && tsc --noEmit/);
   });
+
+  // The Prisma client is generated into git-ignored lib/generated; a clean clone (CI) must create it on install.
+  it('generates the Prisma client on install and validates the schema last in check (F02 AC-026)', () => {
+    expect(pkg.scripts.postinstall).toBe('prisma generate');
+    expect(pkg.scripts.check).toMatch(/&& prisma validate$/);
+  });
 });

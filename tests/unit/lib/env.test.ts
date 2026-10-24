@@ -1,47 +1,68 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const SERVICE_KEYS = [
+// Activated by F02 (FR-007): required at boot. The rest stay optional until their feature.
+const REQUIRED_SERVER_KEYS = [
   'DATABASE_URL',
   'DATABASE_URL_UNPOOLED',
-  'DATABASE_URL_TEST',
   'CLERK_SECRET_KEY',
   'CLERK_WEBHOOK_SIGNING_SECRET',
+] as const;
+const OPTIONAL_SERVER_KEYS = [
+  'DATABASE_URL_TEST',
   'LIVEBLOCKS_SECRET_KEY',
   'LIVEBLOCKS_WEBHOOK_SECRET_KEY',
   'BLOB_READ_WRITE_TOKEN',
   'TRIGGER_SECRET_KEY',
 ] as const;
+const VALID: Record<(typeof REQUIRED_SERVER_KEYS)[number], string> = {
+  DATABASE_URL: 'postgresql://user:pw@db.example.test/app',
+  DATABASE_URL_UNPOOLED: 'postgresql://user:pw@db-direct.example.test/app',
+  CLERK_SECRET_KEY: 'sk_test_value',
+  CLERK_WEBHOOK_SIGNING_SECRET: 'whsec_value',
+};
+
+async function importError(path: string): Promise<Error | null> {
+  return import(path).then(
+    () => null,
+    (e: unknown) => e as Error,
+  );
+}
 
 beforeEach(() => {
   vi.resetModules();
   vi.unstubAllEnvs();
-  SERVICE_KEYS.forEach((key) => vi.stubEnv(key, undefined));
+  REQUIRED_SERVER_KEYS.forEach((key) => vi.stubEnv(key, VALID[key]));
+  OPTIONAL_SERVER_KEYS.forEach((key) => vi.stubEnv(key, undefined));
   vi.stubEnv('LOG_LEVEL', undefined);
 });
 
-describe('lib/env (F00 FR-003)', () => {
-  it('loads with no service keys set (AC-003)', async () => {
+describe('lib/env (F00 FR-003, F02 FR-007)', () => {
+  it('loads with the activated keys set and later-feature keys unset', async () => {
     const { env } = await import('@/lib/env');
     expect(env.NODE_ENV).toBe('test');
     expect(env.LOG_LEVEL).toBe('info');
-    SERVICE_KEYS.forEach((key) => expect(env[key]).toBeUndefined());
+    expect(env.CLERK_SECRET_KEY).toBe(VALID.CLERK_SECRET_KEY);
+    OPTIONAL_SERVER_KEYS.forEach((key) => expect(env[key]).toBeUndefined());
   });
 
-  it('rejects a malformed key and names it without leaking the value (AC-004)', async () => {
+  it.each(REQUIRED_SERVER_KEYS)('fails fast naming %s when it is missing or empty (F02 AC-010, EC-011)', async (key) => {
+    vi.stubEnv(key, '');
+    const error = await importError('@/lib/env');
+    expect(error?.message).toContain(key);
+  });
+
+  it('fails naming NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY when it is missing (F02 AC-010)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', undefined);
+    const error = await importError('@/lib/env.public');
+    expect(error?.message).toContain('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY');
+  });
+
+  it('rejects a malformed key and names it without leaking the value (F00 AC-004)', async () => {
     vi.stubEnv('CLERK_SECRET_KEY', 'notaprefix');
-    const error = await import('@/lib/env').then(
-      () => null,
-      (e: unknown) => e as Error,
-    );
+    const error = await importError('@/lib/env');
     expect(error?.message).toContain('CLERK_SECRET_KEY');
     expect(error?.message).not.toContain('notaprefix');
-  });
-
-  it('treats an empty string as unset', async () => {
-    vi.stubEnv('CLERK_SECRET_KEY', '');
-    const { env } = await import('@/lib/env');
-    expect(env.CLERK_SECRET_KEY).toBeUndefined();
   });
 
   it('honours an explicit LOG_LEVEL', async () => {

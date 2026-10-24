@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 // Literal `process.env.NEXT_PUBLIC_*` references so Next.js can inline them into the client bundle.
 const publicRaw = {
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, // F02 activates
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, // F02
   NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL, // tests only (F05)
 };
 
 export const PublicEnvSchema = z.object({
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().startsWith('pk_'),
   NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: z.url().optional(),
 });
 

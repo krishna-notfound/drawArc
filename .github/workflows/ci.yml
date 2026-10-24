@@ -24,6 +24,8 @@ jobs:
       - run: npm run check
 
       # Sentinel values (not real secrets) let check:bundle prove no server secret reaches .next/static.
+      # F02 made the database and Clerk keys required at boot. The publishable key is public by design; a
+      # syntactically valid sentinel (base64 of "sentinel.clerk.accounts.dev$") is enough to build.
       - name: Build with sentinel secrets
         run: npm run build
         env:
@@ -36,6 +38,7 @@ jobs:
           LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
           BLOB_READ_WRITE_TOKEN: SENTINEL_blob
           TRIGGER_SECRET_KEY: SENTINEL_trigger
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2VudGluZWwuY2xlcmsuYWNjb3VudHMuZGV2JA
 
       - name: Bundle secret check
         run: npm run check:bundle
@@ -49,5 +52,6 @@ jobs:
           LIVEBLOCKS_WEBHOOK_SECRET_KEY: whsec_SENTINEL_liveblocks
           BLOB_READ_WRITE_TOKEN: SENTINEL_blob
           TRIGGER_SECRET_KEY: SENTINEL_trigger
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c2VudGluZWwuY2xlcmsuYWNjb3VudHMuZGV2JA
 
       - run: npm audit --audit-level=high
