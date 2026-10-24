@@ -30,6 +30,23 @@ export interface CanvasMutations {
 
 type FlowState = ReactFlowState<CanvasNode, CanvasEdge>;
 
+/** A patch key set to `undefined` removes that key (an empty edge label is `data: {}`, F09 FR-007). */
+function withoutUndefined<T extends Record<string, unknown>>(data: T): T {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)) as T;
+}
+
+/**
+ * `useLiveblocksFlow().onDelete` removes exactly the nodes and edges it is given, so the edges attached to a
+ * deleted node are added here: node and edges then leave Storage in one batch — one undo entry (F09 FR-009).
+ */
+function withAttachedEdges(params: { nodes: CanvasNode[]; edges: CanvasEdge[] }, all: readonly CanvasEdge[]): CanvasEdge[] {
+  if (params.nodes.length === 0) return params.edges;
+  const nodeIds = new Set(params.nodes.map((n) => n.id));
+  const edgeIds = new Set(params.edges.map((e) => e.id));
+  const attached = all.filter((e) => !edgeIds.has(e.id) && (nodeIds.has(e.source) || nodeIds.has(e.target)));
+  return attached.length === 0 ? params.edges : [...params.edges, ...attached];
+}
+
 /**
  * F06 hands `useLiveblocksFlow`'s handlers to `<ReactFlow>` only for writable members (role and token agree), and
  * React Flow keeps them in its store; so "can edit" is read from the same place the writes go.
@@ -106,11 +123,12 @@ export function useCanvasMutations(): CanvasMutations {
         if (!writable()) return;
         const edge = store.getState().edgeLookup.get(id);
         if (!edge) return;
-        edgeChanges([{ type: 'replace', id, item: { ...edge, data: { ...edge.data, ...patch } } }]);
+        edgeChanges([{ type: 'replace', id, item: { ...edge, data: withoutUndefined({ ...edge.data, ...patch }) } }]);
       },
       onDelete(params) {
         if (!writable()) return;
-        store.getState().onDelete?.(params);
+        const { edges, onDelete } = store.getState();
+        onDelete?.({ nodes: params.nodes, edges: withAttachedEdges(params, edges) });
       },
     };
   }, [store, canEdit]);

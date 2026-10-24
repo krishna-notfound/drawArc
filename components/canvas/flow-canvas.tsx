@@ -6,6 +6,8 @@ import {
   Background,
   BackgroundVariant,
   ConnectionMode,
+  type DefaultEdgeOptions,
+  MarkerType,
   MiniMap,
   type NodeOrigin,
   ReactFlow,
@@ -16,9 +18,11 @@ import {
 } from '@xyflow/react';
 import { type CSSProperties, type ReactNode, useCallback, useState } from 'react';
 
+import { useCanvasConnections } from '@/hooks/useCanvasConnections';
+import { useCanvasMutations } from '@/hooks/useCanvasMutations';
 import type { ProjectRole } from '@/lib/access';
 import { e2eHooksEnabled } from '@/lib/env.public';
-import type { CanvasEdge, CanvasNode } from '@/types/canvas';
+import { type CanvasEdge, type CanvasNode, EDGE_STROKE } from '@/types/canvas';
 
 import { CanvasTestHooks } from './canvas-test-hooks';
 import { edgeTypes, nodeTypes } from './node-types';
@@ -46,6 +50,11 @@ const NODE_ORIGIN: NodeOrigin = [0, 0];
 const INITIAL_FIT = { padding: 0.2, maxZoom: 1 } as const;
 // Flush surface (FR-011): React Flow's own background variable, since its unlayered CSS outranks Tailwind utilities.
 const FLOW_STYLE = { '--xy-background-color': 'var(--bg-base)' } as CSSProperties;
+// F09 D-09c: every edge renders as `canvasEdge` with a closed arrowhead; never written to Storage.
+const DEFAULT_EDGE_OPTIONS: DefaultEdgeOptions = Object.freeze({
+  type: 'canvasEdge',
+  markerEnd: Object.freeze({ type: MarkerType.ArrowClosed, width: 16, height: 16, color: EDGE_STROKE }),
+});
 
 /**
  * The collaborative canvas (FR-006): React Flow fed only by `useLiveblocksFlow` — nodes and edges live in
@@ -84,7 +93,8 @@ function FlowCanvasRoot({ role, children }: FlowCanvasProps) {
 }
 
 function LiveCanvas({ canWrite, children }: { canWrite: boolean; children?: ReactNode }) {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } = useLiveblocksFlow<CanvasNode, CanvasEdge>(
+  // The hook's own `onConnect` is not used: F09 builds schema-v1 edges itself (D-09a).
+  const { nodes, edges, onNodesChange, onEdgesChange, onDelete } = useLiveblocksFlow<CanvasNode, CanvasEdge>(
     FLOW_OPTIONS,
   );
   // Read-only members get no change handlers: every Liveblocks mutation (even React Flow's local `measured`
@@ -94,7 +104,7 @@ function LiveCanvas({ canWrite, children }: { canWrite: boolean; children?: Reac
       nodes={nodes}
       edges={edges}
       canWrite={canWrite}
-      handlers={canWrite ? { onNodesChange, onEdgesChange, onConnect, onDelete } : undefined}
+      handlers={canWrite ? { onNodesChange, onEdgesChange, onDelete } : undefined}
     >
       {children}
     </CanvasSurface>
@@ -107,7 +117,7 @@ interface CanvasSurfaceProps {
   canWrite: boolean;
   handlers?: Pick<
     ReactFlowProps<CanvasNode, CanvasEdge>,
-    'onNodesChange' | 'onEdgesChange' | 'onConnect' | 'onDelete'
+    'onNodesChange' | 'onEdgesChange' | 'onDelete'
   >;
   children?: ReactNode;
 }
@@ -122,6 +132,8 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
     },
     [hadNodesAtMount],
   );
+  // F09: connection rules, edge creation and reconnection, through the single write path.
+  const connections = useCanvasConnections(useCanvasMutations());
 
   return (
     <div data-slot="flow-canvas" data-can-write={String(canWrite)} className="fixed inset-0 bg-base">
@@ -130,11 +142,16 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
         edges={edges}
         onNodesChange={handlers?.onNodesChange}
         onEdgesChange={handlers?.onEdgesChange}
-        onConnect={handlers?.onConnect}
+        onConnect={handlers ? connections.onConnect : undefined}
+        isValidConnection={connections.isValidConnection}
+        onReconnectStart={handlers ? connections.onReconnectStart : undefined}
+        onReconnect={handlers ? connections.onReconnect : undefined}
+        onReconnectEnd={handlers ? connections.onReconnectEnd : undefined}
         onDelete={handlers?.onDelete}
         onInit={onInit}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
         colorMode="dark"
         connectionMode={ConnectionMode.Loose}
         selectionOnDrag

@@ -2,10 +2,13 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CanvasEdge } from '@/components/canvas/edges/canvas-edge';
 import { FlowCanvas } from '@/components/canvas/flow-canvas';
+import { edgeTypes } from '@/components/canvas/node-types';
 import type { ProjectRole } from '@/lib/access';
 
-// Captures what FlowCanvas hands to <ReactFlow> and to useLiveblocksFlow; React Flow itself is not rendered.
+// Captures what FlowCanvas hands to <ReactFlow> and to useLiveblocksFlow; React Flow itself is not rendered (its
+// provider is real: the F07/F09 hooks read the store).
 const captured = vi.hoisted(() => ({
   props: [] as Record<string, unknown>[],
   hookArgs: [] as unknown[],
@@ -25,7 +28,6 @@ vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
-    ReactFlowProvider: ({ children }: { children: ReactNode }) => children,
     ReactFlow: ({ children, ...props }: { children: ReactNode }) => {
       captured.props.push(props);
       return <div data-testid="react-flow">{children}</div>;
@@ -113,9 +115,12 @@ describe('FlowCanvas wiring (AC-009, AC-010, AC-011)', () => {
     expect(captured.hookArgs[0]).toEqual({ suspense: true, storageKey: 'flow', nodes: { initial: [] }, edges: { initial: [] } });
     expect(props.nodes).toBe(captured.flow.nodes);
     expect(props.edges).toBe(captured.flow.edges);
-    for (const key of ['onNodesChange', 'onEdgesChange', 'onConnect', 'onDelete'] as const) {
+    for (const key of ['onNodesChange', 'onEdgesChange', 'onDelete'] as const) {
       expect(props[key]).toBe(captured.flow[key]);
     }
+    // F09 D-09a: edges are built by F09's own onConnect, not the hook's.
+    expect(props.onConnect).toBeTypeOf('function');
+    expect(props.onConnect).not.toBe(captured.flow.onConnect);
     expect(props).toMatchObject({
       connectionMode: 'loose',
       selectionOnDrag: true,
@@ -144,5 +149,25 @@ describe('FlowCanvas wiring (AC-009, AC-010, AC-011)', () => {
     const instance = { fitView: vi.fn() };
     (filled.onInit as (i: unknown) => void)(instance);
     expect(instance.fitView).toHaveBeenCalledExactlyOnceWith({ padding: 0.2, maxZoom: 1 });
+  });
+});
+
+describe('FlowCanvas edges (F09 AC-001)', () => {
+  it('registers the memoised canvasEdge and a stable defaultEdgeOptions with the closed arrowhead', () => {
+    const first = renderCanvas('editor', true);
+    expect(Object.isFrozen(edgeTypes)).toBe(true);
+    expect(Object.keys(edgeTypes)).toEqual(['canvasEdge']);
+    expect(edgeTypes.canvasEdge).toBe(CanvasEdge);
+    expect((CanvasEdge as unknown as { $$typeof: symbol }).$$typeof).toBe(Symbol.for('react.memo'));
+    expect(first.edgeTypes).toBe(edgeTypes);
+    expect(first.defaultEdgeOptions).toEqual({
+      type: 'canvasEdge',
+      markerEnd: { type: 'arrowclosed', width: 16, height: 16, color: '#f8fafc' },
+    });
+    expect(typeof first.isValidConnection).toBe('function');
+    cleanup();
+    const second = renderCanvas('editor', true);
+    expect(second.defaultEdgeOptions).toBe(first.defaultEdgeOptions);
+    expect(second.edgeTypes).toBe(first.edgeTypes);
   });
 });

@@ -3,7 +3,7 @@ import { ReactFlowProvider, useStoreApi } from '@xyflow/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
-import { DEFAULT_SIZES, NODE_SHAPES } from '@/types/canvas';
+import { type CanvasEdge, type CanvasNode, DEFAULT_SIZES, NODE_SHAPES } from '@/types/canvas';
 
 // F06 passes useLiveblocksFlow's handlers to <ReactFlow> only for writable members; React Flow keeps them in its
 // store, which is what the mutations hook writes through.
@@ -55,6 +55,48 @@ describe('useCanvasMutations().addNode (F07 AC-009, AC-005, AC-020 unit half)', 
     expect(result.current.mutations.canEdit).toBe(false);
     expect(result.current.mutations.addNode('circle', { x: 0, y: 0 })).toBeNull();
     expect(onNodesChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('useCanvasMutations edges (F09 FR-007, FR-009)', () => {
+  const edge = (id: string, source: string, target: string, data: { label?: string } = {}) =>
+    ({ id, source, target, sourceHandle: 'right', targetHandle: 'left', type: 'canvasEdge', data }) as CanvasEdge;
+  const X = { id: 'x', position: { x: 0, y: 0 }, data: {} } as unknown as CanvasNode;
+
+  function setupEdges(edges: CanvasEdge[]) {
+    const onDelete = vi.fn();
+    const onEdgesChange = vi.fn();
+    const { result } = renderHook(() => ({ mutations: useCanvasMutations(), store: useStoreApi() }), {
+      wrapper: ReactFlowProvider,
+    });
+    act(() => {
+      result.current.store.setState({
+        onNodesChange: vi.fn(),
+        nodesDraggable: true,
+        onDelete,
+        onEdgesChange,
+        edges,
+        edgeLookup: new Map(edges.map((e) => [e.id, e])),
+      } as never);
+    });
+    return { mutations: result.current.mutations, onDelete, onEdgesChange };
+  }
+
+  it('deleting a node also deletes every edge attached to it, in one onDelete call (AC-015 unit half)', () => {
+    const into = edge('e_in', 'a', 'x');
+    const out = edge('e_out', 'x', 'b');
+    const unrelated = edge('e_u', 'a', 'b');
+    const { mutations, onDelete } = setupEdges([into, out, unrelated]);
+    mutations.onDelete({ nodes: [X], edges: [out] });
+    expect(onDelete).toHaveBeenCalledExactlyOnceWith({ nodes: [X], edges: [out, into] });
+  });
+
+  it('an empty label commit removes the key instead of storing undefined', () => {
+    const { mutations, onEdgesChange } = setupEdges([edge('e_1', 'a', 'b', { label: 'HTTPS' })]);
+    mutations.updateEdgeData('e_1', { label: undefined });
+    const [[changes]] = onEdgesChange.mock.calls;
+    expect(changes).toEqual([{ type: 'replace', id: 'e_1', item: edge('e_1', 'a', 'b', {}) }]);
+    expect(Object.keys(changes[0].item.data)).toEqual([]);
   });
 });
 

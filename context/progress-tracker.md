@@ -51,12 +51,12 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 05 | realtime-room-infrastructure | M1 | Completed — merged to `main` via PR #7 (2026-10-24) |
 | 06 | base-collaborative-canvas | M1 | Completed — merged to `main` via PR #8 (2026-10-24) |
 | 07 | shapes-and-node-creation | M1 | Completed — merged to `main` via PR #10 (2026-10-24) |
-| 08 | node-editing | M1 | drafted |
-| 09 | edges-and-connections | M1 | drafted |
+| 08 | node-editing | M1 | Completed — merged to `main` via PR #13 (2026-10-24) |
+| 09 | edges-and-connections | M1 | Verification (2026-10-24): verified incl. combined check with F08; PR open |
 | 10 | canvas-ergonomics-and-keyboard | M1 | drafted |
 | 11 | presence-and-cursors | M1 | Completed — merged to `main` via PR #11 (2026-10-24) |
 | 12 | sharing-and-access-control | M1 | Completed — merged to `main` via PR #9 (2026-10-24) |
-| 13 | persistence-and-recovery | M1 | Verification (2026-10-24): verified; PR open |
+| 13 | persistence-and-recovery | M1 | Completed — merged to `main` via PR #12 (2026-10-24) |
 | 14 | starter-templates | M1 | drafted |
 | 15 | observability-and-deployment | M1 | drafted |
 | 16 | ai-sidebar-and-room-chat | M2 | drafted |

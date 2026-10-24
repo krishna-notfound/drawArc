@@ -39,6 +39,10 @@ export const DEFAULT_SIZES: Record<NodeShape, { width: number; height: number }>
 
 export const MIN_SIZE = { width: 48, height: 32 } as const;
 
+/** Edge stroke and arrowhead colour (ui-context "Edges"); SVG marker attributes cannot read CSS variables. */
+export const EDGE_STROKE = '#f8fafc';
+/** UX cap of the inline edge label input; the schema bound at the persistence boundary is looser (MAX_LABEL). */
+export const EDGE_LABEL_MAX_LENGTH = 100;
 /** UX cap on a node label, enforced by the F08 editor; looser than the schema bound (`MAX_LABEL`) on purpose. */
 export const LABEL_MAX_LENGTH = 200;
 

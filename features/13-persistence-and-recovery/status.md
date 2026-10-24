@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — implemented and independently verified; PR open |
+| Status | Completed — merged to `main` via PR #12 (2026-10-24) |
 | Spec approved | 2026-10-24, owner (incl. its local decisions) |
 | Implementation authorized | 2026-10-24, owner — after round 4, own worktree |
 | Last verified | 2026-10-24, `77b8468` on `feat/f13-persistence-and-recovery` |
