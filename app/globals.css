@@ -175,6 +175,11 @@
   inset: -4px;
 }
 
+/* F08 colour swatches (FR-011): hover ring in the swatch's text colour at 33 % alpha. */
+.canvas-swatch:hover {
+  box-shadow: 0 0 0 3px var(--swatch-glow);
+}
+
 /* F07 palette drag: the whole document shows a grabbing cursor while a shape is dragged. */
 html.shape-dragging,
 html.shape-dragging * {

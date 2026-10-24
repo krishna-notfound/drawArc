@@ -57,3 +57,25 @@ describe('useCanvasMutations().addNode (F07 AC-009, AC-005, AC-020 unit half)', 
     expect(onNodesChange).not.toHaveBeenCalled();
   });
 });
+
+describe('useCanvasMutations().updateNodesData (F08 AC-017 unit half)', () => {
+  it('recolours every listed node in one onNodesChange call (one Liveblocks batch, one undo step)', () => {
+    const { result, onNodesChange } = setup(true);
+    const shapes = ['rectangle', 'circle', 'pill'] as const;
+    const ids = shapes.map((shape) => result.current.mutations.addNode(shape, { x: 0, y: 0 })!.id);
+    // addNode only emits changes; feed the nodes into the (uncontrolled) store as Liveblocks would.
+    act(() => {
+      result.current.store.getState().setNodes(
+        onNodesChange.mock.calls.flatMap(([changes]) => changes).filter((c) => c.type === 'add').map((c) => c.item),
+      );
+    });
+    onNodesChange.mockClear();
+
+    result.current.mutations.updateNodesData([...ids, 'missing'], { color: 'green' });
+
+    expect(onNodesChange).toHaveBeenCalledTimes(1);
+    const [changes] = onNodesChange.mock.calls[0]!;
+    expect(changes.map((c: { type: string; id: string }) => [c.type, c.id])).toEqual(ids.map((id) => ['replace', id]));
+    for (const change of changes) expect(change.item.data.color).toBe('green');
+  });
+});
