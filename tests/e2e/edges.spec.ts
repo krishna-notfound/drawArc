@@ -108,11 +108,11 @@ test('all 16 handle pairs connect; invalid releases create nothing; the edge ren
   await page.mouse.move(750, 450);
   expect(await pathStyle(page, id)).toMatchObject({ opacity: '1', width: '2px' });
   // AC-014: a selected unlabelled edge shows the faint hint.
-  await expect(page.getByText('Double-click to label')).toBeVisible();
+  await expect(page.locator('.react-flow__edgelabel-renderer').getByText('Double-click to label')).toBeVisible();
   await page.mouse.click(750, 450);
   await expect(group).not.toHaveClass(/selected/);
   expect(await pathStyle(page, id)).toMatchObject({ opacity: '0.6', width: '1.5px' });
-  await expect(page.getByText('Double-click to label')).toHaveCount(0);
+  await expect(page.locator('.react-flow__edgelabel-renderer').getByText('Double-click to label')).toHaveCount(0);
 
   // AC-012 / AC-014 / AC-017: inline label, pill badge at the midpoint, readable focusable edge.
   await page.mouse.dblclick(mid.x, mid.y);
