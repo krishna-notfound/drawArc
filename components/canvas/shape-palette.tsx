@@ -19,6 +19,7 @@ import { useCanvasMutations } from '@/hooks/useCanvasMutations';
 import { useShapeDrag } from '@/hooks/useShapeDrag';
 import { centredDropPosition } from '@/lib/canvas/drop-position';
 import { focusNodeWhenRendered } from '@/lib/canvas/focus-node';
+import { formatKeys } from '@/lib/canvas/registry';
 import { cn } from '@/lib/utils';
 import { type CanvasEdge, type CanvasNode, DEFAULT_SIZES, isNodeShape, NODE_SHAPES, type PaletteKind } from '@/types/canvas';
 
@@ -52,8 +53,8 @@ const LABELS: Record<PaletteKind, string> = {
 const capitalise = (shape: string) => shape.charAt(0).toUpperCase() + shape.slice(1);
 
 function tooltip(kind: PaletteKind): string {
-  if (kind === 'text') return 'Text — click to place, or press T';
-  if (kind === 'sticky') return 'Sticky note — click to place, or press N';
+  if (kind === 'text') return `Text — click to place, or press ${formatKeys('addText', 'other')}`;
+  if (kind === 'sticky') return `Sticky note — click to place, or press ${formatKeys('addSticky', 'other')}`;
   return `${capitalise(kind)} — drag onto canvas, or press Enter`;
 }
 

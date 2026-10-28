@@ -25,6 +25,7 @@ const h = vi.hoisted(() => {
       addNodes: vi.fn(() => log.push('addNodes')),
       addEdge: vi.fn(() => log.push('addEdge')),
       addNode: vi.fn(() => log.push('addNode')),
+      addNodeOfKind: vi.fn((kind: string) => (log.push(`addNodeOfKind:${kind}`), null)),
       moveNodes: vi.fn(() => log.push('moveNodes')),
     },
     batch: vi.fn((fn: () => void) => {
@@ -227,6 +228,18 @@ describe('useCanvasActions clipboard and insertion (F10 v2)', () => {
     expect(h.mutations.addNode).toHaveBeenCalledWith('rectangle', { x: 800 - 90, y: 600 - 40 });
     actions(null).insertShape('circle');
     expect(h.mutations.addNode).toHaveBeenLastCalledWith('circle', { x: 800 - 48, y: 600 - 48 });
+  });
+
+  it('addText and addSticky centre the node on the pointer, or the viewport centre, and write nothing for viewers (F22 AC-008 hook half)', () => {
+    actions().addText();
+    expect(h.mutations.addNodeOfKind).toHaveBeenCalledWith('text', { x: 800 - 12, y: 600 - 10 });
+    actions(null).addSticky();
+    expect(h.mutations.addNodeOfKind).toHaveBeenLastCalledWith('sticky', { x: 800 - 125, y: 600 - 125 });
+    vi.clearAllMocks();
+    h.mutations.canEdit = false;
+    actions().addText();
+    actions().addSticky();
+    expect(h.mutations.addNodeOfKind).not.toHaveBeenCalled();
   });
 
   it('align moves through one moveNodes call, and writes nothing for a single node (AC-036 hook half, EC-021)', () => {

@@ -153,6 +153,25 @@ describe('useKeyboardShortcuts (F10 v2)', () => {
     expect(viewer.insertShape).not.toHaveBeenCalled();
   });
 
+  it('T and N add text and a sticky note: prevented for editors, ignored in inputs, with Ctrl and for viewers (F22 AC-008, EC-013)', () => {
+    const actions = makeActions();
+    const editorHook = renderHook(() => useKeyboardShortcuts(actions));
+    expect(press(document.body, 't').defaultPrevented).toBe(true);
+    expect(press(document.body, 'n').defaultPrevented).toBe(true);
+    expect(actions.addText).toHaveBeenCalledOnce();
+    expect(actions.addSticky).toHaveBeenCalledOnce();
+    expect(press(document.body, 't', { ctrlKey: true }).defaultPrevented).toBe(false);
+    const input = document.createElement('input');
+    document.body.append(input);
+    expect(press(input, 't').defaultPrevented).toBe(false);
+    expect(actions.addText).toHaveBeenCalledOnce();
+    editorHook.unmount();
+    const viewer = makeActions(false);
+    renderHook(() => useKeyboardShortcuts(viewer));
+    expect(press(document.body, 'n').defaultPrevented).toBe(false);
+    expect(viewer.addSticky).not.toHaveBeenCalled();
+  });
+
   it('Ctrl+V is left to the paste event, which is prevented only when something was written (D-10f)', () => {
     const actions = makeActions();
     renderHook(() => useKeyboardShortcuts(actions));

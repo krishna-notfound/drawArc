@@ -24,6 +24,8 @@ export type ShortcutAction =
   | 'insertPill'
   | 'insertCylinder'
   | 'insertHexagon'
+  | 'addText'
+  | 'addSticky'
   | 'toggleGrid'
   | 'zoomToSelection'
   | 'resetZoom'
@@ -87,6 +89,8 @@ export const SHORTCUTS: readonly ShortcutBinding[] = [
   { action: 'insertPill', chords: ['p'], label: 'Add pill', group: 'insert', mutating: true, viewerVisible: false },
   { action: 'insertCylinder', chords: ['c'], label: 'Add cylinder', group: 'insert', mutating: true, viewerVisible: false },
   { action: 'insertHexagon', chords: ['h'], label: 'Add hexagon', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'addText', chords: ['t'], label: 'Add text', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'addSticky', chords: ['n'], label: 'Add sticky note', group: 'insert', mutating: true, viewerVisible: false },
   { action: 'toggleGrid', chords: ['mod+code:Quote'], label: 'Grid', group: 'navigate', mutating: false, viewerVisible: true },
   {
     action: 'zoomToSelection',
@@ -109,8 +113,6 @@ export const SHORTCUTS: readonly ShortcutBinding[] = [
 
 /** Letters held back for later features; `matchShortcut` ignores them and the duplicate guard protects them. */
 export const RESERVED_CHORDS: Readonly<Record<string, string>> = {
-  t: 'F22 text',
-  n: 'F22 sticky',
   f: 'F23 frame',
   x: 'F21 freehand',
   i: 'F24 image',

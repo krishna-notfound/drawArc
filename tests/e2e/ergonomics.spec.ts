@@ -178,7 +178,7 @@ test('keys never reach the canvas while typing or while a dialog is open; Delete
   const before = await zoom(page);
   await page.keyboard.press('?');
   await expect(cheatSheet(page)).toBeVisible();
-  await expect(cheatSheet(page).getByRole('row')).toHaveCount(20); // header + 19 rows (editor)
+  await expect(cheatSheet(page).getByRole('row')).toHaveCount(22); // header + 21 rows (editor; F22 adds Add text, Add sticky note)
   for (const key of ['Delete', 'Backspace', 'Control+z', '+', '?', 'Control+a']) await page.keyboard.press(key);
   await page.keyboard.press('Tab');
   await expect(cheatSheet(page)).toContainText('Keyboard shortcuts');

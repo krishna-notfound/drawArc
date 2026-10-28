@@ -40,10 +40,8 @@ const stored = (page: Page, id: string) =>
 const flowPoint = (page: Page, client: { x: number; y: number }) =>
   page.evaluate((c) => window.__rf!.screenToFlowPosition(c), client);
 
-const viewportCentre = async (page: Page) => {
-  const box = (await page.locator('[data-slot="flow-canvas"]').boundingBox())!;
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-};
+/** `pressCanvasKey` clicks here first, so T / N insert under this client point. */
+const KEY_POINT = { x: 1000, y: 180 };
 
 const selectedId = async (page: Page) => {
   const selected = page.locator('.react-flow__node.selected');
@@ -64,17 +62,17 @@ async function dragHandle(page: Page, id: string, control: string, dx: number, d
   await page.mouse.up();
 }
 
-test('T and N create at the viewport centre; keys are ignored while editing or with Ctrl (AC-008, AC-007)', async ({ page }) => {
+test('T and N create at the pointer; keys are ignored while editing or with Ctrl (AC-008, AC-007)', async ({ page }) => {
   test.setTimeout(120_000);
   await openCanvas(page, projectId);
 
-  // T: a selected text node at the centre with its editor focused.
+  // T: a selected text node centred on the pointer (registry insert, like R/D/O) with its editor focused.
   await pressCanvasKey(page, 't');
   const textId = await selectedId(page);
   expect(textId).toMatch(/^text_/);
   await expect(editor(page)).toBeFocused();
   const created = await stored(page, textId);
-  const centre = await flowPoint(page, await viewportCentre(page));
+  const centre = await flowPoint(page, KEY_POINT);
   expect(Math.abs(created.x + created.width / 2 - centre.x)).toBeLessThanOrEqual(1);
   expect(Math.abs(created.y + created.height / 2 - centre.y)).toBeLessThanOrEqual(1);
 
@@ -113,6 +111,31 @@ test('T and N create at the viewport centre; keys are ignored while editing or w
   const dropFlow = await flowPoint(page, dropAt);
   expect(Math.abs(droppedBox.x + droppedBox.width / 2 - dropFlow.x)).toBeLessThanOrEqual(1);
   expect(Math.abs(droppedBox.y + droppedBox.height / 2 - dropFlow.y)).toBeLessThanOrEqual(1);
+});
+
+test('pasting plain text creates a text node at the pointer; an input swallows it (F10 AC-033, FR-018)', async ({ page }) => {
+  test.setTimeout(120_000);
+  await openCanvas(page, projectId);
+  await page.mouse.click(KEY_POINT.x, KEY_POINT.y);
+  const pasteText = (text: string) =>
+    page.evaluate((t) => {
+      const data = new DataTransfer();
+      data.setData('text/plain', t);
+      const event = new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true });
+      document.body.dispatchEvent(event);
+      return event.defaultPrevented;
+    }, text);
+
+  expect(await pasteText('  Plain words from elsewhere  ')).toBe(true);
+  const id = await selectedId(page);
+  expect(id).toMatch(/^text_/);
+  const pasted = await stored(page, id);
+  expect(pasted).toMatchObject({ label: 'Plain words from elsewhere', autoWidth: true });
+  const at = await flowPoint(page, KEY_POINT);
+  expect(Math.abs(pasted.x + pasted.width / 2 - at.x)).toBeLessThanOrEqual(1);
+  // A non-empty label skips the editor auto-open (F22 FR-007).
+  await expect(editor(page)).toHaveCount(0);
+  await expect(page.locator('.react-flow__node')).toHaveCount(1);
 });
 
 test('side resize makes text fixed-width and wraps; a sticky never goes below 75 x 75 (AC-011)', async ({ page }) => {

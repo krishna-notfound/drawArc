@@ -7,6 +7,7 @@ import {
   cheatSheetKeys,
   formatKeys,
   KEYLESS,
+  MUTATING,
   matchShortcut,
   RESERVED_CHORDS,
   SHORTCUTS,
@@ -56,11 +57,17 @@ describe('registry (F10 AC-025)', () => {
     expect(cheatSheetKeys('redo')).toBe('⌘/Ctrl+Shift+Z');
   });
 
-  it('matchShortcut: code chords, symbols ignore shift, reserved letters are inert (AC-027 pure)', () => {
+  it('matchShortcut: code chords, symbols ignore shift, T and N are bound, other reserved letters are inert (AC-027 pure, F22 AC-008)', () => {
     expect(matchShortcut(key('!', { shiftKey: true }, 'Digit1'))).toBe('fitView');
     expect(matchShortcut(key('+', { shiftKey: true }))).toBe('zoomIn');
     expect(matchShortcut(key('Z', { ctrlKey: true, shiftKey: true }))).toBe('redo');
-    for (const k of ['t', 'n', 'f', 'x', 'i', 'k']) expect(matchShortcut(key(k)), k).toBeNull();
+    expect(matchShortcut(key('t'))).toBe('addText');
+    expect(matchShortcut(key('n'))).toBe('addSticky');
+    expect(matchShortcut(key('t', { ctrlKey: true }))).toBeNull();
+    expect(matchShortcut(key('T', { shiftKey: true }))).toBeNull();
+    expect(MUTATING.has('addText') && MUTATING.has('addSticky')).toBe(true);
+    expect(Object.keys(RESERVED_CHORDS)).toEqual(['f', 'x', 'i']);
+    for (const k of ['f', 'x', 'i', 'k']) expect(matchShortcut(key(k)), k).toBeNull();
     expect(matchShortcut(key('r', { ctrlKey: true }))).toBeNull();
     expect(matchShortcut(key('h', { altKey: true }))).toBeNull();
     expect(matchShortcut(key('R', { shiftKey: true }))).toBeNull();

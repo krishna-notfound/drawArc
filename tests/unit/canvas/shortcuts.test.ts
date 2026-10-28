@@ -80,6 +80,8 @@ describe('cheat-sheet copy (F10 AC-019)', () => {
       'Keyboard shortcuts',
       'Copy / Cut / Paste',
       'Add shape at pointer',
+      'Add text',
+      'Add sticky note',
       'Grid',
       'Align',
       'Zoom to selection',

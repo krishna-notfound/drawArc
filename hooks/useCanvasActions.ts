@@ -133,6 +133,12 @@ export function runAction(action: ShortcutAction, actions: CanvasActions): boole
       actions.insertShape(shape);
       return true;
     }
+    case 'addText':
+      actions.addText();
+      return true;
+    case 'addSticky':
+      actions.addSticky();
+      return true;
     case 'toggleGrid':
       actions.toggleGrid();
       return true;
