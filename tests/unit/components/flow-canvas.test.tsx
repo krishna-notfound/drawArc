@@ -1,11 +1,12 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CanvasEdge } from '@/components/canvas/edges/canvas-edge';
 import { FlowCanvas } from '@/components/canvas/flow-canvas';
 import { edgeTypes } from '@/components/canvas/node-types';
 import type { ProjectRole } from '@/lib/access';
+import { gridStore } from '@/lib/canvas/preferences';
 
 // Captures what FlowCanvas hands to <ReactFlow> and to useLiveblocksFlow; React Flow itself is not rendered (its
 // provider is real: the F07/F09 hooks read the store).
@@ -74,6 +75,8 @@ function renderCanvas(role: ProjectRole, canWrite: boolean) {
   return captured.props.at(-1)!;
 }
 
+afterEach(() => gridStore.set(false));
+
 beforeEach(() => {
   captured.props.length = 0;
   captured.hookArgs.length = 0;
@@ -137,9 +140,18 @@ describe('FlowCanvas wiring (AC-009, AC-010, AC-011)', () => {
       minZoom: 0.1,
       maxZoom: 4,
       nodeOrigin: [0, 0],
+      snapToGrid: false,
+      snapGrid: [20, 20],
     });
     expect(props).not.toHaveProperty('fitView');
     expect(screen.getByTestId('react-flow')).toContainElement(screen.getByTestId('child'));
+  });
+
+  it('snaps to the 20 px grid only while this user has the grid on (F10 v2 FR-019)', () => {
+    renderCanvas('editor', true);
+    expect(captured.props.at(-1)).toMatchObject({ snapToGrid: false, snapGrid: [20, 20] });
+    act(() => gridStore.set(true));
+    expect(captured.props.at(-1)).toMatchObject({ snapToGrid: true, snapGrid: [20, 20] });
   });
 
   it('fits the view once on init only when the room had nodes at mount', () => {

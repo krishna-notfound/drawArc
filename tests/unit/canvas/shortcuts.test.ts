@@ -73,12 +73,24 @@ describe('cheat-sheet copy (F10 AC-019)', () => {
     const rows = conventionRows();
     expect(rows).toHaveLength(10);
     expect(SHORTCUT_ROWS.slice(0, 10).map(({ action, input }) => ({ action, input }))).toEqual(rows);
-    expect(SHORTCUT_ROWS.slice(10).map((r) => r.action)).toEqual(['Select all', 'Duplicate', 'Clear selection', 'Keyboard shortcuts']);
+    expect(SHORTCUT_ROWS.slice(10).map((r) => r.action)).toEqual([
+      'Select all',
+      'Duplicate',
+      'Clear selection',
+      'Keyboard shortcuts',
+      'Copy / Cut / Paste',
+      'Add shape at pointer',
+      'Grid',
+      'Align',
+      'Zoom to selection',
+    ]);
     expect(SHORTCUT_ROWS.filter((r) => r.viewerVisible).map((r) => r.action)).toEqual([
       'Pan',
       'Zoom',
       'Fit view',
       'Keyboard shortcuts',
+      'Grid',
+      'Zoom to selection',
     ]);
   });
 });

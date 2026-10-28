@@ -69,3 +69,17 @@ export async function centreOf(page: Page, selector: string): Promise<{ x: numbe
   const box = (await page.locator(selector).boundingBox())!;
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
+
+/** Adds a node through the F07 write path (no palette drag) at flow position `position`; returns its id. */
+export async function addNodeAt(page: Page, shape: NodeShape, position: { x: number; y: number }): Promise<string> {
+  const before = await page.locator('.react-flow__node').count();
+  const id = await page.evaluate(([s, p]) => window.__canvasMutations!.addNode(s, p)?.id ?? null, [shape, position] as const);
+  expect(id).not.toBeNull();
+  await expect(page.locator('.react-flow__node')).toHaveCount(before + 1);
+  return id!;
+}
+
+/** A node's stored top-left position in flow coordinates. */
+export function nodePosition(page: Page, id: string): Promise<{ x: number; y: number } | null> {
+  return page.evaluate((nodeId) => window.__rf!.getNode(nodeId)?.position ?? null, id);
+}

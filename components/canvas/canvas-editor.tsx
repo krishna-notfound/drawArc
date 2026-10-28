@@ -14,6 +14,7 @@ import { FlowCanvas } from './flow-canvas';
 import { LiveCursors } from './live-cursors';
 import { NodeColorToolbar } from './node-color-toolbar';
 import { PresenceOthers } from './presence-stack';
+import { SelectionToolbar } from './selection-toolbar';
 
 /**
  * The workspace's canvas island (F04 slot contract D-028, FR-015): the project's Liveblocks room around the
@@ -40,6 +41,7 @@ export function CanvasEditor({ projectId, role }: EditorIslandProps) {
           <FlowCanvas role={role}>
             <LiveCursors />
             <NodeColorToolbar />
+            <SelectionToolbar />
             <CanvasPersistence projectId={projectId} />
             {/* F14: the navbar Import button (portalled into the import slot) and the others' replace toast. */}
             <ImportTemplateControl />

@@ -20,7 +20,10 @@ import { type CSSProperties, type ReactNode, useCallback, useState } from 'react
 
 import { useCanvasConnections } from '@/hooks/useCanvasConnections';
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
+import { useGrid } from '@/hooks/useGrid';
+import { usePointerPosition } from '@/hooks/usePointerPosition';
 import type { ProjectRole } from '@/lib/access';
+import { GRID_SIZE, SNAP_GRID } from '@/lib/canvas/preferences';
 import { e2eHooksEnabled } from '@/lib/env.public';
 import { type CanvasEdge, type CanvasNode, EDGE_STROKE } from '@/types/canvas';
 
@@ -135,11 +138,15 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
   );
   // F09: connection rules, edge creation and reconnection, through the single write path.
   const connections = useCanvasConnections(useCanvasMutations());
+  // F10 v2: where paste and letter-key insertion land.
+  const pointer = usePointerPosition();
+  // F10 v2: this user's grid preference (per browser): snap on drag, line background.
+  const grid = useGrid();
 
   return (
     <div data-slot="flow-canvas" data-can-write={String(canWrite)} className="fixed inset-0 bg-base">
       {/* F10: keyboard, context menu, control bar and cheat-sheet around the flow. */}
-      <CanvasErgonomics>
+      <CanvasErgonomics pointer={pointer}>
       <ReactFlow<CanvasNode, CanvasEdge>
         nodes={nodes}
         edges={edges}
@@ -167,13 +174,15 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
         minZoom={0.1}
         maxZoom={4}
         nodeOrigin={NODE_ORIGIN}
+        snapToGrid={grid}
+        snapGrid={SNAP_GRID}
         nodesDraggable={canWrite}
         nodesConnectable={canWrite}
         elementsSelectable={canWrite}
         edgesReconnectable={canWrite}
         style={FLOW_STYLE}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} color="var(--border-default)" />
+        <Background variant={grid ? BackgroundVariant.Lines : BackgroundVariant.Dots} gap={GRID_SIZE} color="var(--border-default)" />
         <MiniMap
           position="bottom-right"
           pannable={false}
