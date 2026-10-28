@@ -26,6 +26,8 @@ function makeActions(canEdit = true): CanvasActions {
     toggleGrid: vi.fn(),
     zoomToSelection: vi.fn(),
     resetZoom: vi.fn(),
+    align: vi.fn(),
+    distribute: vi.fn(),
   };
 }
 
@@ -117,6 +119,21 @@ describe('useKeyboardShortcuts (F10 v2)', () => {
     expect(ev.defaultPrevented).toBe(true);
     expect(nodeSaw).not.toHaveBeenCalled();
     press(nodeEl, 'k'); // unhandled keys still reach the node
+    expect(nodeSaw).toHaveBeenCalledOnce();
+  });
+
+  it('Ctrl+Shift+Arrow aligns even when a focused node nudges on Arrow keys (TC-031, EC-027)', () => {
+    const actions = makeActions();
+    renderHook(() => useKeyboardShortcuts(actions));
+    document.body.innerHTML = '<div class="react-flow__node" tabindex="0" id="n"></div>';
+    const nodeEl = document.getElementById('n')!;
+    const nodeSaw = vi.fn((e: Event) => e.preventDefault());
+    nodeEl.addEventListener('keydown', nodeSaw);
+    const ev = press(nodeEl, 'ArrowLeft', { ctrlKey: true, shiftKey: true });
+    expect(actions.align).toHaveBeenCalledExactlyOnceWith('left');
+    expect(ev.defaultPrevented).toBe(true);
+    expect(nodeSaw).not.toHaveBeenCalled();
+    press(nodeEl, 'ArrowLeft'); // a plain Arrow still nudges the node
     expect(nodeSaw).toHaveBeenCalledOnce();
   });
 

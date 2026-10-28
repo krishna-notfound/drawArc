@@ -77,6 +77,17 @@ describe('registry (F10 AC-025)', () => {
     expect(ariaKeyShortcuts('resetZoom')).toBe('');
   });
 
+  it('align chords are Ctrl/Cmd+Shift+Arrow; centre, middle and distribute have no key (AC-037)', () => {
+    expect(matchShortcut(key('ArrowLeft', { ctrlKey: true, shiftKey: true }))).toBe('alignLeft');
+    expect(matchShortcut(key('ArrowDown', { metaKey: true, shiftKey: true }))).toBe('alignBottom');
+    expect(matchShortcut(key('ArrowLeft', { shiftKey: true }))).toBeNull();
+    expect(matchShortcut(key('ArrowLeft', { ctrlKey: true }))).toBeNull();
+    expect(formatKeys('alignLeft', 'mac')).toBe('⌘⇧←');
+    expect(formatKeys('alignLeft', 'other')).toBe('Ctrl+Shift+←');
+    expect(ariaKeyShortcuts('alignLeft')).toBe('Control+Shift+ArrowLeft Meta+Shift+ArrowLeft');
+    for (const a of ['alignCenterH', 'alignMiddleV', 'distributeH', 'distributeV'] as const) expect(formatKeys(a, 'other')).toBe('');
+  });
+
   it('letters insert shapes (CapsLock-safe), Ctrl+V is left to the paste event (AC-027)', () => {
     const letters: [string, ShortcutAction][] = [
       ['r', 'insertRectangle'],

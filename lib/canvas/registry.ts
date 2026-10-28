@@ -26,7 +26,15 @@ export type ShortcutAction =
   | 'insertHexagon'
   | 'toggleGrid'
   | 'zoomToSelection'
-  | 'resetZoom';
+  | 'resetZoom'
+  | 'alignLeft'
+  | 'alignRight'
+  | 'alignTop'
+  | 'alignBottom'
+  | 'alignCenterH'
+  | 'alignMiddleV'
+  | 'distributeH'
+  | 'distributeV';
 
 export type Platform = 'mac' | 'other';
 export type ShortcutGroup = 'navigate' | 'select' | 'edit' | 'insert' | 'arrange' | 'history' | 'help';
@@ -89,6 +97,14 @@ export const SHORTCUTS: readonly ShortcutBinding[] = [
     viewerVisible: true,
   },
   { action: 'resetZoom', chords: [], label: 'Reset zoom', group: 'navigate', mutating: false, viewerVisible: true },
+  { action: 'alignLeft', chords: ['mod+shift+ArrowLeft'], label: 'Align left', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'alignRight', chords: ['mod+shift+ArrowRight'], label: 'Align right', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'alignTop', chords: ['mod+shift+ArrowUp'], label: 'Align top', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'alignBottom', chords: ['mod+shift+ArrowDown'], label: 'Align bottom', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'alignCenterH', chords: [], label: 'Align centre (horizontal)', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'alignMiddleV', chords: [], label: 'Align middle (vertical)', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'distributeH', chords: [], label: 'Distribute horizontally', group: 'arrange', mutating: true, viewerVisible: false },
+  { action: 'distributeV', chords: [], label: 'Distribute vertically', group: 'arrange', mutating: true, viewerVisible: false },
 ];
 
 /** Letters held back for later features; `matchShortcut` ignores them and the duplicate guard protects them. */

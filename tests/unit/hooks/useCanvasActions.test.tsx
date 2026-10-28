@@ -25,6 +25,7 @@ const h = vi.hoisted(() => {
       addNodes: vi.fn(() => log.push('addNodes')),
       addEdge: vi.fn(() => log.push('addEdge')),
       addNode: vi.fn(() => log.push('addNode')),
+      moveNodes: vi.fn(() => log.push('moveNodes')),
     },
     batch: vi.fn((fn: () => void) => {
       log.push('batch:start');
@@ -226,6 +227,18 @@ describe('useCanvasActions clipboard and insertion (F10 v2)', () => {
     expect(h.mutations.addNode).toHaveBeenCalledWith('rectangle', { x: 800 - 90, y: 600 - 40 });
     actions(null).insertShape('circle');
     expect(h.mutations.addNode).toHaveBeenLastCalledWith('circle', { x: 800 - 48, y: 600 - 48 });
+  });
+
+  it('align moves through one moveNodes call, and writes nothing for a single node (AC-036 hook half, EC-021)', () => {
+    const at = (id: string, x: number) => ({ ...n(id, true), position: { x, y: 0 } });
+    h.state.nodes = [at('X', 0), at('Y', 300)];
+    actions().align('left');
+    expect(h.mutations.moveNodes).toHaveBeenCalledExactlyOnceWith([{ id: 'Y', position: { x: 0, y: 0 } }]);
+    vi.clearAllMocks();
+    h.state.nodes = [at('X', 0), { ...at('Y', 300), selected: false }];
+    actions().align('left');
+    actions().distribute('h');
+    expect(h.mutations.moveNodes).not.toHaveBeenCalled();
   });
 
   it('undo/redo are ignored mid-drag or mid-resize (FR-025, AC-041 unit)', () => {

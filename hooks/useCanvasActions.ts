@@ -4,6 +4,7 @@ import { useRedo, useRoom, useUndo } from '@liveblocks/react/suspense';
 import { type EdgeChange, type NodeChange, useReactFlow, useStoreApi, type XYPosition } from '@xyflow/react';
 import { useMemo } from 'react';
 
+import { useArrange } from '@/hooks/useArrange';
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
 import type { PointerRef } from '@/hooks/usePointerPosition';
 import {
@@ -16,6 +17,7 @@ import {
   serializeSelection,
   writeClipboardText,
 } from '@/lib/canvas/clipboard';
+import type { AlignMode, Axis } from '@/lib/canvas/align';
 import { centredDropPosition } from '@/lib/canvas/drop-position';
 import { duplicateSelection } from '@/lib/canvas/duplicate';
 import { textInserter, textMaxLength } from '@/lib/canvas/kinds';
@@ -53,6 +55,10 @@ export interface CanvasActions {
   zoomToSelection(): void;
   /** Zoom to 100 % (the control bar readout). */
   resetZoom(): void;
+  /** Aligns the selected, unlocked nodes (needs >= 2); one undo entry, nothing written when nothing moves. */
+  align(mode: AlignMode): void;
+  /** Spreads the selected, unlocked nodes with equal gaps (needs >= 3); one undo entry. */
+  distribute(axis: Axis): void;
 }
 
 const ZOOM = { duration: 200 } as const;
@@ -131,6 +137,30 @@ export function runAction(action: ShortcutAction, actions: CanvasActions): boole
     case 'resetZoom':
       actions.resetZoom();
       return true;
+    case 'alignLeft':
+      actions.align('left');
+      return true;
+    case 'alignRight':
+      actions.align('right');
+      return true;
+    case 'alignTop':
+      actions.align('top');
+      return true;
+    case 'alignBottom':
+      actions.align('bottom');
+      return true;
+    case 'alignCenterH':
+      actions.align('centerH');
+      return true;
+    case 'alignMiddleV':
+      actions.align('middleV');
+      return true;
+    case 'distributeH':
+      actions.distribute('h');
+      return true;
+    case 'distributeV':
+      actions.distribute('v');
+      return true;
     default: {
       const unreachable: never = action;
       return unreachable;
@@ -150,6 +180,7 @@ export function useCanvasActions(openCheatSheet: () => void, pointer: PointerRef
   const undo = useUndo();
   const redo = useRedo();
   const room = useRoom();
+  const arrange = useArrange();
 
   return useMemo<CanvasActions>(() => {
     const { canEdit } = mutations;
@@ -297,6 +328,12 @@ export function useCanvasActions(openCheatSheet: () => void, pointer: PointerRef
         else void rf.fitView({ ...FIT, nodes: selected.map((n) => ({ id: n.id })) });
       },
       resetZoom: () => void rf.zoomTo(1, ZOOM),
+      align(mode) {
+        if (canEdit) arrange.align(mode);
+      },
+      distribute(axis) {
+        if (canEdit) arrange.distribute(axis);
+      },
     };
-  }, [store, rf, mutations, undo, redo, room, openCheatSheet, pointer]);
+  }, [store, rf, mutations, undo, redo, room, arrange, openCheatSheet, pointer]);
 }

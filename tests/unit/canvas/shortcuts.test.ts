@@ -81,6 +81,7 @@ describe('cheat-sheet copy (F10 AC-019)', () => {
       'Copy / Cut / Paste',
       'Add shape at pointer',
       'Grid',
+      'Align',
       'Zoom to selection',
     ]);
     expect(SHORTCUT_ROWS.filter((r) => r.viewerVisible).map((r) => r.action)).toEqual([

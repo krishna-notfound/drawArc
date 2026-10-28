@@ -7,11 +7,17 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import type { CanvasActions } from '@/hooks/useCanvasActions';
-import { formatKeys, isEditableTarget, type Platform } from '@/lib/canvas/shortcuts';
+import { type CanvasActions, runAction } from '@/hooks/useCanvasActions';
+import { useMovableSelectedCount } from '@/hooks/useArrange';
+import { ariaKeyShortcuts, bindingFor, formatKeys, type ShortcutAction } from '@/lib/canvas/registry';
+import { isEditableTarget, type Platform } from '@/lib/canvas/shortcuts';
 import type { CanvasEdge, CanvasNode } from '@/types/canvas';
 
 export type ContextTarget =
@@ -40,7 +46,107 @@ export function resolveContextTarget(el: Element): ContextTarget | null {
 }
 
 const ITEM = 'rounded-lg text-copy-primary focus:bg-subtle focus:text-copy-primary';
+const DANGER = 'text-error focus:text-error';
 const HINT = 'tracking-normal text-copy-faint';
+const PANEL = 'min-w-44 rounded-xl border-surface-border bg-elevated p-1 text-copy-primary shadow-xl';
+
+export type MenuEntry =
+  | { kind: 'item'; action: ShortcutAction; danger?: boolean }
+  | { kind: 'separator' }
+  | { kind: 'submenu'; label: 'Align'; items: MenuEntry[] };
+
+export interface MenuContext {
+  canEdit: boolean;
+  /** Selected nodes that are not `data.locked`: the Align submenu needs 2, its distribute items 3. */
+  movableSelected: number;
+}
+
+const SEPARATOR: MenuEntry = { kind: 'separator' };
+const item = (action: ShortcutAction, danger = false): MenuEntry => ({ kind: 'item', action, ...(danger ? { danger } : {}) });
+
+/** Drops absent entries and separators that would lead, trail or double up. */
+function collapse(entries: readonly (MenuEntry | null)[]): MenuEntry[] {
+  const out: MenuEntry[] = [];
+  for (const entry of entries) {
+    if (entry === null) continue;
+    if (entry.kind === 'separator' && (out.length === 0 || out[out.length - 1]!.kind === 'separator')) continue;
+    out.push(entry);
+  }
+  while (out.length > 0 && out[out.length - 1]!.kind === 'separator') out.pop();
+  return out;
+}
+
+/**
+ * The v2 menu for a target (F10 v2 FR-014 UX): entries are registry actions, so label, hint and `aria-keyshortcuts`
+ * are never written here; predicates omit items that cannot apply and the separators around them collapse.
+ */
+export function menuEntries(target: ContextTarget, ctx: MenuContext): MenuEntry[] {
+  if (target.kind === 'edge') return [item('delete', true)];
+  if (target.kind === 'pane') {
+    return collapse([
+      ctx.canEdit ? item('paste') : null,
+      ctx.canEdit ? item('selectAll') : null,
+      item('fitView'),
+      item('zoomToSelection'),
+      item('cheatSheet'),
+    ]);
+  }
+  const align: MenuEntry | null =
+    ctx.movableSelected >= 2
+      ? {
+          kind: 'submenu',
+          label: 'Align',
+          items: collapse([
+            item('alignLeft'),
+            item('alignCenterH'),
+            item('alignRight'),
+            item('alignTop'),
+            item('alignMiddleV'),
+            item('alignBottom'),
+            ctx.movableSelected >= 3 ? SEPARATOR : null,
+            ctx.movableSelected >= 3 ? item('distributeH') : null,
+            ctx.movableSelected >= 3 ? item('distributeV') : null,
+          ]),
+        }
+      : null;
+  return collapse([
+    item('copy'),
+    item('cut'),
+    item('paste'),
+    item('duplicate'),
+    SEPARATOR,
+    align,
+    item('zoomToSelection'),
+    SEPARATOR,
+    item('delete', true),
+  ]);
+}
+
+function renderEntries(entries: readonly MenuEntry[], actions: CanvasActions, platform: Platform): ReactNode {
+  return entries.map((entry, index) => {
+    if (entry.kind === 'separator') return <ContextMenuSeparator key={`sep-${index}`} />;
+    if (entry.kind === 'submenu') {
+      return (
+        <ContextMenuSub key={entry.label}>
+          <ContextMenuSubTrigger className={ITEM}>{entry.label}</ContextMenuSubTrigger>
+          <ContextMenuSubContent className={PANEL}>{renderEntries(entry.items, actions, platform)}</ContextMenuSubContent>
+        </ContextMenuSub>
+      );
+    }
+    const hint = formatKeys(entry.action, platform);
+    return (
+      <ContextMenuItem
+        key={entry.action}
+        className={entry.danger ? `${ITEM} ${DANGER}` : ITEM}
+        aria-keyshortcuts={ariaKeyShortcuts(entry.action) || undefined}
+        onSelect={() => void runAction(entry.action, actions)}
+      >
+        {bindingFor(entry.action).label}
+        {hint ? <ContextMenuShortcut className={HINT}>{hint}</ContextMenuShortcut> : null}
+      </ContextMenuItem>
+    );
+  });
+}
 
 export interface CanvasContextMenuProps {
   actions: CanvasActions;
@@ -62,6 +168,7 @@ export function CanvasContextMenu({ actions, platform, children }: CanvasContext
   const reissuing = useRef(false);
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<ContextTarget>({ kind: 'pane' });
+  const movableSelected = useMovableSelectedCount();
 
   // EC-013: the element the menu was opened on disappeared (deleted remotely) — close the menu.
   const targetGone = useStore((s) =>
@@ -113,8 +220,6 @@ export function CanvasContextMenu({ actions, platform, children }: CanvasContext
     }
   };
 
-  const hint = (text: string) => <ContextMenuShortcut className={HINT}>{text}</ContextMenuShortcut>;
-
   return (
     <ContextMenu open={open} onOpenChange={setOpen}>
       <ContextMenuTrigger asChild>
@@ -131,36 +236,9 @@ export function CanvasContextMenu({ actions, platform, children }: CanvasContext
       <ContextMenuContent
         collisionPadding={8}
         aria-label="Canvas actions"
-        className="min-w-44 rounded-xl border-surface-border bg-elevated p-1 text-copy-primary shadow-xl"
+        className={PANEL}
       >
-        {target.kind === 'node' || target.kind === 'selection' ? (
-          <>
-            <ContextMenuItem className={ITEM} onSelect={actions.duplicateSelection}>
-              Duplicate{hint(formatKeys('duplicate', platform))}
-            </ContextMenuItem>
-            <ContextMenuItem className={`${ITEM} text-error focus:text-error`} onSelect={actions.deleteSelection}>
-              Delete{hint(formatKeys('delete', platform))}
-            </ContextMenuItem>
-          </>
-        ) : target.kind === 'edge' ? (
-          <ContextMenuItem className={`${ITEM} text-error focus:text-error`} onSelect={actions.deleteSelection}>
-            Delete{hint(formatKeys('delete', platform))}
-          </ContextMenuItem>
-        ) : (
-          <>
-            {actions.canEdit ? (
-              <ContextMenuItem className={ITEM} onSelect={actions.selectAll}>
-                Select all{hint(formatKeys('selectAll', platform))}
-              </ContextMenuItem>
-            ) : null}
-            <ContextMenuItem className={ITEM} onSelect={actions.fitView}>
-              Fit view{hint(formatKeys('fitView', platform))}
-            </ContextMenuItem>
-            <ContextMenuItem className={ITEM} onSelect={actions.openCheatSheet}>
-              Keyboard shortcuts{hint(formatKeys('cheatSheet', platform))}
-            </ContextMenuItem>
-          </>
-        )}
+        {renderEntries(menuEntries(target, { canEdit: actions.canEdit, movableSelected }), actions, platform)}
       </ContextMenuContent>
     </ContextMenu>
   );
