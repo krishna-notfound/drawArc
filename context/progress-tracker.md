@@ -69,7 +69,7 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 23 | grouping-locking-and-z-order | M1.5 | planned (D-052) |
 | 24 | images-on-canvas | M1.5 | planned (D-052) |
 | 25 | element-library | M1.5 | planned (D-052) |
-| 26 | landing-page | M1 | Approved (2026-10-28, D-066) — in progress |
+| 26 | landing-page | M1 | Verification (2026-10-28) — awaiting owner review |
 | 27 | custom-auth-ui | M1 | planned (D-052) |
 | 28 | lines-and-free-arrows | M1.5 | planned (D-052) |
 

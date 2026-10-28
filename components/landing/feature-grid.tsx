@@ -1,7 +1,7 @@
 import { LayoutTemplate, Share2, Shapes, Sparkles, Type, Users, type LucideIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 import { LANDING_COPY, type FeatureId } from './copy';
 
@@ -15,6 +15,8 @@ const ICONS: Record<FeatureId, LucideIcon> = {
   ai: Sparkles,
 };
 
+// Flat card (no CardHeader/CardContent): their long default class lists are serialised twice (HTML and the flight
+// payload) and would push the document past the 40 KB budget (FR-014).
 export function FeatureGrid(): React.JSX.Element {
   return (
     <section aria-labelledby="features-heading" className="py-16">
@@ -25,19 +27,15 @@ export function FeatureGrid(): React.JSX.Element {
         {LANDING_COPY.features.map((feature) => {
           const Icon = ICONS[feature.id];
           return (
-            <Card key={feature.id} className="gap-3 rounded-2xl border-surface-border bg-surface py-5">
-              <CardHeader className="gap-3 px-5">
-                <Icon className="h-5 w-5 text-brand" aria-hidden="true" />
-                <h3 className="font-semibold text-copy-primary">{feature.title}</h3>
-                {feature.comingSoon ? (
-                  <Badge variant="outline" className="text-copy-secondary">
-                    {LANDING_COPY.comingSoon}
-                  </Badge>
-                ) : null}
-              </CardHeader>
-              <CardContent className="px-5">
-                <p className="text-sm text-copy-secondary">{feature.body}</p>
-              </CardContent>
+            <Card key={feature.id} className="gap-3 rounded-2xl border-surface-border bg-surface px-5 py-5">
+              <Icon className="h-5 w-5 text-brand" aria-hidden="true" />
+              <h3 className="font-semibold text-copy-primary">{feature.title}</h3>
+              {feature.comingSoon ? (
+                <Badge variant="outline" className="self-start text-copy-secondary">
+                  {LANDING_COPY.comingSoon}
+                </Badge>
+              ) : null}
+              <p className="text-sm text-copy-secondary">{feature.body}</p>
             </Card>
           );
         })}
