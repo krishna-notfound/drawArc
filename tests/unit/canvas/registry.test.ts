@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  ariaKeyShortcuts,
+  bindingFor,
+  checkRegistry,
+  cheatSheetKeys,
+  formatKeys,
+  KEYLESS,
+  matchShortcut,
+  RESERVED_CHORDS,
+  SHORTCUTS,
+  type ShortcutAction,
+} from '@/lib/canvas/registry';
+
+const key = (k: string, mods: Partial<Record<'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey', boolean>> = {}, code = '') => ({
+  key: k,
+  code,
+  ctrlKey: false,
+  metaKey: false,
+  shiftKey: false,
+  altKey: false,
+  ...mods,
+});
+
+describe('registry (F10 AC-025)', () => {
+  it('has no duplicate chord across SHORTCUTS and RESERVED_CHORDS, and every keyed action has a chord', () => {
+    const all = [...SHORTCUTS.flatMap((b) => b.chords), ...Object.keys(RESERVED_CHORDS)];
+    expect(new Set(all).size).toBe(all.length);
+    for (const b of SHORTCUTS) expect(b.chords.length > 0 || KEYLESS.has(b.action), b.action).toBe(true);
+    expect(() => checkRegistry(SHORTCUTS, RESERVED_CHORDS)).not.toThrow();
+    expect(() => checkRegistry([...SHORTCUTS, { ...bindingFor('undo'), chords: ['mod+a'] }], RESERVED_CHORDS)).toThrow(/Duplicate chord "mod\+a"/);
+    expect(() => checkRegistry(SHORTCUTS, { ...RESERVED_CHORDS, Escape: 'x' })).toThrow(/"Escape"/);
+  });
+
+  it('keeps the ten v1 labels verbatim and renders W3C aria strings', () => {
+    const v1: [ShortcutAction, string, string][] = [
+      ['undo', '⌘Z', 'Ctrl+Z'],
+      ['redo', '⌘⇧Z', 'Ctrl+Shift+Z'],
+      ['selectAll', '⌘A', 'Ctrl+A'],
+      ['duplicate', '⌘D', 'Ctrl+D'],
+      ['zoomIn', '+', '+'],
+      ['zoomOut', '−', '−'],
+      ['fitView', 'Shift+1', 'Shift+1'],
+      ['clearSelection', 'Esc', 'Esc'],
+      ['delete', 'Del', 'Del'],
+      ['cheatSheet', '?', '?'],
+    ];
+    for (const [action, mac, other] of v1) {
+      expect(formatKeys(action, 'mac')).toBe(mac);
+      expect(formatKeys(action, 'other')).toBe(other);
+    }
+    expect(ariaKeyShortcuts('redo')).toBe('Control+Shift+z Meta+Shift+z');
+    expect(ariaKeyShortcuts('zoomIn')).toBe('Plus =');
+    expect(ariaKeyShortcuts('fitView')).toBe('Shift+1');
+    expect(cheatSheetKeys('redo')).toBe('⌘/Ctrl+Shift+Z');
+  });
+
+  it('matchShortcut: code chords, symbols ignore shift, reserved letters are inert (AC-027 pure)', () => {
+    expect(matchShortcut(key('!', { shiftKey: true }, 'Digit1'))).toBe('fitView');
+    expect(matchShortcut(key('+', { shiftKey: true }))).toBe('zoomIn');
+    expect(matchShortcut(key('Z', { ctrlKey: true, shiftKey: true }))).toBe('redo');
+    for (const k of ['t', 'n', 'f', 'x', 'i', 'k']) expect(matchShortcut(key(k)), k).toBeNull();
+    expect(matchShortcut(key('r', { ctrlKey: true }))).toBeNull();
+    expect(matchShortcut(key('h', { altKey: true }))).toBeNull();
+    expect(matchShortcut(key('R', { shiftKey: true }))).toBeNull();
+  });
+});
