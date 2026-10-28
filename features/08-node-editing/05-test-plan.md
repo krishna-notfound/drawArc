@@ -54,3 +54,45 @@ Not applicable — no new route or Server Action. Viewer write rejection at the 
 - Visual quality of resize handles, toolbar placement and glow (AC-007, AC-016) — manual screenshots.
 - Role downgrade mid-edit (EC-010) — the downgrade flow belongs to F12; here the unit test for the editor's `canEdit` prop flipping to false (editor closes without commit) is included in TC-004's file as an extra case, but the end-to-end KICK path is tested in F12.
 - Touch double-tap to open the editor — manual on a device; Playwright touch emulation smoke only.
+
+---
+
+## v2 — richer node editing (2026-10-28)
+
+Lean budget (testing-strategy "Test budget"): one unit file per pure helper, extensions of the existing component/E2E files, no per-control tests. `window.__rfChanges` (new hook, T-013) records every `onNodesChange` call for change-count assertions.
+
+### Unit and integration cases (v2)
+
+| TC | Verifies AC | Layer | File | Setup / data | Steps | Expected |
+|---|---|---|---|---|---|---|
+| TC-029 | AC-028 | L1 | tests/unit/canvas/fit-height.test.ts | `measureText` stubbed | call `fitHeight` with content 40 / 20 / 2 000, border 1 and 3, widths 180 and 48 | 58; current height (no shrink); 480; mirror width = w − 16 − 2·border |
+| TC-030 | AC-031, AC-041 | L1 | tests/unit/components/node-label-editor.test.tsx | nodes with and without `data.text`; mocked `replaceNode` | read computed styles at rest and in the editor; Ctrl+B + Enter; Ctrl+B + Escape; click toolbar stub while editing | xl/600/left/flex-end and v1 defaults; one call with `text.bold`; no call; commit call then option call |
+| TC-031 | AC-032 | L1 | tests/unit/components/canvas/shape-renderer.test.tsx | rectangle + hexagon, `border` variants, selected on/off | inspect `border` style / polygon attributes | per FR-021 table, `none`→solid brand when selected |
+| TC-032 | AC-033 | L1 | tests/unit/canvas/color.test.ts (extend F22's) | seeded PRNG, 1 000 hexes | `normaliseColor`, `resolveColor`, contrast | normalisation/palette-id cases; every pair ≥ 4.58; `textContrastOk` true for filled kinds, false for kind `text` + `#111114` |
+| TC-033 | AC-034, AC-035 | L1 | tests/unit/components/node-color-toolbar.test.tsx (extend) | store with 1 then 2 selected nodes (mixed border); `localStorage` mock, then throwing mock | More colours → hex input flows; six applies; text-kind refusal; mixed rendering incl. rectangle+sticky and frame cases; Tab/arrow traversal | per AC-034/035; storage failure swallowed |
+| TC-034 | AC-036 (unit half) | L1 | tests/unit/hooks/useCanvasMutations.test.tsx (extend) | 3 nodes | `updateNodesData(ids, patchFn)` | one `triggerNodeChanges` call with 3 `replace` items carrying distinct `height`s |
+| TC-035 | AC-030 (prop half), T-008 | L1 + L2 | tests/unit/components/canvas/node-resizer.test.tsx; tests/integration/liveblocks/flow-resize-and-batch.test.tsx (extend) | `NodeResizer` mocked for props; dev server for the spike | emit `onResize` with `sourceEvent.shiftKey`; measure `minHeight`; spike (a)(b)(c) | `keepAspectRatio` follows Shift; `minHeight` ≥ fit; spike results recorded in status.md |
+
+### End-to-end cases (`tests/e2e/node-editing.spec.ts`, extend)
+
+| TC | Verifies AC | Layer | Setup / data | Steps | Expected |
+|---|---|---|---|---|---|
+| TC-036 | AC-025, AC-026 | L3 | hexagon 160 × 110; F10 merged | drag with Shift mid-drag; Shift held across the whole gesture; Shift+drag on pane | 240 × 165; no selection box; box-select intact |
+| TC-037 | AC-027 (P3) | L3 | rectangle at (100,100) | Alt-drag right handle +40; undo | 260 × 80 at (60,100); restored in one undo |
+| TC-038 | AC-030 | L3 | node with long label at width 300 | resize to width 100; release; undo | height = fitted; one undo restores width + height (or two — recorded) |
+| TC-039 | AC-036, AC-037 | L3 | 3 nodes, widths 180/100/60 | box-select; XL; undo; drag all by (120,60); undo | one change set; distinct heights; one undo each |
+
+### Collaboration cases (`tests/e2e/node-editing-collab.spec.ts`, extend — mandatory)
+
+| TC | Verifies AC | Layer | Setup / data | Steps | Expected |
+|---|---|---|---|---|---|
+| TC-040 | AC-029 | L3 | A, B editors; `__rfChanges` on both | A commits a 6-line label | A: one `replace` with new height; undo restores both; B: zero changes for X |
+| TC-041 | AC-038 | L3 | A owner, B viewer | A sets border/text/hex; B inspects; B calls `updateNodesData` | identical computed styles on B; no toolbar; A unchanged after 2 s |
+| TC-042 | AC-040 | L3 | A, B editors; v1 fixture | A dashed + B hex within 100 ms; load v1 fixture | both land ≤ 1 s; v1 styles identical; no change emitted for 2 s |
+| TC-043 | AC-039 | Manual | preview | zoom 0.5/1/2; viewport 1280 and 700 px | screenshots in status.md |
+
+### Not tested automatically (and why)
+
+- Visual legibility of dashed borders and toolbar layout (AC-039) — manual screenshots.
+- Alt-from-centre (TC-037) exists only if FR-016 is approved.
+- Font rendering differences across OSes in `measureText` — F22 owns the mirror; F08 tests stub it (TC-029) and rely on F22's AC for pixel accuracy.

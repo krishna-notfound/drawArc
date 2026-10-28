@@ -15,11 +15,15 @@ Numbered in dependency order. Each folder follows [`context/feature-spec-templat
          │        │   ├─ 08 node-editing ──┐
          │        │   └─ 09 edges-and-connections ─┤
          │        │                                 └─ 10 canvas-ergonomics-and-keyboard
+         │        │                                      └─ 22 text-and-sticky-notes (M1.5; needs 07, 08, 10; ships canvas schema v2, D-057)
+         │        │                                           ├─ 23 grouping-locking-and-z-order · 24 images-on-canvas · 28 lines-and-free-arrows  (planned, D-052)
+         │        │                                           └─ 25 element-library (planned, D-052; also needs 10 paste helper, 19 envelope)
          │        ├─ 11 presence-and-cursors
          │        ├─ 13 persistence-and-recovery
          │        └─ 14 starter-templates (needs 07, 09)
          └─ 12 sharing-and-access-control (needs 04, 05)
 15 observability-and-deployment (needs 00–14; closes M1)
+26 landing-page (M1, post-F15; needs 01; supersedes F02 FR-005, D-052) · 27 custom-auth-ui (planned, D-062/D-064; needs 02, 26)
 16 ai-sidebar-and-room-chat (M2; needs 11)
 └─ 17 ai-design-agent (M2; needs 16, 13)
    └─ 18 spec-generation (M3; needs 17)
@@ -52,6 +56,13 @@ Numbered in dependency order. Each folder follows [`context/feature-spec-templat
 | 19 | `19-import-export` | Future | 13 | — |
 | 20 | `20-public-share-links` | Future | 12 | — |
 | 21 | `21-freehand-strokes` | Future | 07 | — |
+| 22 | `22-text-and-sticky-notes` | M1.5 — canvas richness | 07, 08, 10 | PRD-021, PRD-023, PRD-024, PRD-030; NFR-003, NFR-004, NFR-006 |
+| 23 | `23-grouping-locking-and-z-order` | M1.5 — canvas richness | 22 | planned (D-052) — overview pending |
+| 24 | `24-images-on-canvas` | M1.5 — canvas richness | 22, 13 | planned (D-052) — overview pending |
+| 25 | `25-element-library` | M1.5 — canvas richness | 22, 10, 19 | planned (D-052) — overview pending |
+| 26 | `26-landing-page` | M1 (post-F15) | 01 (supersedes F02 FR-005) | PRD-001, NFR-006 |
+| 27 | `27-custom-auth-ui` | M1 (post-F15) | 02, 26 | planned (D-052) — overview pending |
+| 28 | `28-lines-and-free-arrows` | M1.5 — canvas richness | 22, 09 | planned (D-052) — overview pending |
 
 ## Status vocabulary
 

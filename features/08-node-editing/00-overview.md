@@ -62,3 +62,44 @@ Out of scope / non-goals:
 - Research: `research/react-flow.md` §5 (NodeResizer props; **how size is stored**: `NodeDimensionChange { dimensions, resizing, setAttributes }` → `width`/`height` set on the node, S44/S38), §6 (NodeToolbar `nodeId: string | string[]`, hidden for multi-select unless `isVisible`, does not scale), §7 (no built-in text editor; `nodrag`/`nowheel`/`nopan`; built-in Backspace/arrow keys — editors must stop propagation), §9 — checked 2026-10-22. `research/liveblocks.md` §1 (width/height synced; "Drags and resizes collapse into a single undo entry"; `updateNode` no-op if id missing), §2 (per-key LWW), §3 (undo per client, no rebase) — checked 2026-10-22.
 - Reference prompts (intent only): `No_touch_ai/.../14-node-editing.md`, `15-node-color-toolbar.md`.
 - Reference bug context: `current-issues-workspace-implementation.md` §2 (deletion must bypass `deleteKeyCode`; typing must never delete).
+
+---
+
+## v2 — richer node editing (2026-10-28)
+
+> Increment to the shipped v1 (PR #13). v1 requirements FR-001–FR-014 are unchanged; v2 continues the numbering (FR-015+, EC-014+, AC-025+, T-008+, TC-029+). Sources: `docs/research/excalidraw/00-summary.md` rows R-007, R-008, R-024, R-027, R-028, R-029, R-031, R-048 (all "Upgrade F08"); decisions D-052, D-053, D-057, D-063.
+
+| Field | Value |
+|---|---|
+| Depends on (v2) | **F22** (schema v2 migration, D-057 — merged first; F08 v2 only reads/writes fields F22 reserves), F10 FR-008 (`selectionKeyCode="Shift"`), F13 (persisted `height` is the rendered height) |
+| Depended on by (v2) | F22 text/sticky nodes reuse the text options and the properties toolbar; F19 PNG export renders borders/text options; F17 agent nodes may set them |
+| Product requirements | PRD-022, PRD-023, PRD-024 (extended); NFR-006 |
+
+### Purpose (v2)
+Daily-feel upgrades from the Excalidraw research: Shift keeps the aspect ratio while resizing, a node grows to fit its label instead of clipping at five lines, per-node text options (size, alignment, bold), border style and width, custom hex colours with a contrast guard, and one compact properties toolbar replacing the colour-only toolbar. Everything still writes through `useCanvasMutations`; every user action remains one undo step.
+
+### Goals (v2)
+- G-6: Shift during a resize drag keeps the drag-start aspect ratio for every shape; Shift outside a resize drag still box-selects (F10 FR-008).
+- G-7: a label commit, text-option change or resize never leaves text clipped while the node is under the height cap; the fitted height lands in the same undo step as its cause.
+- G-8: every node colour, palette id or hex, renders its label at ≥ 4.5:1 (NFR-006).
+- G-9: a property change on N selected nodes is one write and one undo step; a multi-node drag is one undo step.
+
+### Scope (v2)
+In: FR-015–FR-027 (01-requirements). Out / non-goals: fonts other than Geist (never, 01§X8); rich text or per-run formatting (never); rotation (P3, 01§R2 — later increment, needs a schema `rotation` field); sketchy style (P3, D-052); eyedropper (R-062, browser `EyeDropper` API UNVERIFIED — skipped); union-bounding-box group resize (R-024/01§S7, P3 — v2 only guarantees batched mutations); copy/paste styles (R-030 → F10 upgrade); font-size shortcuts Ctrl+Shift+< / > (→ F10 upgrade; v2 defines the toolbar only); remembered style for new nodes (03§F-40, P3).
+
+### User stories (v2)
+- US-9: As an editor I hold Shift while dragging a corner so a hexagon keeps its proportions.
+- US-10: As an editor I type a long label and the node grows downward so nothing is cut off; when I make it narrower it grows taller.
+- US-11: As an editor I make a title node large and bold, left-align a list node, and dash the border of an "optional" component.
+- US-12: As an editor I paste `#0f766e` from my brand sheet and the label stays legible without my choosing a text colour.
+- US-13: As an editor with six nodes selected I see "—" where their values differ and one click sets all six.
+- US-14 (failure): As a viewer I see borders, text options and custom colours rendered, but never the toolbar, and my writes are rejected.
+
+### Decisions referenced / proposed (v2)
+- D-053 (Esc cancels — unchanged), D-057 (schema v2 owned by F22), D-063 (hex + contrast guard), D-013 (one undo step per gesture), D-08b (one toolbar for the selection — extended).
+- **PROPOSED D-08e — Auto-grow writes the fitted height in the same change (or paused history span) as its cause** — label commit, text-option change, resize end — measured in the DOM, never per keystroke; a node never auto-shrinks; the resizer's `minHeight` equals the content height so text cannot be clipped by hand. Cap `AUTO_GROW_MAX_HEIGHT = 480`.
+- **PROPOSED D-08f — Shift (keep aspect) and Alt (from centre, P3) are read from the resize drag's `event.sourceEvent`**, not from a window key listener, so they only exist while a handle is active (01§T4 conflict with box select resolved).
+- **PROPOSED D-08g — Derived text colour for a hex fill is pure white or pure black chosen by WCAG relative luminance** (always ≥ 4.58:1, proof in 02-design); palette ids stay preferred — a hex equal to a palette fill is stored as that id. *Resolved at validation (2026-10-28): adopted as the shared `lib/canvas/color.ts` behaviour; F22 FR-004 and `context/domain-model.md` aligned (O-v2-3).*
+
+### Reference material (v2)
+`docs/research/excalidraw/01-selection-tools-text.md` §T4, §T5, §R4, §S7, §X6, §X7, §X9, §X10; `03-editing-productivity.md` §2.5 (F-31, F-32, F-33, F-36), §2.6 (F-41, F-43, F-44); `00-summary.md` §C1 (reserved v2 fields). React Flow 12.12.0 types read from `node_modules/@xyflow/react` and `@xyflow/system@0.0.83` on 2026-10-28 (02-design "Verified library facts (v2)").

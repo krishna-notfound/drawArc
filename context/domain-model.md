@@ -109,7 +109,7 @@ Capabilities:
 
 `{ id, projectId, token (hashed), role: 'viewer', expiresAt?, revokedAt?, createdById }`. Reserved so `getProjectRole` has one extension point. Not in the M1 schema.
 
-## Canvas schema v1 (PROPOSED → frozen at feature 06 approval)
+## Canvas schema v1 (frozen 2026-10-24 at F06 approval; superseded by v2 below — kept as history)
 
 Defined in `types/canvas.ts` and validated in `lib/canvas/schema.ts`.
 
@@ -141,6 +141,48 @@ Rules:
 - Node and edge ids: `${shape}_${ulid}` / `e_${ulid}` — unique across clients and agent runs.
 - Templates (feature 14) and agent output (feature 17) must validate against the same Zod schema.
 - Any change to this shape bumps `schemaVersion` and adds a migration `migrateV{n}ToV{n+1}(doc)` in `lib/canvas/schema.ts`; loading always migrates to current before seeding the room.
+
+## Canvas schema v2 (PROPOSED → frozen at F22 approval; D-057, 2026-10-28)
+
+One migration, `migrateV1ToV2(doc)` = `{ ...doc, schemaVersion: 2 }`, reserves every field the batch-1–3 features need. Every new field is **optional with a per-kind default**, so v1 documents load unchanged and F21/F23/F24/F28 and the F08/F09 upgrades change behaviour only, never the version. Full contracts: `features/22-text-and-sticky-notes/02-design.md`.
+
+```ts
+export const CANVAS_SCHEMA_VERSION = 2 as const;
+export const NODE_SHAPES = [...six geometric shapes] as const;                       // unchanged; F07 palette
+export const NODE_KINDS  = [...NODE_SHAPES, 'text', 'sticky', 'line', 'freehand', 'frame', 'image'] as const;   // `data.shape` discriminator
+export const HANDLE_KINDS = [...NODE_SHAPES, 'sticky', 'image'] as const;            // only these may be edge endpoints
+
+export type NodeColor = NodeColorId | `#rrggbb`;                                    // D-063; text colour derived (pure #FFFFFF / #000000) for ≥ 4.58:1
+export type TextOptions   = { size: 's'|'m'|'l'|'xl'; align: 'left'|'center'|'right'; valign: 'top'|'middle'|'bottom'; bold: boolean };
+export type BorderOptions = { style: 'none'|'solid'|'dashed'|'dotted'; width: 1|2|3 };
+export type MarkerKind    = 'none'|'arrow'|'arrowClosed'|'circle'|'diamond'|'bar';
+
+type CommonData = { label: string; color: NodeColor; text?: TextOptions; border?: BorderOptions;
+                    locked?: boolean; groupId?: `g_${ULID}`; order?: string /* fractional index, D-056; absent sorts lowest */; href?: `http(s)://…` };
+export type CanvasNodeData =
+  | CommonData & { shape: NodeShape }
+  | CommonData & { shape: 'text'; autoWidth: boolean }                                                   // F22
+  | CommonData & { shape: 'sticky' }                                                                     // F22
+  | CommonData & { shape: 'line'; points: [x, y][] /* 2–100 */; stroke?: StrokeStyle }                   // F28
+  | CommonData & { shape: 'freehand'; points: [x, y, pressure][] /* ≤ 2000 */; strokeWidth: number /* 2–16 */ }   // F21
+  | CommonData & { shape: 'frame'; clip: boolean }                                                       // F23 (label = title)
+  | CommonData & { shape: 'image'; image: { fileId: string; status: 'pending'|'saved'|'error'; natural: { width; height } } };   // F24
+
+export type EdgeStyle = { path: 'smoothstep'|'step'|'straight'|'bezier'; dash: 'solid'|'dashed'|'dotted'; width: 1|2|3; markerStart: MarkerKind; markerEnd: MarkerKind };
+export type CanvasEdgeData = { label?: string; style?: EdgeStyle };                  // absent = today's F09 rendering
+
+export interface PersistedNode { id: `${NodeKind}_${ULID}`; type: 'canvasNode'; position; width; height; data: CanvasNodeData;
+                                 parentId?: string /* must be a frame; one level */; extent?: 'parent' }
+export interface CanvasDocument { schemaVersion: 2; nodes: PersistedNode[]; edges: PersistedEdge[] }
+```
+
+Rules added in v2 (v1 rules still apply):
+- `data.shape` stays the discriminator and is never repurposed; kinds without UI in the current app render a placeholder, never crash.
+- Minimum sizes are per kind (`MIN_SIZES`): shapes 48 × 32, text 24 × 20, sticky 75 × 75.
+- An edge endpoint must be a `HANDLE_KINDS` node; a `parentId` must reference a `frame`; frames are never nested.
+- Hex colours are `#rrggbb` only (either case accepted by the schema; writers normalise to lower-case). `lib/canvas/color.ts` — one module shared by F22 and F08 v2 — derives the text colour for a hex fill as pure `#FFFFFF` or `#000000` by WCAG relative luminance, which is always ≥ 4.58:1 (F08 D-08g; validation ruling 2026-10-28), so filled kinds need no refusal path; `textContrastOk(kind, hex)` guards only the `text` kind, whose hex is the text colour on `--bg-base`.
+- Templates, agent output (`NODE_SHAPES` only) and import envelopes validate against the v2 schema; stored v1 snapshots are migrated on read and re-saved as v2 by the next autosave.
+- A v2 document with `schemaVersion: 3` is still rejected ("newer version required").
 
 ## Liveblocks room shape
 

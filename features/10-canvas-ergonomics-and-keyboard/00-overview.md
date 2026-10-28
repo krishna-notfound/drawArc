@@ -60,3 +60,39 @@ Out of scope / non-goals:
 - `context/architecture-context.md` canvas section (`deleteKeyCode={null}`, selection props), `context/decision-log.md` D-013/D-020, `context/code-standards.md` (keyboard handlers ignore inputs).
 - Research `research/react-flow.md` §4 (selection defaults, `SelectionMode.Partial`, store-based selection, performance warning), §6 (context-menu handlers exist; example code UNVERIFIED), §8 (`zoomIn/zoomOut/fitView` with `duration`), §9 (key props, built-in a11y keys: Esc clears, arrows nudge; undo/redo/copy/duplicate/select-all not built in) — checked 2026-10-22. `research/liveblocks.md` §3 (`useUndo/useRedo/useCanUndo/useCanRedo`; per-client; cleared on reload; **undo applies the inverse without rebasing and can overwrite someone's newer value**) — checked 2026-10-22.
 - Reference prompt (intent only): `No_touch_ai/.../17-canvas-ergonomics.md.md`. Reference bug: `current-issues-workspace-implementation.md` §2.
+
+## v2 — canvas productivity (2026-10-28)
+
+Increment to the shipped v1 (PR #15). Nothing above is renumbered; v1 IDs stay valid. Source: `docs/research/excalidraw/00-summary.md` §2 C3 (clipboard format), C6 (shortcut registry) and rows R-001–R-004, R-009–R-012; findings `03-editing-productivity.md` F-02/F-03/F-04/F-06/F-08 (undo set), F-11 (clipboard), F-15/F-16/F-18 (registry, conflicts, `aria-keyshortcuts`), F-20 (tool letters), F-24 (align keys), F-28/F-29 (menu hints), F-49/F-50 (zoom readout, Shift+2), F-53 (grid); `02-arrows-groups-snapping-images-library.md` F-S03 (grid), F-S05/F-S06 (align/distribute), F-C01/F-C03/F-C06 (clipboard, paste position, re-id). Approved framing: D-052 (research adopted), D-053 (Esc cancels — kept), D-054 (duplicate stays +20/+20 — kept), D-055 (partial box select — kept), D-057 (schema v2 lands once, in F22).
+
+| Field | Value |
+|---|---|
+| Depends on (v2) | v1 (all of F10); F07 `useCanvasMutations.addNode`, `centredDropPosition`, F07 FR-007 centre placement; F06 `<ReactFlow>`/`<Background>` props (grid); `lib/canvas/schema.ts` Zod schemas and `migrate` (paste validation); **F22 optional**: the `text` node kind (plain-text paste, `T`/`N` keys) and `data.locked` (align exclusion) exist only once F22's schema v2 is merged — v2 of F10 must build and pass with or without F22 |
+| Depended on by (v2) | F19 insert-mode import (D-059) and F25 library insertion reuse the paste placement helper; F21/F23/F24 register their reserved letters (`X`, `F`, `I`) in the registry; every later feature that adds a shortcut goes through the registry |
+
+### Goals (continue v1)
+- G-6: Ctrl+C/X/V move nodes and edges within and between projects with fresh ids, remapped edges and the original relative layout, in one undo step; pasting garbage never writes.
+- G-7: a 20 px grid can be switched on per user and nodes snap to it while dragging; the choice survives reload without touching Storage.
+- G-8: two or more nodes can be aligned and three or more distributed from the keyboard, the menu and a small toolbar, one undo step each.
+- G-9: the control bar shows the zoom level, resets it in one click, and never offers a zoom step that cannot happen.
+- G-10: one registry is the only place a key binding is written; a test fails the build on the first duplicate binding; letters are reserved for node insertion before F21–F24 claim them.
+- G-11: the undo set is written down and tested: content only, never selection/viewport/grid; remote changes never clear redo.
+
+### Scope (v2)
+In: `lib/canvas/registry.ts` (single source of truth), `lib/canvas/clipboard.ts`, `lib/canvas/align.ts`, `lib/canvas/preferences.ts` (grid, localStorage), letter-key insertion, grid toggle in the control bar, zoom readout, `Shift+2`, align/distribute toolbar and menu entries, Copy/Cut/Paste menu entries, cheat-sheet rows, `aria-keyshortcuts` on every control with a binding, explicit undo-set ACs. Out (non-goals, with owner): object snapping/helper lines (R-032, P3), lasso (R-049), groups (F23), Alt+drag duplicate (R-036), node search (R-033), z-order (F23/D-056; F22 only reserves `data.order`), copy-as-PNG (F19/D-060), custom key remapping (never).
+
+### User stories (continue v1)
+- US-9: As an editor I want Ctrl+C / Ctrl+X / Ctrl+V (and the menu) to copy, cut and paste what I selected — also into another project tab — landing where my pointer is.
+- US-10: As an editor I want a grid I can switch on so dragged nodes line up, remembered per browser.
+- US-11: As an editor I want to align or evenly space a selection with one shortcut and undo it with one Ctrl+Z.
+- US-12: As any participant I want to see the zoom percentage, reset it, and jump to my selection with Shift+2.
+- US-13: As an editor I want to press `R`/`D`/`O`/`P`/`C`/`H` to drop that shape under my pointer.
+- US-14 (failure): As a viewer I must not be able to paste, cut, align or insert; as anyone, pasting text copied from a web page must never corrupt the canvas.
+
+### Key decisions (v2, PROPOSED — copy to the decision log on approval)
+- **D-10f — Clipboard transport.** Copy/cut write the JSON envelope as `text/plain` with `navigator.clipboard.writeText` (C3; custom MIME types are unreliable) and always keep an in-memory copy. Keyboard paste reads the `paste` DOM event's `clipboardData` (no permission prompt in any browser, Firefox included); menu Paste uses `navigator.clipboard.readText()` and falls back to the in-memory copy when the read is denied or unavailable. Ctrl+V is therefore listed in the registry but handled by the `paste` event, not `keydown`.
+- **D-10g — The window key listener moves to the capture phase.** React Flow's node wrapper nudges on any Arrow key and calls `preventDefault` regardless of Ctrl/Meta (VERIFIED, `@xyflow/react` 12.12.0 `index.js` ~L2312), so a bubbling listener (which skips `defaultPrevented` events) could never see Ctrl+Shift+Arrow on a focused node. Handled shortcuts call `stopPropagation()` in the capture phase; the v1 ignore rules (editable target, open overlay, `isComposing`) still run first, so Radix dialogs/menus and the F08 editors keep their keys.
+- **D-10h — Shift+2 with nothing selected fits the whole canvas** (same as Shift+1) instead of doing nothing; one label "Zoom to selection".
+- **D-10i — Grid snapping applies to drags only.** Inserted (letter key, palette) and pasted nodes are not rounded to the grid; stored positions change only when a user drags. Grid on = `<Background variant="lines">`, grid off = v1 dots.
+- **D-10j — Plain-text paste is feature-flagged by the `text` node kind.** If F22's `NODE_KINDS` (F22 FR-002, `features/22-text-and-sticky-notes/`) exists and includes `'text'`, a text node is created at the pointer through F22's `addNodeOfKind('text', pos)`; otherwise non-envelope text is ignored silently. F10 v2 reads the kind list through one `lib/canvas/kinds.ts` shim that falls back to `NODE_SHAPES`, so no F10 code path depends on F22 at build time. **Ordering rule (validation 2026-10-28):** `t`/`n` are owned by this registry (`RESERVED_CHORDS`); whichever of F10 v2 / F22 reaches `main` second does the wiring — F22 registers `addText`/`addSticky` here if the registry exists, otherwise F22 ships them on the interim `matchShortcut` path and T-009 migrates the two entries under the same action ids (F22 FR-008).
+- **D-10k — Align/distribute use the node's stored `width`/`height`** (always present when persisted, domain-model) rather than `measured`, so the pure helper is testable and identical on every client.

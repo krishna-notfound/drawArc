@@ -98,3 +98,87 @@ None (no routes/actions/events). Liveblocks: `replace` node changes; `room.batch
 | Undo is per client and does not rebase ("can overwrite someone's newer value"); `history.pause()/resume()` collapse changes into one step; `room.batch()` = one message + one undo step | https://liveblocks.io/docs/api-reference/liveblocks-react , https://liveblocks.io/docs/api-reference/liveblocks-client | checked 2026-10-22 |
 | **UNVERIFIED**: `room.batch()` wrapping the hook's `onNodesChange` yields one undo step (fallback: `history.pause/resume`). Verified in T-001. | — | — |
 | **UNVERIFIED**: `useStore` shallow-compare selector returning a new array each time — use `useStore(selector, shallow)` from `@xyflow/react` (`shallow` re-exported from zustand) — confirm export name in T-004. | — | — |
+
+---
+
+## v2 — richer node editing (2026-10-28)
+
+### Architecture and components (v2)
+
+All client-side. F22 (schema v2) must be merged first: F08 v2 consumes its types (`TextOptions`, `BorderOptions`, `NodeColor`, `DEFAULT_TEXT`, `TEXT_SIZE_PX`), its `lib/canvas/color.ts` (`resolveColor`, `textContrastOk`, `isHexColor`) and its `lib/canvas/text-measure.ts` (`measureText(mirror, { text, size, bold, width })`), and reads its `TEXT_OPTION_KINDS` predicate (six shapes, `text`, `sticky`) to decide where the toolbar's text groups apply. Nothing is redefined here.
+
+```
+components/canvas/nodes/node-resizer.tsx (modified)        ─ Shift/Alt from event.sourceEvent; dynamic minHeight; history pause/resume + fit write at end
+components/canvas/nodes/node-label.tsx (modified)          ─ typography from data.text (size/align/valign/bold); line-clamp removed, overflow hidden kept
+components/canvas/nodes/node-label-editor.tsx (modified)   ─ same typography; Ctrl/⌘+B toggles a local `bold` draft; onCommit(value, { bold })
+components/canvas/nodes/shape-renderer.tsx (modified)      ─ border style/width (CSS + SVG dasharray); fill/text via resolveColor
+components/canvas/nodes/canvas-node.tsx (modified)         ─ commit = one replace change { data, height: fit }
+components/canvas/node-properties-toolbar.tsx (renamed from node-color-toolbar.tsx) ─ the single properties toolbar for every kind (validation 2026-10-28): colour(+More) · border · text (size/bold/align/valign); F22 ships no toolbar
+components/canvas/node-hex-input.tsx (new)                 ─ hex field + recent list (localStorage), validation, aria-invalid
+lib/canvas/fit-height.ts (new)                             ─ fitHeight(node, mirror): number — pure except for the DOM read inside measureText
+hooks/useSelectedNodeIds.ts (modified)                     ─ useSelectionValue<T>(ids, pick: (data) => T): T | MIXED  (generalises useSelectionColor)
+hooks/useCanvasMutations.ts (modified)                     ─ replaceNodes(items) batched; updateNodesData gains an optional per-id patch fn for fitted heights
+app/globals.css (modified)                                 ─ toolbar divider/mixed badge; dashed outline tokens
+```
+
+### Resize modifiers (FR-015, FR-016, D-08f)
+
+```
+onResizeStart(e)  → shift = e.sourceEvent.shiftKey; alt = e.sourceEvent.altKey; history.pause()
+onResize(e, p)    → setShift(e.sourceEvent.shiftKey); setMinHeight(max(32, fitHeight({ ...node, width: p.width })))
+                    [P3] if alt: trigger [{type:'position', id, position:{x: start.x - dw/2, y: start.y - dh/2}}, {type:'dimensions', id, dimensions:{w: start.w + 2dw, h: start.h + 2dh}, resizing:true, setAttributes:true}]
+onResizeEnd(e, p) → h = clamp(p.height, fitHeight(node@p.width), 480); if h > p.height → trigger [{type:'dimensions', id, dimensions:{width:p.width, height:h}, setAttributes:'height'}]; history.resume(); setShift(false)
+<NodeResizer keepAspectRatio={shape === 'circle' || shift} minHeight={minHeight} …v1 props />
+```
+
+- The React `ResizeControl` re-runs `resizer.update({ keepAspectRatio, boundaries… })` in an effect keyed on those props, and the system drag handler reads `params.keepAspectRatio` / `params.boundaries` on every pointer move, so a state change applies on the next move (one-move lag, sub-frame). `startValues.aspectRatio` is captured at drag start, which fixes the ratio semantics in FR-015.
+- No window listener: Shift outside a drag is never observed by F08, so F10's `selectionKeyCode="Shift"` is untouched (01§T4 risk resolved).
+- `history.pause()/resume()` bracket the gesture so the post-gesture fit write joins the same undo step (Liveblocks docs; the hook's own gesture collapsing is unaffected). The pause/resume-around-the-hook interaction is VERIFIED in T-008 before anything else is built.
+
+### Auto-grow (FR-017, FR-018, D-08e)
+
+- `fitHeight(node, mirror) = clamp(MIN_SIZES[kind].height, measureText(mirror, { text: label, size, bold, width: node.width − 2·padding − 2·borderWidth }).height + 16 + 2·borderWidth, AUTO_GROW_MAX_HEIGHT)` (padding 2 × 8 px for the six shapes; F22's `text`/`sticky` keep their own commit-time sizing — F22 FR-010/FR-015 — and are not fitted by F08); `AUTO_GROW_MAX_HEIGHT = 480` in `types/canvas.ts`. The mirror is F22's single hidden element with the label typography; measurement is a synchronous DOM read (01§X10: never canvas `measureText`).
+- Label commit: `canvas-node.tsx` builds one `replace` item `{ ...node, height: max(node.height, fitHeight(nodeWithNewLabel)), data: { ...data, label, text? } }` → `replaceNode(item)`. One change, one undo step, no post-render measurement, no second write. Only the committing client writes (EC-017).
+- Toolbar text-size/bold: `updateNodesData(ids, patchFn)` where `patchFn(node)` returns `{ data: {...}, height: max(node.height, fitHeight(...)) }`; one change set (EC-020).
+- Never shrinks automatically; the resizer `minHeight` (FR-018) stops manual clipping. Persisted `height` is always the rendered height, so F13 snapshots, SSR sizing and edge anchors are unchanged; the F06 `CanvasDocumentSchema` bound `height ≥ 32` holds and no upper bound exists.
+- Interplay: a remote client receives only the final `height`; it measures nothing. v1 documents without `data.text` measure with the defaults, so their fitted height equals what v1 rendered (no write until a user acts, EC-021).
+
+### Text options, border, colour (FR-019 – FR-023)
+
+- Effective options = `{ ...DEFAULT_TEXT[shape], ...data.text }`; writes send the **whole** `text` object (F22 rule: nested per-key LWW depth is UNVERIFIED, so `data.text` is treated as one value). `data.border` likewise.
+- Label column: `display:flex; flex-direction:column; justify-content:{valign}` on the shape's content box; label and textarea get `font-size: TEXT_SIZE_PX[size]`, `font-weight: bold ? 600 : 400`, `text-align: align`. `LABEL_TYPOGRAPHY` becomes `labelTypography(text)` returning the class/style pair used by both rest and editor (FR-014 contract).
+- Border: CSS shapes → `border: {w}px {style} {colour}` (`none` → `border-color: transparent` at rest, keeping the box size stable). SVG shapes → `stroke-width={w}`, `stroke-dasharray` `6 4` (dashed) / `2 4` (dotted, schema-only) / none; `vector-effect: non-scaling-stroke` (v1). Selected: colour `--accent-primary`, width `max(2, w)`, style kept, `none` → solid.
+- Colour: `resolveColor(data.color)` → `{ fill, text, custom }`; `knownVisuals` accepts hex via `isHexColor`. WCAG relative luminance: `lin(c) = c/255 ≤ 0.03928 ? c/255/12.92 : ((c/255 + 0.055)/1.055)^2.4`; `L = 0.2126·lin(r) + 0.7152·lin(g) + 0.0722·lin(b)`; `contrast = (L_hi + 0.05)/(L_lo + 0.05)`. **Proof for D-08g (pure `#FFFFFF` / `#000000`):** the fill luminance minimising `max(contrast(white), contrast(black))` solves `1.05/(L+0.05) = (L+0.05)/0.05` → `L = 0.179`, where both equal **4.58 ≥ 4.5**: every hex is legible and `textContrastOk` never fails. With the previously drafted pair `#F0F0F4` (L ≈ 0.874) / `#111114` (L ≈ 0.006) the same minimum would be ≈ **4.08** (fills near L 0.18 such as `#757575` would need refusing), which is why it was dropped. **Resolved at validation (2026-10-28, O-v2-3): the pure pair is the shared implementation in `lib/canvas/color.ts` (F22 FR-004).** `textContrastOk(kind, hex)` remains only for the `text` kind (the hex is the text colour on `--bg-base`), which is the one case the hex input refuses (FR-023).
+- Palette preference: `normaliseColor(hex)` lower-cases and returns the palette id whose `fill` matches, else the hex. Recent list: `localStorage['drawarc:recent-colors']`, JSON array ≤ 5, hex only, read/written in `try/catch`; never in Liveblocks (03§F-40: per-user only).
+
+### Properties toolbar (FR-024, FR-025)
+
+- `useSelectionValue(ids, pick)` runs `pick(effectiveData)` per selected node via `nodeLookup`; all equal → value, else `MIXED`. Groups: colour, border style, border width, text size, bold, align, valign. Group visibility (FR-024): colour always; border groups when every selected kind is one of the six shapes; text groups when every selected kind ∈ F22 `TEXT_OPTION_KINDS`. Each group is a `role="radiogroup"` (bold: `aria-pressed` button; width: cycling button) reusing v1's `nextIndex` roving logic; a `—` badge (`aria-label="Mixed"`) appears per mixed group.
+- One `<NodeToolbar nodeId={ids} isVisible position={Position.Top} offset={12} align="center" className="nodrag nopan">`; the "More colours" row expands inside it (no Popover: `components/ui` has none and `@radix-ui/react-popover` would need owner approval).
+- The v1 rule stands: a toolbar pointerdown blurs the textarea and commits the draft first (EC-008), then the option applies; the hex input is an ordinary focus target.
+- Every action → one `updateNodesData(ids, patch | patchFn)`; `patchFn(node) => Partial<CanvasNode>` supplies per-node fitted heights; still one `triggerNodeChanges` call (v1 ruling: one change call = one undo step).
+
+### Data and state ownership (v2)
+
+| State | Owner | Notes |
+|---|---|---|
+| `data.text`, `data.border`, `data.color` (id or hex) | Liveblocks Storage | Whole-object writes; per-key LWW between `text` / `border` / `color` (EC-023). |
+| Fitted `height` | Liveblocks Storage | Written only by the acting client, in the same change / history step as its cause. |
+| Shift/Alt state, `minHeight`, bold draft in the editor | Component state | Exists only during a drag / an open editor. |
+| Recent colours | `localStorage` (per browser) | Never synced; absent in private mode. |
+
+### Security and validation (v2)
+
+No server boundary changes. F22's Zod schema (v2) validates `text`, `border`, hex `color` and `height ≥ 32` at autosave/import; the toolbar only writes enum values and normalised hex; the hex input refuses anything but 3/6-digit hex. Viewer gates unchanged (FR-013/FR-027).
+
+### Verified library facts this design relies on (v2)
+
+| Fact | Source | Date checked |
+|---|---|---|
+| `NodeResizerProps` (@xyflow/react 12.12.0): `keepAspectRatio`, `minWidth/minHeight/maxWidth/maxHeight`, `shouldResize`, `onResizeStart/onResize/onResizeEnd`, `autoScale`, `handleStyle/lineStyle`, `isVisible` — **VERIFIED** | `node_modules/@xyflow/react/dist/esm/additional-components/NodeResizer/types.d.ts` | 2026-10-28 |
+| `OnResize(event: D3DragEvent, params: { x, y, width, height, direction })`; `event.sourceEvent` is the native pointer event (modifier keys readable) — **VERIFIED** | `@xyflow/system@0.0.83 dist/esm/xyresizer/types.d.ts`; `@types/d3-drag` (`sourceEvent`) | 2026-10-28 |
+| `ResizeControl` re-runs `resizer.update({ … keepAspectRatio, boundaries … })` in a `useEffect` keyed on those props; the drag handler reads `params.keepAspectRatio` / `params.boundaries` on each move; `startValues.aspectRatio` is fixed at start — **VERIFIED** (prop changes apply mid-drag) | `@xyflow/react dist/esm/index.js` ≈ L4960–4990; `@xyflow/system dist/esm/index.js` L3249–3255, L3430–3436, L3526 | 2026-10-28 |
+| `NodeDimensionChange.setAttributes?: boolean \| 'width' \| 'height'` — **VERIFIED** | `@xyflow/system dist/esm/types/changes.d.ts` L7 | 2026-10-28 |
+| A `dimensions` change emitted outside a gesture (`setAttributes:'height'`, no `resizing`) is synced by `@liveblocks/react-flow` 3.24.4 as `height` — **UNVERIFIED** (dist minified; v1 verified only the in-gesture path). Fallback: a `replace` change (v1 path). Settled in T-008. | — | — |
+| `history.pause()` at `onResizeStart` and `resume()` after the fit write collapse gesture + extra write into one undo step without breaking the hook's own collapsing — **UNVERIFIED**; fallback: accept a second undo step for the resize-end fit (recorded in status). Settled in T-008. | https://liveblocks.io/docs/api-reference/liveblocks-react (`pause`/`resume`, checked 2026-10-22) | — |
+| F22's `measureText` mirror returns the wrapped height for a given width — relies on F22's own verification (its mirror AC). | F22 02-design | — |

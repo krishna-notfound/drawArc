@@ -255,6 +255,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-066 — Batch 1 approved: F22, F26, F08 v2, F10 v2
+**APPROVED** 2026-10-28 (owner: "then start writing code using sonnet 5.5 using parallel dev"). Specs approved as validated; the 14 local decisions in `docs/research/batch1-owner-decisions.md` adopted as recommended (notably: auto-grow cap 480 px; Alt-resize-from-centre dropped; text nodes have no handles; sticky default `orange`, sizes 12/14/20/28 px; derived text colour pure `#FFFFFF`/`#000000`; F08 owns the properties toolbar; F10 registry owns T/N; `NEXT_PUBLIC_SITE_URL` for the landing page; footer links the public repo). Execution: implementation plans per `superpowers:writing-plans`, then one Sonnet 5.5 agent per feature in parallel worktrees — round A: F22 ∥ F26 ∥ F10 v2 (shim, independent of F22); round B: F08 v2 after F22 merges (needs the v2 fields).
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

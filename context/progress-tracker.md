@@ -51,9 +51,9 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 05 | realtime-room-infrastructure | M1 | Completed — merged to `main` via PR #7 (2026-10-24) |
 | 06 | base-collaborative-canvas | M1 | Completed — merged to `main` via PR #8 (2026-10-24) |
 | 07 | shapes-and-node-creation | M1 | Completed — merged to `main` via PR #10 (2026-10-24) |
-| 08 | node-editing | M1 | Completed — merged to `main` via PR #13 (2026-10-24) |
+| 08 | node-editing | M1 | Completed (v1, PR #13, 2026-10-24) · v2 Approved (2026-10-28, D-066) — in progress |
 | 09 | edges-and-connections | M1 | Completed — merged to `main` via PR #14 (2026-10-24) |
-| 10 | canvas-ergonomics-and-keyboard | M1 | Completed — merged to `main` via PR #15 (2026-10-24) |
+| 10 | canvas-ergonomics-and-keyboard | M1 | Completed (v1, PR #15, 2026-10-24) · v2 Approved (2026-10-28, D-066) — in progress |
 | 11 | presence-and-cursors | M1 | Completed — merged to `main` via PR #11 (2026-10-24) |
 | 12 | sharing-and-access-control | M1 | Completed — merged to `main` via PR #9 (2026-10-24) |
 | 13 | persistence-and-recovery | M1 | Completed — merged to `main` via PR #12 (2026-10-24) |
@@ -65,6 +65,13 @@ See [decision-log.md](decision-log.md) D-001 … D-011: product identity, milest
 | 19 | import-export | Future | deferred (overview only) |
 | 20 | public-share-links | Future | deferred (overview only) |
 | 21 | freehand-strokes | Future | deferred (overview only) |
+| 22 | text-and-sticky-notes | M1.5 | Approved (2026-10-28, D-066) — in progress |
+| 23 | grouping-locking-and-z-order | M1.5 | planned (D-052) |
+| 24 | images-on-canvas | M1.5 | planned (D-052) |
+| 25 | element-library | M1.5 | planned (D-052) |
+| 26 | landing-page | M1 | Approved (2026-10-28, D-066) — in progress |
+| 27 | custom-auth-ui | M1 | planned (D-052) |
+| 28 | lines-and-free-arrows | M1.5 | planned (D-052) |
 
 Status vocabulary (per `features/README.md`): `drafted` → `reviewed` → `approved` → `planned` → `in-progress` → `verified` → `released`; `deferred` for future packages.
 

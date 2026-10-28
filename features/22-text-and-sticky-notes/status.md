@@ -1,0 +1,30 @@
+# F22 — Status
+
+| Field | Value |
+|---|---|
+| Status | Approved — implementation authorized (2026-10-28, D-066) |
+| Spec approved | 2026-10-28, owner (D-066) |
+| Implementation authorized | 2026-10-28, owner — batch 1 |
+| Last verified | — |
+
+## History
+- 2026-10-28 — drafted by the spec writer from D-052, D-057, D-063 (and D-053, D-056, D-058) and research R-005, R-006, R-008, R-027, R-031 (`00-summary.md` §2 C1/C2/C6), `01-selection-tools-text.md` §T6, §T10, §R4, §X6, §X7, §X9, §X10, `02-…` §F-A03, `03-…` §F-41, `04-…` §B4/§D3; React Flow 12.12.0 and Zod 4.6.7 facts verified against `node_modules` on 2026-10-28. Companion edits: `context/domain-model.md` (v2 block, PROPOSED → frozen at approval) and `features/06-base-collaborative-canvas/status.md` (open-issue pointer).
+- 2026-10-28 — Approved by owner with batch 1 (D-066); the 14 local decisions in `docs/research/batch1-owner-decisions.md` adopted as recommended. Implementation authorized (Sonnet 5.5 agent, own worktree).
+
+## Evidence
+None yet.
+
+## Open issues (owner decisions needed at approval)
+- **D-22a** one React Flow node type with kind dispatch on `data.shape` (vs. separate `textNode`/`stickyNode` types). Recommend A: no change to `nodeTypes`, serialisers, F13/F14.
+- **D-22b** fixed-width text via side resize, creation always auto-width (vs. a press-T-then-drag tool mode). Recommend A; tool modes are P3 (R-047).
+- **D-22c** text nodes have no handles; sticky notes keep four (vs. handles on both). Recommend A (see 00-overview rationale); affects `HANDLE_KINDS` and the edge-endpoint rule, which also excludes `line`, `freehand`, `frame`.
+- **D-22d** every v2 field optional with per-kind defaults; `order` absent sorts lowest (vs. required `order` assigned in the migration, which needs `fractional-indexing` in F22). Recommend A; F23 assigns keys lazily.
+- **D-22e** defaults: sticky colour `orange` (alternative: a classic yellow hex such as `#FDE68A` with derived dark text — possible only because F22 ships hex rendering); font sizes `s/m/l/xl` = 12/14/20/28 px, default `m` for all kinds (Excalidraw sticky minimum is 16 px, 01§T10 — owner may prefer `l` for stickies); text/sticky default alignment left/top, shapes centre/middle.
+- Edge style vocabulary: `path` = `smoothstep | step | straight | bezier` (React Flow's four verified path helpers — the only edge-path vocabulary used in the batch-1 packages, validation 2026-10-28); `width` 1–3 with default 2 (today's CSS stroke is 1.5 px — the F09 upgrade decides whether to render 2 or keep 1.5 for the default). Marker kinds `none | arrow | arrowClosed | circle | diamond | bar` (≤ 8 per research).
+- Reserved-kind field shapes (`line.points` 2–100, `freehand.points` ≤ 2000 with pressure + `strokeWidth` 2–16, `frame.clip`, `image.{fileId,status,natural}`) are taken from the F21 draft and research; F21/F23/F24/F28 may only *use* them — any change to their shape would break D-057 and needs owner approval.
+- Resolved at validation (2026-10-28): text-options toolbar — F08 v2 owns the single properties toolbar (colour · border · text size · align) for every kind (F08 FR-024, O-v2-4); F22's toolbar was removed from 02-design/T-006 and F22 provides only `TEXT_OPTION_KINDS` / `DEFAULT_TEXT` / `TEXT_SIZE_PX` (FR-016; T-006 blocked on F08 v2 T-012). The hex colour picker (R-031) stays with F08; F22 only renders hex.
+- Resolved at validation (2026-10-28): shortcut registration — `t`/`n` are owned by F10 v2's `RESERVED_CHORDS` (`lib/canvas/registry.ts`); F22 registers through the registry if it is on `main` first, otherwise through the interim `matchShortcut` path, and F10 v2 T-009 migrates the entries (FR-008 ordering rule, F10 D-10j).
+- Resolved at validation (2026-10-28): derived text colour for hex fills — one shared `lib/canvas/color.ts`; pure `#FFFFFF`/`#000000` chosen by WCAG relative luminance (always ≥ 4.58:1, F08 D-08g) replaces the drafted `#F0F0F4`/`#111114` pair; no refusal path for filled kinds; `textContrastOk(kind, hex)` kept only for the `text` kind (hex rendered as text on `--bg-base`). FR-004, EC-003, AC-004, AC-014, TC-003 and `context/domain-model.md` updated.
+- Resolved at validation (2026-10-28): `addNodeOfKind` gained an optional `init.label` (FR-007) so F10 v2's plain-text paste (F10 FR-018) creates text nodes through F22's path; `features/README.md` and `context/progress-tracker.md` rows added (F22 under "M1.5 — canvas richness", depends on 07, 08, 10).
+- UNVERIFIED: `@liveblocks/react-flow` conflict granularity for nested `data.text` (F22 writes whole objects, so not blocking) and whether it syncs top-level `parentId`/`extent` (F23 verifies; F22 validates only); `document.fonts.ready` vs first paint (fallback designed, 02-design).
+- `context/domain-model.md` v2 block and this package's PROPOSED decisions must be copied into `context/decision-log.md` on approval (D-066+ ids assigned by the owner session).

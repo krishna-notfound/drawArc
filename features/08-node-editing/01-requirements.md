@@ -65,3 +65,66 @@
 | EC-011 | Swatch clicked with 50 nodes selected | One batched mutation; one undo entry; all 50 recoloured on both clients | AC-017 |
 | EC-012 | Resize on a node with an open editor | Resizer and editor coexist; textarea stretches with the node; no commit until Enter/blur | AC-020 (manual part) |
 | EC-013 | Offline during commit | Change queued, applied locally, sent on reconnect (liveblocks.md §8) | F07/AC-023 pattern; TC-0xx here reuses it for a label |
+
+---
+
+## v2 — richer node editing (2026-10-28)
+
+Field names below are the schema v2 fields F08 v2 needs from F22 (D-057); F08 does not define the migration. Defaults apply whenever the field is absent (every v1 document).
+
+```ts
+data.color:   NodeColorId | HexColor          // D-063; HexColor = `#${string}` validated as /^#[0-9a-fA-F]{6}$/ (F22 FR-004); F08 writes lowercase
+data.text?:   { size: 's'|'m'|'l'|'xl'; align: 'left'|'center'|'right'; valign: 'top'|'middle'|'bottom'; bold: boolean }
+              // F22 FR-003; default DEFAULT_TEXT[kind] = { size: 'm', align: 'center', valign: 'middle', bold: false } for the six shapes (= v1 rendering); text/sticky default left/top
+data.border?: { style: 'none'|'solid'|'dashed'|'dotted'; width: 1|2|3 }   // F22 FR-003; default DEFAULT_BORDER[kind] = { style: 'solid', width: 1 } for the six shapes (= v1); 'dotted' is rendered but has no UI (O-v2-6)
+// TEXT_SIZE_PX = { s: 12, m: 14, l: 20, xl: 28 } and MIN_SIZES per kind are F22's (types/canvas.ts)
+```
+
+### Functional requirements (v2)
+
+| ID | Requirement (shall-statement, testable) | Priority | Source | Acceptance criteria |
+|---|---|---|---|---|
+| FR-015 | While a resize drag is active (between `onResizeStart` and `onResizeEnd`), holding Shift shall keep the aspect ratio captured at drag start for every shape (`keepAspectRatio` true); releasing Shift mid-drag shall free the ratio again; circle stays locked regardless. Shift state shall be read from the drag event's `sourceEvent` only — no window key listener — so Shift outside a resize drag keeps its F10 FR-008 box-select meaning. | must | R-007 (01§T4), US-9, D-08f | AC-025, AC-026 |
+| FR-016 | **P3 (optional, owner decides at approval):** holding Alt during a resize drag shall resize symmetrically from the node's centre: each `onResize` emits, in the same gesture, a `NodePositionChange` shifting the origin by half the size delta and a `NodeDimensionChange` doubling the delta; the gesture remains one undo step. | should (P3) | R-048 (01§T5) | AC-027 |
+| FR-017 | On a label commit (FR-007) or a text-option change (FR-019, FR-020) the node's `height` shall be set to `clamp(currentHeight, fitHeight, 480)` where `fitHeight` = DOM-measured content height of the label at the node's current width and text options + 16 px padding + 2 × border width; the height and the data change shall be written as one `replace` change (one undo step). Height never auto-shrinks. Measurement is DOM-based (hidden measurer or the editor's textarea), never canvas `measureText` (01§X10). | must | R-008 (01§R4, X10), US-10, D-08e | AC-028, AC-029 |
+| FR-018 | During a resize the resizer's `minHeight` shall be `max(32, fitHeight(width))` recomputed on each `onResize`, so a user cannot drag the node shorter than its text; at `onResizeEnd`, if the new width made `fitHeight` exceed the height, the height shall be raised to `min(fitHeight, 480)` inside the same history step as the gesture (`history.pause()` at start, `resume()` after the fit write). Above 480 px the label clips with `overflow: hidden` (v1 behaviour, no line clamp). | must | R-008, D-08e, FR-003 | AC-028, AC-030 |
+| FR-019 | The label at rest and the editor textarea shall render `data.text`: size from F22's `TEXT_SIZE_PX` (`s`=12, `m`=14, `l`=20, `xl`=28 px — one table for every kind; line-height 1.3; Geist Sans only); `align` → `text-align`; `valign` → vertical placement of the label block inside the shape (`justify-content: flex-start / center / flex-end` on the label column); absent `data.text` renders exactly as v1 (FR-014). The FR-014 typography contract (identical rest/editor styles) is kept for every size. | must | R-027 (01§X6, X7, X9; 03§F-36), US-11 | AC-031 |
+| FR-020 | `data.text.bold` true shall render the label at font-weight 600; Ctrl/⌘+B inside the open editor shall toggle bold for that node, written with the pending draft at commit (not immediately; Esc discards it with the draft, D-053). | must (shortcut: should) | 03§F-36, US-11 | AC-031, AC-041 |
+| FR-021 | `data.border` shall render on every shape: `solid` / `dashed` (CSS `border-style`; SVG shapes `stroke-dasharray="6 4"` with `vector-effect: non-scaling-stroke`) / `none` (no outline at rest); width 1, 2 or 3 px. A selected node keeps its style but uses the brand colour at `max(2, width)` px; a `none` border shows a solid 2 px brand outline while selected so selection never depends on colour alone (NFR-006). The v1 drag ghost is unaffected. F22 reserves `dotted` (F22 FR-003); the renderer maps it to CSS `dotted` / `stroke-dasharray="2 4"` with no UI for it (O-v2-6). | must | R-028 (03§F-32, F-33), US-11 | AC-032, AC-039 |
+| FR-022 | `data.color` may be a palette id or a lowercase `#rrggbb`. For a hex, the fill is the hex and the text colour is derived by F22's `resolveColor` (`lib/canvas/color.ts`) — pure `#FFFFFF` or `#000000` by WCAG relative luminance (D-08g; formula in 02-design; resolved at validation 2026-10-28 and shared with F22 FR-004); the derived colour is never stored. A hex equal (case-insensitively) to a palette fill shall be stored as that palette id. Unknown non-hex strings render `neutral` with the v1 warning. | must | D-063, R-031 (03§F-41), US-12 | AC-033 |
+| FR-023 | The colour group of the toolbar shall add a "More colours" control that expands an inline row with: a hex `<input>` (`aria-label="Hex colour"`, `maxLength=7`, accepts `#abc`, `abc`, `#aabbcc`, `aabbcc`; normalises to `#aabbcc`; Enter applies; invalid → `aria-invalid="true"`, not applied; when the selection contains a `text`-kind node, a hex failing F22's `textContrastOk('text', hex)` against `--bg-base` is refused the same way with the tooltip "Too low contrast" — the only refusal path, since filled kinds always pass under D-08g), the current custom colour swatch, and up to 5 recent custom colours (most recent first, per browser via `localStorage` key `drawarc:recent-colors`, never synced). Applying any colour uses `updateNodesData(ids, { color })`. No eyedropper. | must | R-031 (03§F-41, F-44), R-062 (skip) | AC-034 |
+| FR-024 | `node-color-toolbar.tsx` shall become a properties toolbar (`node-properties-toolbar.tsx`, still one `<NodeToolbar nodeId={selectedIds}>`, D-08b) with groups in order, separated by 1 px dividers: Colour (v1 radiogroup + More) · Border style (`none`/`solid`/`dashed` radiogroup, icons) · Border width (one cycling button 1 → 2 → 3 px, `aria-label="Border width: N px"`) · Text size (`S M L XL` radiogroup) · Bold (toggle, `aria-pressed`) · Align (left/centre/right radiogroup) · Vertical align (top/middle/bottom radiogroup). Each radiogroup uses v1's roving tabindex; Tab moves between groups. For a mixed selection a group shows no checked item and a "—" badge (`aria-label="Mixed"`); the cycling button shows "—" and its next click sets 1 px. Buttons are 24 × 24 px; under 768 px viewport width the toolbar wraps to two rows (`flex-wrap`, max 360 px). Classes `nodrag nopan`, surface as v1. This is the **single properties toolbar for every node kind** (validation ruling 2026-10-28, O-v2-4; F22 ships none): the colour group always renders; the border groups render when every selected kind is one of the six shapes; the text groups render when every selected kind is in F22's `TEXT_OPTION_KINDS` (six shapes, `text`, `sticky`); reserved-kind placeholders get no toolbar (F22 FR-018). | must | R-029 (03§F-31), US-13, D-08b, F22 FR-016 | AC-035, AC-039 |
+| FR-025 | Every toolbar action on N selected nodes shall produce exactly one `updateNodesData` call (one change set, one undo step); when the action changes text size or bold, the per-node fitted `height` (FR-017) shall be included in the same change set. | must | R-024 (01§S7), G-9 | AC-036 |
+| FR-026 | Dragging a multi-node selection shall remain one undo step for the author (React Flow emits one position change per node per frame; Liveblocks collapses the drag); v2 adds the verification only, no new code. | must | R-024, FR-004 | AC-037 |
+| FR-027 | Viewers shall see borders, text options and custom colours rendered exactly as editors do, but no properties toolbar, no resizer and no editor (FR-013 extended). | must | US-14, PRD-012 | AC-038 |
+
+### Non-functional requirements exercised (v2)
+
+| NFR | How v2 meets it |
+|---|---|
+| NFR-003 | Fit-height is measured once per commit / option change / resize end, never per keystroke; one write per action. |
+| NFR-004 | One shared hidden measurer; `fitHeight` runs only on the acting client and, for the resizer `minHeight`, only for selected nodes. Toolbar selectors stay narrow (`useSelectionValue(ids, pick)` generalises `useSelectionColor`). |
+| NFR-006 | Derived text colour ≥ 4.58:1 (D-08g proof); selection visible without colour (FR-021); every control has an `aria-label`, radiogroups are keyboard-operable, mixed state is announced. |
+| NFR-007 | `data.text` / `data.border` / hex typed from F22's schema v2 types; `fitHeight` and `deriveTextColor` are pure typed functions. |
+
+### UX and interaction behaviour (v2)
+
+- **Shift during resize**: cursor and handles unchanged; the ratio locks to the size at drag start (library `startValues.aspectRatio`), not to the size when Shift was pressed.
+- **Auto-grow**: growth is downward only (top edge fixed); the resizer refuses to shrink below the text; no animation; silent clip at 480 px (as v1 clipped at 5 lines).
+- **Toolbar while editing**: pointerdown on any toolbar control blurs the textarea → the draft commits (v1 EC-008 rule), then the option applies; Esc in the editor still discards only the draft (D-053).
+- **Copy**: tooltips "More colours", "No border" / "Solid" / "Dashed", "Border width: 1 px", "Small", "Medium", "Large", "Extra large", "Bold (Ctrl+B)", "Align left/centre/right", "Align top/middle/bottom"; mixed badge text "—".
+
+### Error handling and edge cases (v2)
+
+| ID | Condition | Expected behaviour | Covered by |
+|---|---|---|---|
+| EC-014 | Shift held before the drag starts and released after it ends; or pressed while the pointer is off the node mid-drag | Ratio applies only between start and end; no box-select starts; selection unchanged | AC-026 |
+| EC-015 | Label that fits at width 300 is committed, then the node is resized to width 100 | At resize end the height grows to fit (≤ 480) in the same undo step as the resize | AC-030 |
+| EC-016 | 200-character label at `xl` on a 48 px-wide node | Height clamps at 480; label clips; no write above 480; schema (`height ≥ 32`) satisfied | AC-028 |
+| EC-017 | Remote user A commits a long label on X while B is idle | Only A writes X's height (A's action); B never emits a height write for X (no phantom undo entry on B) | AC-029 |
+| EC-018 | Hex `#FFF`, `fff`, `#FFFFFF`, `#10233d` (blue's fill), `#12345`, `red` | Normalised `#ffffff` ×3; stored as `blue`; `aria-invalid`, not applied; `aria-invalid`, not applied | AC-033, AC-034 |
+| EC-019 | Recent-colour list reaches 6 entries; `localStorage` unavailable (private mode) | Oldest dropped (5 kept); storage errors swallowed, list empty, apply still works | AC-034 |
+| EC-020 | Text size set to `xl` on 50 selected nodes of different widths | One change set with 50 `replace` items, each with its own fitted height; one undo restores all sizes and heights | AC-036 |
+| EC-021 | v1 document (no `data.text`/`data.border`, palette ids) opened after the upgrade | Renders pixel-identical to v1; no write occurs until the user acts | AC-040 |
+| EC-022 | Ctrl+B pressed in the editor, then Esc | Nothing written (bold and draft discarded) | AC-041 |
+| EC-023 | A sets X's border dashed while B sets X's colour | Per-key LWW (D-014): both land (different keys `border` / `color`); both clients converge ≤ 1 s | AC-040 |

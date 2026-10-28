@@ -2,14 +2,16 @@
 
 | Field | Value |
 |---|---|
-| Status | Completed — merged to `main` via PR #15 (2026-10-24) |
-| Spec approved | 2026-10-24, owner (incl. its local decisions) |
-| Implementation authorized | 2026-10-24, owner — parallel round 6, own worktree |
-| Last verified | 2026-10-24, `a67d7dd` + merge `d009507` + test fixes |
+| Status | Completed (v1) · v2 Approved — implementation authorized (2026-10-28, D-066) |
+| Spec approved | v1: 2026-10-24, owner (incl. its local decisions) · v2: — |
+| Implementation authorized | v1: 2026-10-24, owner — parallel round 6, own worktree · v2: — (T-009–T-015) |
+| Last verified | v1: 2026-10-24, `a67d7dd` + merge `d009507` + test fixes · v2: — |
 
 ## History
 - 2026-10-22 — drafted by planning session (spec writer), from F06–F09 contracts, `research/react-flow.md` §4, §6, §8, §9, §13, `research/liveblocks.md` §3, reference prompt 17 and `current-issues-workspace-implementation.md` §2.
 - 2026-10-22 — Gate 4 audit fixes applied (cheat-sheet row synced to ui-context, TC-011/026/027 AC links, Manual TC-028). See `features/AUDIT-2026-10-22.md`.
+- 2026-10-28 — v2 "canvas productivity" drafted by the spec writer as a marked increment in every file (FR-014–FR-025, EC-014–EC-027, AC-025–AC-043, T-009–T-015, TC-029–TC-047; local decisions D-10f–D-10k) from `docs/research/excalidraw/00-summary.md` C3/C6 and R-001–R-004, R-009–R-012 under D-052–D-055, D-057. React Flow 12.12.0 props/hooks verified against `node_modules` (02-design v2 table). No code, no commits.
+- 2026-10-28 — v2 approved by owner with batch 1 (D-066); the 14 local decisions in `docs/research/batch1-owner-decisions.md` adopted as recommended. Implementation authorized (Sonnet 5.5 agent, own worktree).
 
 ## Evidence
 
@@ -32,5 +34,18 @@ Rulings: context-menu target read from the clicked element (React Flow swallows 
 - Optional `?` ghost button in the control bar (T-006) is beyond the brief; drop if unwanted.
 - Aligned with F06's drafted package (2026-10-22): zoom range 0.1–4 (F06/FR-008), viewers have `elementsSelectable: false` so selection shortcuts/menu rows are omitted for them, island is `flow-canvas.tsx`, prop guard extends F06's `flow-canvas.test.tsx`.
 - Known limitation (Liveblocks 3.24.4): an undo within ~1 s of a delete can be lost — the server's delete acknowledgement re-deletes the restored item. Tests wait 1 s; real users can still hit it.
-- Owner decision pending: the project sidebar (open by default on desktop) covers the bottom-left control bar.
+- Resolved 2026-10-24 (D-050): workspace sidebar closed by default, so it no longer covers the control bar.
 - AC-024 visual check pending (owner).
+
+### v2 open decisions (owner input needed before approval)
+- **D-10f** clipboard transport: `writeText` + in-memory copy on write; keyboard paste from the `paste` event, menu paste via `readText` with memory fallback — confirm (alternative: `readText` everywhere, which prompts in Firefox).
+- **D-10g** window key listener moves to the capture phase so Ctrl+Shift+Arrow beats React Flow's node nudge — confirm (touches every v1 shortcut path; v1 unit tests must stay green).
+- **D-10h** Shift+2 with nothing selected = fit all — confirm or make it a no-op.
+- **D-10i** grid snapping on drag only; inserted/pasted nodes are not rounded to the grid — confirm or ask for snap-on-insert.
+- **D-10j** plain-text paste creates a text node only when F22's `text` kind is present — confirm the flag mechanism (`lib/canvas/kinds.ts` shim over F22's `NODE_KINDS`, F22 FR-002). *Resolved at validation (2026-10-28): the shortcut hand-over is now an explicit ordering rule in both packages (F10 D-10j / F22 FR-008) — registry owns `t`/`n`; whichever lands second wires them; the paste path calls F22's `addNodeOfKind('text', pos, { label })` and trims to F22's `TEXT_MAX_LENGTH`.*
+- **D-10k** align/distribute use stored `width`/`height` — confirm.
+- Grid preference in `localStorage` is drawArc's first client-side preference: authorise a `context/data-ownership.md` row at phase end.
+- Letters reserved in `RESERVED_CHORDS` for F21/F22/F23/F24 (`x`, `t`/`n`, `f`, `i`): *Resolved at validation (2026-10-28) for `t`/`n` — they match F22 FR-008;* `x`/`f`/`i` stay provisional until the F21/F23/F24 overviews exist (placeholders in `features/README.md`).
+- Resolved at validation (2026-10-28): naming checked against F22 — the `lib/canvas/kinds.ts` shim reads F22's `NODE_KINDS`, the align exclusion reads F22's optional `data.locked`, paste ids use `${kind}_` via `newNodeId(kind)`, and the migration helper is `migrate` (`lib/canvas/schema.ts`, as in F22), not `migrateCanvas`.
+- Distribute has no default key (Excalidraw's Alt+H collides with AltGr layouts, 02 §F-S04): confirm menu/toolbar only.
+- UNVERIFIED (02-design v2 table): Liveblocks redo stack surviving a remote change (AC-042 asserts it); clipboard permission behaviour outside Chromium (memory fallback covers it).

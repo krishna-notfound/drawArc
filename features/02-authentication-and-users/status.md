@@ -45,3 +45,4 @@ Notable rulings: Clerk theme from `@clerk/ui/themes`; migration generated offlin
 - CI has no database or Clerk secrets: integration (L2) and e2e (L3) tests run locally only. Adding CI secrets is a separate owner decision.
 - Live email swap between two active accounts may leave a stale email until the next Clerk update (EC-007, accepted); F03 binding by email should be aware.
 - Removal of a deleted user's memberships is owed by F03/F12.
+- 2026-10-28 — FR-003/004/005/006 superseded by D-052/D-062/D-064: `/` is the F26 landing page; custom auth UI is F27.
