@@ -255,7 +255,8 @@ test('a remote change does not clear the local redo stack (AC-042 — Liveblocks
   await expect.poll(() => nodeIds(a)).toEqual([]);
   await expect(control(a, 'Redo')).toBeEnabled();
 
-  // B changes the room while A holds a redo entry.
+  // B changes the room while A holds a redo entry; B must have applied A's undo first, or its node count is stale.
+  await expect.poll(() => nodeIds(b), { timeout: 5_000 }).toEqual([]);
   const other = await addNodeAt(b, 'circle', { x: 200, y: 200 });
   await expect.poll(() => nodeIds(a), { timeout: 3_000 }).toEqual([other]);
   await a.waitForTimeout(500);

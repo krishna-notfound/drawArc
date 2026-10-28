@@ -132,7 +132,9 @@ test('pasting plain text creates a text node at the pointer; an input swallows i
   const pasted = await stored(page, id);
   expect(pasted).toMatchObject({ label: 'Plain words from elsewhere', autoWidth: true });
   const at = await flowPoint(page, KEY_POINT);
-  expect(Math.abs(pasted.x + pasted.width / 2 - at.x)).toBeLessThanOrEqual(1);
+  // Pasted content lands with its top-left at the pointer (F10 FR-017, like pasted shapes).
+  expect(Math.abs(pasted.x - at.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(pasted.y - at.y)).toBeLessThanOrEqual(1);
   // A non-empty label skips the editor auto-open (F22 FR-007).
   await expect(editor(page)).toHaveCount(0);
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
@@ -143,7 +145,8 @@ test('side resize makes text fixed-width and wraps; a sticky never goes below 75
   await openCanvas(page, projectId);
   const { zoom } = await getViewport(page);
 
-  await pressCanvasKey(page, 't');
+  // Left of centre: the unwrapped text grows rightwards and its right edge must stay inside the viewport.
+  await pressCanvasKey(page, 't', { x: 400, y: 300 });
   const textId = await selectedId(page);
   await expect(editor(page)).toBeFocused();
   await page.keyboard.type('a long sentence that will wrap when narrowed');

@@ -86,8 +86,11 @@ export function nodePosition(page: Page, id: string): Promise<{ x: number; y: nu
   return page.evaluate((nodeId) => window.__rf!.getNode(nodeId)?.position ?? null, id);
 }
 
-/** Presses a modifier-less key with the canvas focused: a click on empty pane first, then the key (F22 T / N). */
-export async function pressCanvasKey(page: Page, key: 't' | 'n'): Promise<void> {
-  await page.mouse.click(1000, 180);
+/**
+ * Presses a modifier-less key with the canvas focused: a click on empty pane first, then the key (F22 T / N). T and N
+ * insert centred on the pointer (registry insert keys, F10 v2), so `at` is where the new node lands.
+ */
+export async function pressCanvasKey(page: Page, key: 't' | 'n', at = { x: 1000, y: 180 }): Promise<void> {
+  await page.mouse.click(at.x, at.y);
   await page.keyboard.press(key);
 }
