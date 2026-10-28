@@ -3,6 +3,9 @@ import { readFileSync } from 'node:fs';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Keeps `@clerk/nextjs` out of the unit run.
+vi.mock('@/components/landing/session-cta', () => ({ SessionCta: () => null }));
+
 beforeEach(() => {
   vi.resetModules();
   vi.unstubAllEnvs();
@@ -85,4 +88,29 @@ describe('OG image routes (FR-009, AC-008)', () => {
       );
     },
   );
+});
+
+describe('app/page metadata (FR-008, AC-007)', () => {
+  const title = 'drawArc — Collaborative system-design canvas and whiteboard';
+  const description =
+    'Real-time collaborative system-design canvas and whiteboard. Sketch architectures with shapes, connectors and text, and edit them live with your team.';
+  it('exports the static title, description, Open Graph and Twitter fields', async () => {
+    const { metadata } = await import('@/app/page');
+    expect(metadata.title).toEqual({ absolute: title });
+    expect(metadata.description).toBe(description);
+    expect(metadata.openGraph).toEqual({ type: 'website', siteName: 'drawArc', url: '/', title, description });
+    expect(metadata.twitter).toEqual({ card: 'summary_large_image', title, description });
+  });
+  it('app/page.tsx is synchronous and imports no request-time API (FR-001, Review Focus 2)', () => {
+    const source = readFileSync('app/page.tsx', 'utf8');
+    expect(source).not.toMatch(
+      /next\/headers|@clerk\/nextjs\/server|\b(cookies|headers|connection|auth)\(|Suspense|async function/,
+    );
+  });
+  it('the hero illustration is an aria-hidden inline SVG of at most 3 KB with no hex colour (FR-003)', () => {
+    const source = readFileSync('components/landing/hero-illustration.tsx', 'utf8');
+    expect(Buffer.byteLength(source)).toBeLessThanOrEqual(3072);
+    expect(source).toContain('aria-hidden="true"');
+    expect(source).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
 });
