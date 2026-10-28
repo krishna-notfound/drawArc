@@ -260,6 +260,11 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-067 — Round A of batch 1 merged; letter-key insertion is pointer-centred
+**APPROVED** 2026-10-28 (owner authorized batch 1 execution, D-066). F26 (PR #18), F10 v2 (PR #19) and F22 (PR #20) merged in that order so F22 adopted F10 v2's shortcut registry (T/N registered; plain-text paste creates a text node). Ruling: every letter-key insertion (R/D/O/P/C/H/T/N) and paste is centred on the pointer, falling back to the viewport centre when the pointer is off-canvas — F22 FR-008's "viewport centre" wording is superseded. Known limitation kept: undo within ~1 s of a delete can be lost (Liveblocks). F08 v2 runs as round B from `efd9246`.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — awaiting owner review |
+| Status | Completed — merged to `main` via PR #18 (2026-10-28); AC-013 Lighthouse pending a preview deployment |
 | Spec approved | 2026-10-28, owner (D-066) |
 | Implementation authorized | 2026-10-28, owner — batch 1 |
 | Last verified | 2026-10-28 |

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Completed (v1) · v2 Verification (2026-10-28; the owner moves it to Completed) |
+| Status | Completed (v1 PR #15, v2 PR #19, 2026-10-28); v2 AC-043 manual screenshots pending |
 | Spec approved | v1: 2026-10-24, owner (incl. its local decisions) · v2: — |
 | Implementation authorized | v1: 2026-10-24, owner — parallel round 6, own worktree · v2: — (T-009–T-015) |
 | Last verified | v1: 2026-10-24, `a67d7dd` + merge `d009507` + test fixes · v2: 2026-10-28, branch `feat/f10-v2-canvas-productivity` (five commits below) |

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Verification — implemented and verified except AC-016 (blocked on F08 v2) and AC-020 (manual); awaiting owner review |
+| Status | Completed — merged to `main` via PR #20 (2026-10-28); AC-016 pending F08 v2 toolbar, AC-020 manual |
 | Spec approved | 2026-10-28, owner (D-066) |
 | Implementation authorized | 2026-10-28, owner — batch 1 |
 | Last verified | 2026-10-28, branch tip 59b7b15 plus the evidence commit |
@@ -28,3 +28,4 @@
 - Resolved at validation (2026-10-28): `addNodeOfKind` gained an optional `init.label` (FR-007) so F10 v2's plain-text paste (F10 FR-018) creates text nodes through F22's path; `features/README.md` and `context/progress-tracker.md` rows added (F22 under "M1.5 — canvas richness", depends on 07, 08, 10).
 - UNVERIFIED: `@liveblocks/react-flow` conflict granularity for nested `data.text` (F22 writes whole objects, so not blocking) and whether it syncs top-level `parentId`/`extent` (F23 verifies; F22 validates only); `document.fonts.ready` vs first paint (fallback designed, 02-design).
 - `context/domain-model.md` v2 block and this package's PROPOSED decisions must be copied into `context/decision-log.md` on approval (D-066+ ids assigned by the owner session).
+- 2026-10-28 (D-067): T/N insert centred on the pointer (viewport centre when the pointer is off-canvas), matching F10 v2 letter-key insertion; FR-008 wording "viewport centre" is superseded.
