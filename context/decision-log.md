@@ -211,6 +211,50 @@ Format: ID · title · status · date · context · decision · alternatives con
 
 ---
 
+### D-052 — Excalidraw research adopted; drawArc becomes a full whiteboard, not only a node-and-edge canvas
+**APPROVED** 2026-10-28 (owner). Research in `docs/research/excalidraw/00-summary.md` (73 capabilities, six evidence files, Excalidraw commit 14bb42e, code-read only — visuals UNVERIFIED). Owner direction: "I want more things in the canvas like Excalidraw has" — freehand strokes, standalone lines and arrows, more shapes, lasso, eraser, frames, images, text and sticky notes are all in scope and move up the batch order. drawArc's own rules win where they conflict with Excalidraw. Sketchy/hand-drawn style stays a later option (P3). Landing page and custom auth UI approved (supersede F02 FR-003/004/005/006 and the reference "keep Clerk default user menu" rule).
+
+### D-053 — Label editor: Esc cancels (kept)
+**APPROVED** 2026-10-28 (owner, option A). Esc discards the edit; Enter/blur commit. Excalidraw's commit-on-Esc is not adopted.
+
+### D-054 — Duplicate keeps the +20/+20 offset
+**APPROVED** 2026-10-28 (owner, option A). Ctrl+D and context-menu Duplicate place the copy at +20 px / +20 px (F10 FR), not in place.
+
+### D-055 — Box select stays partial-overlap only
+**APPROVED** 2026-10-28 (owner, option A). No "fully contained" toggle; lasso selection is a separate later capability.
+
+### D-056 — Z-order via a fractional `data.order` field; `fractional-indexing` dependency approved
+**APPROVED** 2026-10-28 (owner, options A + A). `@liveblocks/react-flow` does not sync `zIndex`, so ordering is stored as a fractional string in node data and `zIndex` is derived at render time. The `fractional-indexing` npm package is approved (pinned, audited).
+
+### D-057 — Canvas schema v2 lands once
+**APPROVED** 2026-10-28 (owner). One migration `migrateV1ToV2` introduces every reserved field at once: new node kinds (text, sticky, line, freehand, frame, image), `data.text` options, `data.border`, `locked`, `groupId`, `order`, `href`, image refs, `edge.data.style`. Owned by F22 (first feature to ship it); F21/F23/F24/F28 consume it without further bumps.
+
+### D-058 — Group model: `groupId` tag; frames via React Flow `parentId`; Ctrl+click enters a group
+**APPROVED** 2026-10-28 (owner, option A).
+
+### D-059 — Import supports insert as well as replace
+**APPROVED** 2026-10-28 (owner). F19 import offers "replace canvas" (F14 path) and "insert into canvas" (re-id + edge remap, pasted at pointer/centre, one undo step).
+
+### D-060 — Export: PNG first, SVG later
+**APPROVED** 2026-10-28 (owner, option A). F19 ships PNG (1×/2×/3×, padding, selection or whole) and copy-as-PNG; SVG export is deferred until a font strategy is chosen.
+
+### D-061 — Mermaid text-to-diagram deferred (P3 inside F19)
+**APPROVED** 2026-10-28 (owner, option A). No dependency added now.
+
+### D-062 — Auth: Clerk custom flows on the Free plan; no Clerk branding; OAuth later
+**APPROVED** 2026-10-28 (owner, option A). F27 builds sign-in, sign-up, email code, device trust and password reset with `useSignIn`/`useSignUp`; prebuilt `<SignIn>/<SignUp>/<UserButton>` and hosted Account Portal pages are removed; no Clerk Pro purchase. Social OAuth is a later increment.
+
+### D-063 — Node colours: palette plus custom hex with a contrast guard
+**APPROVED** 2026-10-28 (owner, option B). Schema v2 allows `color` to be a palette id or `#rrggbb`; text colour is derived to keep ≥ 4.5:1 contrast (NFR-006).
+
+### D-064 — Landing page (F26) and custom auth UI (F27) are separate parallel packages
+**APPROVED** 2026-10-28 (owner, option A).
+
+### D-065 — Research and agent-role rules (CLAUDE.md §9) and model allocation
+**APPROVED** 2026-10-28 (owner). Research on Haiku 5.5, coding/verification agents on Sonnet 5.5, orchestration/spec/plan on Fable 5.1; research outputs live in `docs/research/`; every decision continues to be recorded here and in the feature `status.md`.
+
+---
+
 ## Open decisions requiring owner input (Gate 5)
 
 | ID | Question | Recommendation |

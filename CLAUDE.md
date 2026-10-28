@@ -145,7 +145,33 @@ Use `superpowers:brainstorming` for unresolved design questions and `superpowers
 
 Do not start implementation during planning mode. Do not expand the planning package without a specific, justified need.
 
-## 9. Required Task Report
+## 9. Research and Agent Roles
+
+The main session is the orchestrator. It never does bulk research or bulk implementation itself; it delegates to agents, keeps its own context small, and independently re-verifies what comes back.
+
+### Model allocation
+
+| Role | Model | Why |
+|---|---|---|
+| Orchestrator (main session), spec writer, implementation planner | Fable 5.1 (`fable`) | judgement, cross-feature consistency, owner communication |
+| Research agents (read-only, parallel) | Haiku 5.5 (`haiku`) | cheap and fast for reading sources and summarising evidence |
+| Coding agents (one per feature, from the approved spec) | Sonnet 5.5 (`sonnet`) | strong implementation at lower cost than the orchestrator model |
+| Verification / integration agents (merge, check, build, e2e) | Sonnet 5.5 (`sonnet`) | same as coding |
+
+Pass the model explicitly when spawning an agent. Escalate a coding agent to the orchestrator model only when it has failed twice on the same task and the owner agrees.
+
+### How research is done
+
+1. **Research is read-only and produces documents, never code.** Output goes to `docs/research/<topic>/`, one file per area, plus one prioritised summary written by the orchestrator. Nothing is committed without authorization.
+2. **Split by area, run in parallel.** One Haiku agent per independent area (for example: canvas tools · editing and productivity · document workflows · collaboration). Each agent gets the area, the exact sources to inspect, the output path, and the output format below. Agents do not overlap areas.
+3. **Evidence over names.** Every finding must cite the source actually inspected: a file path and symbol in the upstream repository, a documentation URL, a release note, or an image asset. Behaviour is described (what happens on which input), not just the feature name. Anything the agent could not open or see is marked **UNVERIFIED** with what would verify it. Never attribute hosted-service functionality to open-source code without evidence; never claim to have seen a screenshot that was not opened.
+4. **Per-finding format:** name · observed behaviour · evidence (source and path) · where it maps in drawArc (existing feature ID to upgrade, new feature, or skip) · React Flow fit (native / custom node or edge / extra interaction logic / app UI / server / collaboration / needs architectural approval) · priority (P1 daily use, P2 valuable, P3 later, P4 skip) · risks and dependencies.
+5. **Orchestrator merges, owner approves.** The orchestrator deduplicates the findings, resolves cross-cutting items (for example one schema change instead of five), and presents a prioritised list with an upgrade / new / skip mapping. The owner approves that list before any specification is written.
+6. **Specs come after approval, in batches.** For each approved batch, the orchestrator (or a Fable spec-writer agent) updates existing `features/` packages first and creates new numbered packages only for capabilities with no existing home. Every requirement maps to acceptance criteria, every criterion to a verification method, following `context/feature-spec-template.md`.
+7. **Validate before review.** A validation pass checks links, ID traceability, dependency references, and that no finding was specified without evidence. Then the owner reviews.
+8. **Context discipline.** Agents write long output to files and return a summary under 400 words. The orchestrator reads summaries and spot-checks files; it does not re-read whole research files into its context.
+
+## 10. Required Task Report
 
 Keep every report concise:
 
