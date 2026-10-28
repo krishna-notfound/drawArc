@@ -225,6 +225,11 @@
   outline: 2px solid var(--accent-primary);
 }
 
+/* F22 sticky note: a soft shadow lifts the card off the dot grid (D-22c). */
+.canvas-sticky-node {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
 /* F08 colour swatches (FR-011): hover ring in the swatch's text colour at 33 % alpha. */
 .canvas-swatch:hover {
   box-shadow: 0 0 0 3px var(--swatch-glow);
