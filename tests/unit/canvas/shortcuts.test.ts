@@ -80,12 +80,16 @@ describe('cheat-sheet copy (F10 AC-019)', () => {
       'Keyboard shortcuts',
       'Copy / Cut / Paste',
       'Add shape at pointer',
+      'Grid',
+      'Zoom to selection',
     ]);
     expect(SHORTCUT_ROWS.filter((r) => r.viewerVisible).map((r) => r.action)).toEqual([
       'Pan',
       'Zoom',
       'Fit view',
       'Keyboard shortcuts',
+      'Grid',
+      'Zoom to selection',
     ]);
   });
 });

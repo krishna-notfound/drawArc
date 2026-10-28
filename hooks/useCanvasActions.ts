@@ -19,6 +19,7 @@ import {
 import { centredDropPosition } from '@/lib/canvas/drop-position';
 import { duplicateSelection } from '@/lib/canvas/duplicate';
 import { textInserter, textMaxLength } from '@/lib/canvas/kinds';
+import { gridStore } from '@/lib/canvas/preferences';
 import type { ShortcutAction } from '@/lib/canvas/registry';
 import { type CanvasEdge, type CanvasNode, DEFAULT_SIZES, type NodeShape } from '@/types/canvas';
 
@@ -46,6 +47,12 @@ export interface CanvasActions {
   pasteFromClipboard(): Promise<void>;
   /** Adds `shape` centred on the pointer, or on the viewport centre when the pointer is off the canvas. */
   insertShape(shape: NodeShape): void;
+  /** Flips this user's grid preference (localStorage only); allowed for viewers, never a history entry. */
+  toggleGrid(): void;
+  /** Fits the selected nodes (padding 0.2, 200 ms), or everything when nothing is selected. */
+  zoomToSelection(): void;
+  /** Zoom to 100 % (the control bar readout). */
+  resetZoom(): void;
 }
 
 const ZOOM = { duration: 200 } as const;
@@ -115,6 +122,15 @@ export function runAction(action: ShortcutAction, actions: CanvasActions): boole
       actions.insertShape(shape);
       return true;
     }
+    case 'toggleGrid':
+      actions.toggleGrid();
+      return true;
+    case 'zoomToSelection':
+      actions.zoomToSelection();
+      return true;
+    case 'resetZoom':
+      actions.resetZoom();
+      return true;
     default: {
       const unreachable: never = action;
       return unreachable;
@@ -274,6 +290,13 @@ export function useCanvasActions(openCheatSheet: () => void, pointer: PointerRef
         if (!canEdit) return;
         mutations.addNode(shape, centredDropPosition(targetPoint(), DEFAULT_SIZES[shape]));
       },
+      toggleGrid: () => gridStore.set(!gridStore.get()),
+      zoomToSelection() {
+        const selected = store.getState().nodes.filter((n) => n.selected);
+        if (selected.length === 0) void rf.fitView(FIT);
+        else void rf.fitView({ ...FIT, nodes: selected.map((n) => ({ id: n.id })) });
+      },
+      resetZoom: () => void rf.zoomTo(1, ZOOM),
     };
   }, [store, rf, mutations, undo, redo, room, openCheatSheet, pointer]);
 }

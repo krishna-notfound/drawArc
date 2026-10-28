@@ -23,7 +23,10 @@ export type ShortcutAction =
   | 'insertCircle'
   | 'insertPill'
   | 'insertCylinder'
-  | 'insertHexagon';
+  | 'insertHexagon'
+  | 'toggleGrid'
+  | 'zoomToSelection'
+  | 'resetZoom';
 
 export type Platform = 'mac' | 'other';
 export type ShortcutGroup = 'navigate' | 'select' | 'edit' | 'insert' | 'arrange' | 'history' | 'help';
@@ -76,6 +79,16 @@ export const SHORTCUTS: readonly ShortcutBinding[] = [
   { action: 'insertPill', chords: ['p'], label: 'Add pill', group: 'insert', mutating: true, viewerVisible: false },
   { action: 'insertCylinder', chords: ['c'], label: 'Add cylinder', group: 'insert', mutating: true, viewerVisible: false },
   { action: 'insertHexagon', chords: ['h'], label: 'Add hexagon', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'toggleGrid', chords: ['mod+code:Quote'], label: 'Grid', group: 'navigate', mutating: false, viewerVisible: true },
+  {
+    action: 'zoomToSelection',
+    chords: ['shift+code:Digit2'],
+    label: 'Zoom to selection',
+    group: 'navigate',
+    mutating: false,
+    viewerVisible: true,
+  },
+  { action: 'resetZoom', chords: [], label: 'Reset zoom', group: 'navigate', mutating: false, viewerVisible: true },
 ];
 
 /** Letters held back for later features; `matchShortcut` ignores them and the duplicate guard protects them. */

@@ -78,6 +78,8 @@ const REGISTRY_TABLE: readonly { action: string; actions: ShortcutAction[]; view
     actions: ['insertRectangle', 'insertDiamond', 'insertCircle', 'insertPill', 'insertCylinder', 'insertHexagon'],
     viewerVisible: false,
   },
+  { action: 'Grid', actions: ['toggleGrid'], viewerVisible: true },
+  { action: 'Zoom to selection', actions: ['zoomToSelection'], viewerVisible: true },
 ];
 
 /** Rows after the ten verbatim ones are written from the registry, so no chord is typed twice (FR-014). */

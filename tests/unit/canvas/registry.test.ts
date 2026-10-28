@@ -66,6 +66,17 @@ describe('registry (F10 AC-025)', () => {
     expect(matchShortcut(key('R', { shiftKey: true }))).toBeNull();
   });
 
+  it('grid and zoom-to-selection chords are layout-independent code chords; reset zoom has no key (AC-034, AC-039)', () => {
+    expect(matchShortcut(key("'", { ctrlKey: true }, 'Quote'))).toBe('toggleGrid');
+    expect(matchShortcut(key('@', { shiftKey: true }, 'Digit2'))).toBe('zoomToSelection');
+    expect(formatKeys('toggleGrid', 'other')).toBe("Ctrl+'");
+    expect(formatKeys('toggleGrid', 'mac')).toBe("⌘'");
+    expect(formatKeys('zoomToSelection', 'mac')).toBe('Shift+2');
+    expect(ariaKeyShortcuts('toggleGrid')).toBe("Control+' Meta+'");
+    expect(formatKeys('resetZoom', 'other')).toBe('');
+    expect(ariaKeyShortcuts('resetZoom')).toBe('');
+  });
+
   it('letters insert shapes (CapsLock-safe), Ctrl+V is left to the paste event (AC-027)', () => {
     const letters: [string, ShortcutAction][] = [
       ['r', 'insertRectangle'],

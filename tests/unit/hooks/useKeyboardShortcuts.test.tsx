@@ -23,6 +23,9 @@ function makeActions(canEdit = true): CanvasActions {
     paste: vi.fn(() => true),
     pasteFromClipboard: vi.fn(() => Promise.resolve()),
     insertShape: vi.fn(),
+    toggleGrid: vi.fn(),
+    zoomToSelection: vi.fn(),
+    resetZoom: vi.fn(),
   };
 }
 
