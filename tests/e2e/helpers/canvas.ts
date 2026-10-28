@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-import type { PaletteKind } from '@/types/canvas';
+import type { NodeShape, PaletteKind } from '@/types/canvas';
 
 /**
  * Canvas helpers shared by the workspace specs (F07+). The app under test runs with NEXT_PUBLIC_E2E_HOOKS=1, so
@@ -70,6 +70,20 @@ async function selectedNodeId(page: Page): Promise<string> {
 export async function centreOf(page: Page, selector: string): Promise<{ x: number; y: number }> {
   const box = (await page.locator(selector).boundingBox())!;
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+/** Adds a node through the F07 write path (no palette drag) at flow position `position`; returns its id. */
+export async function addNodeAt(page: Page, shape: NodeShape, position: { x: number; y: number }): Promise<string> {
+  const before = await page.locator('.react-flow__node').count();
+  const id = await page.evaluate(([s, p]) => window.__canvasMutations!.addNode(s, p)?.id ?? null, [shape, position] as const);
+  expect(id).not.toBeNull();
+  await expect(page.locator('.react-flow__node')).toHaveCount(before + 1);
+  return id!;
+}
+
+/** A node's stored top-left position in flow coordinates. */
+export function nodePosition(page: Page, id: string): Promise<{ x: number; y: number } | null> {
+  return page.evaluate((nodeId) => window.__rf!.getNode(nodeId)?.position ?? null, id);
 }
 
 /** Presses a modifier-less key with the canvas focused: a click on empty pane first, then the key (F22 T / N). */

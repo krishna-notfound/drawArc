@@ -54,7 +54,7 @@ test('control bar: layout, animated zoom and fit from buttons and keys, per-clie
 
   // AC-001/AC-002: order, separator, geometry at desktop and narrow widths, never over the palette.
   const labels = await controls(page).getByRole('button').evaluateAll((els) => els.map((el) => el.getAttribute('aria-label')));
-  expect(labels).toEqual(['Zoom out', 'Fit view', 'Zoom in', 'Undo', 'Redo']);
+  expect(labels).toEqual(['Zoom out', 'Zoom 100 %, reset to 100 %', 'Zoom in', 'Fit view', 'Grid', 'Undo', 'Redo']);
   await expect(controls(page).getByRole('separator')).toHaveCount(1);
   for (const [width, bottom] of [
     [1280, 16],
@@ -178,7 +178,7 @@ test('keys never reach the canvas while typing or while a dialog is open; Delete
   const before = await zoom(page);
   await page.keyboard.press('?');
   await expect(cheatSheet(page)).toBeVisible();
-  await expect(cheatSheet(page).getByRole('row')).toHaveCount(17); // header + 16 rows (editor; F22 added Add text / Add sticky note)
+  await expect(cheatSheet(page).getByRole('row')).toHaveCount(20); // header + 19 rows (editor)
   for (const key of ['Delete', 'Backspace', 'Control+z', '+', '?', 'Control+a']) await page.keyboard.press(key);
   await page.keyboard.press('Tab');
   await expect(cheatSheet(page)).toContainText('Keyboard shortcuts');
@@ -305,16 +305,24 @@ test('context menu: node, edge and pane items, keyboard operation, right-drag pa
   const at = { x: boxX.x + 30, y: boxX.y + 20 };
   await page.mouse.click(at.x, at.y, { button: 'right' });
   await expect(menu(page)).toBeVisible();
-  await expect(menu(page).getByRole('menuitem')).toHaveText(['DuplicateCtrl+D', 'DeleteDel']);
+  await expect(menu(page).getByRole('menuitem')).toHaveText([
+    'CopyCtrl+C',
+    'CutCtrl+X',
+    'PasteCtrl+V',
+    'DuplicateCtrl+D',
+    'Zoom to selectionShift+2',
+    'DeleteDel',
+  ]);
   const menuBox = (await menu(page).boundingBox())!;
   expect(Math.abs(menuBox.x - at.x)).toBeLessThanOrEqual(8);
   expect(Math.abs(menuBox.y - at.y)).toBeLessThanOrEqual(8);
   await expect(page.locator(`.react-flow__node[data-id="${x}"]`)).toHaveClass(/\bselected\b/);
   await expect(menu(page)).toBeFocused();
-  await page.keyboard.press('ArrowDown');
-  await expect(menu(page).getByRole('menuitem', { name: /Duplicate/ })).toBeFocused();
-  await page.keyboard.press('ArrowDown');
-  await expect(menu(page).getByRole('menuitem', { name: /Delete/ })).toBeFocused();
+  // One press per item, awaiting the focus move each time (Radix moves it after the key is handled).
+  for (const name of [/^Copy/, /^Cut/, /^Paste/, /^Duplicate/, /^Zoom to selection/, /^Delete/]) {
+    await page.keyboard.press('ArrowDown');
+    await expect(menu(page).getByRole('menuitem', { name })).toBeFocused();
+  }
   await page.keyboard.press('Enter');
   await expect(menu(page)).toHaveCount(0);
   await expect(nodes(page)).toHaveCount(1);
@@ -338,7 +346,13 @@ test('context menu: node, edge and pane items, keyboard operation, right-drag pa
 
   // Pane: Select all / Fit view / Keyboard shortcuts; a pane click closes it.
   await page.mouse.click(1100, 200, { button: 'right' });
-  await expect(menu(page).getByRole('menuitem')).toHaveText(['Select allCtrl+A', 'Fit viewShift+1', 'Keyboard shortcuts?']);
+  await expect(menu(page).getByRole('menuitem')).toHaveText([
+    'PasteCtrl+V',
+    'Select allCtrl+A',
+    'Fit viewShift+1',
+    'Zoom to selectionShift+2',
+    'Keyboard shortcuts?',
+  ]);
   await clickEmpty(page);
   await expect(menu(page)).toHaveCount(0);
   await page.mouse.click(1100, 200, { button: 'right' });

@@ -5,12 +5,14 @@ const publicRaw = {
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, // F02
   NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL, // tests only (F05)
   NEXT_PUBLIC_E2E_HOOKS: process.env.NEXT_PUBLIC_E2E_HOOKS, // tests only (F05): enables the test-only room page
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL, // F26: canonical origin for metadata, sitemap and robots
 };
 
 export const PublicEnvSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().startsWith('pk_'),
   NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: z.url().optional(),
   NEXT_PUBLIC_E2E_HOOKS: z.enum(['1']).optional(),
+  NEXT_PUBLIC_SITE_URL: z.url().optional(),
 });
 
 export type PublicEnv = z.infer<typeof PublicEnvSchema>;

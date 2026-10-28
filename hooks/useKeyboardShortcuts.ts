@@ -2,47 +2,20 @@
 
 import { useEffect } from 'react';
 
-import type { CanvasActions } from '@/hooks/useCanvasActions';
-import { hasOpenOverlay, isEditableTarget, matchShortcut, MUTATING, type ShortcutAction } from '@/lib/canvas/shortcuts';
-
-function run(action: ShortcutAction, actions: CanvasActions): void {
-  switch (action) {
-    case 'undo':
-      return actions.undo();
-    case 'redo':
-      return actions.redo();
-    case 'zoomIn':
-      return actions.zoomIn();
-    case 'zoomOut':
-      return actions.zoomOut();
-    case 'fitView':
-      return actions.fitView();
-    case 'clearSelection':
-      return actions.clearSelection();
-    case 'selectAll':
-      return actions.selectAll();
-    case 'duplicate':
-      return actions.duplicateSelection();
-    case 'delete':
-      return actions.deleteSelection();
-    case 'addText':
-      return actions.addText();
-    case 'addSticky':
-      return actions.addSticky();
-    case 'cheatSheet':
-      return actions.openCheatSheet();
-    default: {
-      const unreachable: never = action;
-      return unreachable;
-    }
-  }
-}
+import { type CanvasActions, runAction } from '@/hooks/useCanvasActions';
+import { hasOpenOverlay, isEditableTarget, matchShortcut, MUTATING } from '@/lib/canvas/shortcuts';
 
 /**
- * The canvas's single window `keydown` listener (FR-004, FR-006). Keystrokes typed into text fields, dialogs or
- * menus never reach the canvas (D-10e) — the reference editor deleted nodes while users typed. Delete goes through
- * `actions.deleteSelection` (the collaborative `onDelete`), never React Flow's `deleteKeyCode` (kept `null`, F06).
- * Mutating keys are not handled at all for read-only members, so the browser default stays theirs (EC-007).
+ * The canvas's single window `keydown` listener (FR-004, FR-006) plus its `paste` listener. Keystrokes typed into
+ * text fields, dialogs or menus never reach the canvas (D-10e) — the reference editor deleted nodes while users
+ * typed. Delete goes through `actions.deleteSelection` (the collaborative `onDelete`), never React Flow's
+ * `deleteKeyCode` (kept `null`, F06). Mutating keys are not handled at all for read-only members, so the browser
+ * default stays theirs (EC-007).
+ *
+ * The keydown listener runs in the capture phase (D-10g): a focused node's own handler nudges on Arrow keys and
+ * calls `preventDefault` without looking at Ctrl/Meta (`@xyflow/react` 12.12.0 `index.js` L2312–2325), which would
+ * swallow `Ctrl+Shift+Arrow` before a bubbling listener saw it. `Ctrl+V` is never matched on keydown: the `paste`
+ * event carries the text without a clipboard permission and lets us decide `preventDefault` synchronously (D-10f).
  */
 export function useKeyboardShortcuts(actions: CanvasActions): void {
   useEffect(() => {
@@ -52,10 +25,22 @@ export function useKeyboardShortcuts(actions: CanvasActions): void {
       const action = matchShortcut(event);
       if (action === null) return;
       if (!actions.canEdit && MUTATING.has(action)) return;
+      if (!runAction(action, actions)) return;
       event.preventDefault();
-      run(action, actions);
+      event.stopPropagation();
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    const onPaste = (event: ClipboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (isEditableTarget(event.target) || hasOpenOverlay()) return;
+      if (!actions.canEdit) return;
+      const text = event.clipboardData?.getData('text/plain') ?? '';
+      if (actions.paste(text)) event.preventDefault();
+    };
+    window.addEventListener('keydown', onKeyDown, { capture: true });
+    window.addEventListener('paste', onPaste);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, { capture: true });
+      window.removeEventListener('paste', onPaste);
+    };
   }, [actions]);
 }

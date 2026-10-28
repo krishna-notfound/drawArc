@@ -188,7 +188,7 @@ test('a viewer’s mutating shortcuts and menu items do nothing; navigation stil
   // AC-005: zoom buttons only.
   const bar = b.getByRole('toolbar', { name: 'Canvas controls' });
   const labels = await bar.getByRole('button').evaluateAll((els) => els.map((el) => el.getAttribute('aria-label')));
-  expect(labels).toEqual(['Zoom out', 'Fit view', 'Zoom in']);
+  expect(labels.map((l) => l?.replace(/^Zoom \d+ %/, 'Zoom N %'))).toEqual(['Zoom out', 'Zoom N %, reset to 100 %', 'Zoom in', 'Fit view', 'Grid']);
   await expect(bar.getByRole('separator')).toHaveCount(0);
 
   // A read-only node takes no pointer events; B presses where it is drawn, then every mutating key.
@@ -202,7 +202,7 @@ test('a viewer’s mutating shortcuts and menu items do nothing; navigation stil
   // Right-click on the node or the pane: only the pane's navigation items.
   for (const at of [centre, { x: 1000, y: 200 }]) {
     await b.mouse.click(at.x, at.y, { button: 'right' });
-    await expect(menu(b).getByRole('menuitem')).toHaveText(['Fit viewShift+1', 'Keyboard shortcuts?']);
+    await expect(menu(b).getByRole('menuitem')).toHaveText(['Fit viewShift+1', 'Zoom to selectionShift+2', 'Keyboard shortcuts?']);
     await b.keyboard.press('Escape');
     await expect(menu(b)).toHaveCount(0);
   }
@@ -226,5 +226,5 @@ test('a viewer’s mutating shortcuts and menu items do nothing; navigation stil
   await expect(node(b, x)).toBeInViewport();
   await b.keyboard.press('?');
   const sheet = b.getByRole('dialog', { name: 'Keyboard shortcuts' });
-  await expect(sheet.getByRole('rowheader')).toHaveText(['Pan', 'Zoom', 'Fit view', 'Keyboard shortcuts']);
+  await expect(sheet.getByRole('rowheader')).toHaveText(['Pan', 'Zoom', 'Fit view', 'Keyboard shortcuts', 'Grid', 'Zoom to selection']);
 });

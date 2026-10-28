@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { isEditableTarget, matchShortcut, MUTATING, SHORTCUT_ROWS } from '@/lib/canvas/shortcuts';
+import { isEditableTarget, matchShortcut, SHORTCUT_ROWS } from '@/lib/canvas/shortcuts';
 
 const key = (k: string, mods: Partial<Record<'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey', boolean>> = {}, code = '') => ({
   key: k,
@@ -30,12 +30,6 @@ describe('matchShortcut (F10 AC-010)', () => {
     expect(matchShortcut(key('Delete'))).toBe('delete');
     expect(matchShortcut(key('Backspace'))).toBe('delete');
     expect(matchShortcut(key('?', { shiftKey: true }, 'Slash'))).toBe('cheatSheet');
-    // F22 AC-008: the interim path for the whiteboard kinds (F10 v2 moves them into the registry).
-    expect(matchShortcut(key('t'))).toBe('addText');
-    expect(matchShortcut(key('n'))).toBe('addSticky');
-    expect(matchShortcut(key('t', { ctrlKey: true }))).toBeNull();
-    expect(matchShortcut(key('T', { shiftKey: true }))).toBeNull();
-    expect(MUTATING.has('addText') && MUTATING.has('addSticky')).toBe(true);
   });
 
   it('leaves browser zoom (⌘/Ctrl +/-), Alt combos and unknown keys alone', () => {
@@ -82,16 +76,21 @@ describe('cheat-sheet copy (F10 AC-019)', () => {
     expect(SHORTCUT_ROWS.slice(10).map((r) => r.action)).toEqual([
       'Select all',
       'Duplicate',
-      'Add text',
-      'Add sticky note',
       'Clear selection',
       'Keyboard shortcuts',
+      'Copy / Cut / Paste',
+      'Add shape at pointer',
+      'Grid',
+      'Align',
+      'Zoom to selection',
     ]);
     expect(SHORTCUT_ROWS.filter((r) => r.viewerVisible).map((r) => r.action)).toEqual([
       'Pan',
       'Zoom',
       'Fit view',
       'Keyboard shortcuts',
+      'Grid',
+      'Zoom to selection',
     ]);
   });
 });

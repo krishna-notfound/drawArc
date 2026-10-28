@@ -3,6 +3,7 @@
 import { type ReactNode, useCallback, useRef, useState, useSyncExternalStore } from 'react';
 
 import { useCanvasActions } from '@/hooks/useCanvasActions';
+import type { PointerRef } from '@/hooks/usePointerPosition';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { detectPlatform } from '@/lib/canvas/shortcuts';
 
@@ -18,7 +19,7 @@ const serverPlatform = () => 'other' as const;
  * `<ReactFlow>` element passed as children), the bottom-left control bar and the shortcut cheat-sheet. Must render
  * under F06's `ReactFlowProvider` and inside the Liveblocks room.
  */
-export function CanvasErgonomics({ children }: { children: ReactNode }) {
+export function CanvasErgonomics({ children, pointer }: { children: ReactNode; pointer: PointerRef }) {
   const platform = useSyncExternalStore(noSubscribe, detectPlatform, serverPlatform);
   const [cheatSheetOpen, setCheatSheetOpen] = useState(false);
   const opener = useRef<Element | null>(null);
@@ -38,7 +39,7 @@ export function CanvasErgonomics({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const actions = useCanvasActions(openCheatSheet);
+  const actions = useCanvasActions(openCheatSheet, pointer);
   useKeyboardShortcuts(actions);
 
   return (
