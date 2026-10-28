@@ -216,6 +216,15 @@
   inset: -4px;
 }
 
+/* F22 text node: borderless, so hover and selection are drawn as outlines (never layout-affecting). */
+.react-flow__node:hover .canvas-text-node {
+  outline: 1px solid var(--border-subtle);
+}
+
+.react-flow__node.selected .canvas-text-node {
+  outline: 2px solid var(--accent-primary);
+}
+
 /* F08 colour swatches (FR-011): hover ring in the swatch's text colour at 33 % alpha. */
 .canvas-swatch:hover {
   box-shadow: 0 0 0 3px var(--swatch-glow);

@@ -16,7 +16,14 @@ import {
 } from '@/types/canvas';
 
 /** What a text or sticky commit writes in one `replace` (F22): the label and, for text, the measured size. */
-export type TextCommitPatch = { label?: string; width?: number; height?: number; autoWidth?: boolean };
+export type TextCommitPatch = {
+  label?: string;
+  width?: number;
+  height?: number;
+  autoWidth?: boolean;
+  /** Resize end of a left-edge drag: the gesture's final position, so the replace never writes a stale one. */
+  position?: XYPosition;
+};
 
 export interface CanvasMutations {
   canEdit: boolean;
@@ -119,7 +126,7 @@ export function useCanvasMutations(): CanvasMutations {
         if (!writable()) return;
         const node = store.getState().nodeLookup.get(id)?.internals.userNode;
         if (!node) return; // deleted remotely meanwhile (EC-009)
-        const { label, width, height, autoWidth } = patch;
+        const { label, width, height, autoWidth, position } = patch;
         const data: CanvasNodeData = {
           ...node.data,
           ...(label !== undefined ? { label } : {}),
@@ -129,7 +136,13 @@ export function useCanvasMutations(): CanvasMutations {
           {
             type: 'replace',
             id,
-            item: { ...node, ...(width !== undefined ? { width } : {}), ...(height !== undefined ? { height } : {}), data },
+            item: {
+              ...node,
+              ...(position !== undefined ? { position } : {}),
+              ...(width !== undefined ? { width } : {}),
+              ...(height !== undefined ? { height } : {}),
+              data,
+            },
           },
         ]);
       },

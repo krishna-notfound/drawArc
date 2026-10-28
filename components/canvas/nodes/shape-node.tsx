@@ -1,21 +1,18 @@
 'use client';
 
 import type { NodeProps } from '@xyflow/react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
 import { effectiveText, textStyle } from '@/lib/canvas/text-style';
 import type { CanvasNode as CanvasNodeType, NodeShape } from '@/types/canvas';
 
+import { onControl, useEnterToEdit } from './node-editing';
 import { NodeHandles } from './node-handles';
 import { NodeLabel } from './node-label';
 import { NodeLabelEditor } from './node-label-editor';
 import { CanvasNodeResizer } from './node-resizer';
 import { ShapeRenderer } from './shape-renderer';
-
-/** A double-click on a resize control or connection handle is not a request to edit the label. */
-const onControl = (target: EventTarget) =>
-  target instanceof Element && target.closest('.react-flow__resize-control, .react-flow__handle') !== null;
 
 /**
  * The renderer of the six drawn shapes (F07 FR-009 – FR-011): a centred label and four handles. F08 adds the
@@ -30,18 +27,7 @@ export function ShapeNode({ id, data, selected, isConnectable, shape }: NodeProp
   const rootRef = useRef<HTMLDivElement>(null);
   const style = textStyle(effectiveText(shape, data));
 
-  // React Flow focuses the node wrapper (`.react-flow__node`), an ancestor of this component, so Enter is read there.
-  useEffect(() => {
-    const wrapper = rootRef.current?.closest<HTMLElement>('.react-flow__node');
-    if (!wrapper || !canEdit) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' || e.target !== wrapper || e.repeat) return;
-      e.preventDefault();
-      setEditing(true);
-    };
-    wrapper.addEventListener('keydown', onKeyDown);
-    return () => wrapper.removeEventListener('keydown', onKeyDown);
-  }, [canEdit]);
+  useEnterToEdit(rootRef, canEdit, useCallback(() => setEditing(true), []));
 
   const commit = (value: string) => {
     const label = value.trim();
@@ -58,7 +44,7 @@ export function ShapeNode({ id, data, selected, isConnectable, shape }: NodeProp
         if (canEdit && !onControl(e.target)) setEditing(true);
       }}
     >
-      {selected && canEdit ? <CanvasNodeResizer shape={shape} /> : null}
+      {selected && canEdit ? <CanvasNodeResizer kind={shape} /> : null}
       <ShapeRenderer shape={shape} color={data.color} selected={selected}>
         <NodeLabel label={data.label} showPlaceholder={canEdit} hidden={editing} style={style} />
         {editing ? (
