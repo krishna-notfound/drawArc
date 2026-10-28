@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { duplicateSelection } from '@/lib/canvas/duplicate';
-import type { CanvasEdge, CanvasNode } from '@/types/canvas';
+import type { CanvasEdge, CanvasNode, NodeShape } from '@/types/canvas';
 
-const node = (id: string, x: number, shape: CanvasNode['data']['shape'] = 'rectangle'): CanvasNode => ({
+const node = (id: string, x: number, shape: NodeShape = 'rectangle'): CanvasNode => ({
   id,
   type: 'canvasNode',
   position: { x, y: 10 },
@@ -51,5 +51,19 @@ describe('duplicateSelection (F10 AC-013, D-10d)', () => {
     expect(e2.data).not.toBe(e.data);
     expect(e2).not.toHaveProperty('selected');
     expect(out.idMap).toEqual(new Map([[x.id, x2.id], [y.id, y2.id]]));
+  });
+  it('duplicates text and sticky nodes with their kind fields and id prefix (Review Focus 3)', () => {
+    const text: CanvasNode = { ...node('text_T', 0), data: { label: 't', shape: 'text', color: 'neutral', autoWidth: false } };
+    const sticky: CanvasNode = {
+      ...node('sticky_S', 100),
+      data: { label: 's', shape: 'sticky', color: '#FDE68A', text: { size: 'l', align: 'left', valign: 'top', bold: false } },
+    };
+    const out = duplicateSelection([text, sticky], []);
+    expect(out.nodes[0].id).toMatch(/^text_/);
+    expect(out.nodes[1].id).toMatch(/^sticky_/);
+    expect(out.nodes[0].data).toEqual(text.data);
+    expect(out.nodes[1].data).toEqual(sticky.data);
+    expect(out.nodes[0].data).not.toBe(text.data);
+    expect(out.nodes[1].data).not.toBe(sticky.data);
   });
 });

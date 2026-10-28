@@ -6,7 +6,7 @@ import { expect, it } from 'vitest';
 import { validateDocument } from '@/lib/canvas/schema';
 
 // F15 AC-018 / TC-009: the NFR-004 fixture that perf.spec.ts seeds through the snapshot API.
-it('is a valid schema-v1 canvas of exactly 500 non-overlapping nodes and 800 edges within the size caps', () => {
+it('is a valid schema-v2 canvas of exactly 500 non-overlapping nodes and 800 edges within the size caps', () => {
   const text = readFileSync('tests/fixtures/canvas/large-500-nodes.json', 'utf8');
   const result = validateDocument(JSON.parse(text));
   if (!result.ok) throw result.error;

@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 2,
+  "nodes": [
+    {
+      "id": "rectangle_01JBE000000000000000000K01",
+      "type": "canvasNode",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "width": 180,
+      "height": 80,
+      "data": {
+        "label": "rectangle",
+        "shape": "rectangle",
+        "color": "#FDE68A",
+        "text": {
+          "size": "l",
+          "align": "left",
+          "valign": "top",
+          "bold": true
+        },
+        "border": {
+          "style": "dashed",
+          "width": 2
+        },
+        "locked": true,
+        "groupId": "g_01JBE0000000000000000000G1",
+        "order": "a0",
+        "href": "https://example.com/spec"
+      }
+    },
+    {
+      "id": "diamond_01JBE000000000000000000K02",
+      "type": "canvasNode",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "width": 140,
+      "height": 140,
+      "data": {
+        "label": "diamond",
+        "shape": "diamond",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "circle_01JBE000000000000000000K03",
+      "type": "canvasNode",
+      "position": {
+        "x": 600,
+        "y": 0
+      },
+      "width": 96,
+      "height": 96,
+      "data": {
+        "label": "circle",
+        "shape": "circle",
+        "color": "neutral"
+      },
+      "parentId": "frame_01JBE000000000000000000K11",
+      "extent": "parent"
+    },
+    {
+      "id": "pill_01JBE000000000000000000K04",
+      "type": "canvasNode",
+      "position": {
+        "x": 900,
+        "y": 0
+      },
+      "width": 180,
+      "height": 64,
+      "data": {
+        "label": "pill",
+        "shape": "pill",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "cylinder_01JBE000000000000000000K05",
+      "type": "canvasNode",
+      "position": {
+        "x": 0,
+        "y": 300
+      },
+      "width": 140,
+      "height": 110,
+      "data": {
+        "label": "cylinder",
+        "shape": "cylinder",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "hexagon_01JBE000000000000000000K06",
+      "type": "canvasNode",
+      "position": {
+        "x": 300,
+        "y": 300
+      },
+      "width": 160,
+      "height": 110,
+      "data": {
+        "label": "hexagon",
+        "shape": "hexagon",
+        "color": "neutral"
+      }
+    },
+    {
+      "id": "text_01JBE000000000000000000K07",
+      "type": "canvasNode",
+      "position": {
+        "x": 600,
+        "y": 300
+      },
+      "width": 24,
+      "height": 20,
+      "data": {
+        "label": "note",
+        "shape": "text",
+        "color": "neutral",
+        "autoWidth": true
+      }
+    },
+    {
+      "id": "sticky_01JBE000000000000000000K08",
+      "type": "canvasNode",
+      "position": {
+        "x": 900,
+        "y": 300
+      },
+      "width": 250,
+      "height": 250,
+      "data": {
+        "label": "idea",
+        "shape": "sticky",
+        "color": "orange"
+      }
+    },
+    {
+      "id": "line_01JBE000000000000000000K09",
+      "type": "canvasNode",
+      "position": {
+        "x": 0,
+        "y": 600
+      },
+      "width": 100,
+      "height": 100,
+      "data": {
+        "label": "line",
+        "shape": "line",
+        "color": "neutral",
+        "points": [
+          [
+            0,
+            0
+          ],
+          [
+            100,
+            100
+          ]
+        ],
+        "stroke": {
+          "dash": "dashed",
+          "width": 2,
+          "markerStart": "none",
+          "markerEnd": "arrow"
+        }
+      }
+    },
+    {
+      "id": "freehand_01JBE000000000000000000K10",
+      "type": "canvasNode",
+      "position": {
+        "x": 300,
+        "y": 600
+      },
+      "width": 100,
+      "height": 100,
+      "data": {
+        "label": "freehand",
+        "shape": "freehand",
+        "color": "neutral",
+        "points": [
+          [
+            0,
+            0,
+            0.5
+          ],
+          [
+            10,
+            10,
+            0.5
+          ]
+        ],
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "frame_01JBE000000000000000000K11",
+      "type": "canvasNode",
+      "position": {
+        "x": 600,
+        "y": 600
+      },
+      "width": 400,
+      "height": 300,
+      "data": {
+        "label": "frame",
+        "shape": "frame",
+        "color": "neutral",
+        "clip": true
+      }
+    },
+    {
+      "id": "image_01JBE000000000000000000K12",
+      "type": "canvasNode",
+      "position": {
+        "x": 900,
+        "y": 600
+      },
+      "width": 200,
+      "height": 150,
+      "data": {
+        "label": "image",
+        "shape": "image",
+        "color": "neutral",
+        "image": {
+          "fileId": "file_01",
+          "status": "saved",
+          "natural": {
+            "width": 800,
+            "height": 600
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_01JBE0000000000000000000E1",
+      "type": "canvasEdge",
+      "source": "sticky_01JBE000000000000000000K08",
+      "target": "rectangle_01JBE000000000000000000K01",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": {
+        "style": {
+          "path": "step",
+          "dash": "dotted",
+          "width": 3,
+          "markerStart": "circle",
+          "markerEnd": "none"
+        }
+      }
+    }
+  ]
+}

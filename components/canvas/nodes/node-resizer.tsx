@@ -3,7 +3,7 @@
 import { NodeResizer, type ReactFlowState, useStore } from '@xyflow/react';
 import type { CSSProperties } from 'react';
 
-import { MIN_SIZE, type NodeShape } from '@/types/canvas';
+import { MIN_SIZES, type NodeShape } from '@/types/canvas';
 
 export interface CanvasNodeResizerProps {
   shape: NodeShape;
@@ -22,8 +22,8 @@ export function CanvasNodeResizer({ shape }: CanvasNodeResizerProps) {
   const scale = useStore(inverseZoom);
   return (
     <NodeResizer
-      minWidth={MIN_SIZE.width}
-      minHeight={MIN_SIZE.height}
+      minWidth={MIN_SIZES[shape].width}
+      minHeight={MIN_SIZES[shape].height}
       keepAspectRatio={shape === 'circle'}
       autoScale={false}
       handleClassName="canvas-resize-handle"

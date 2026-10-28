@@ -150,7 +150,7 @@ describe('useAutosave guards and server answers (AC-016, AC-017, AC-018)', () =>
     expect(fetchMock).not.toHaveBeenCalled();
 
     await act(async () => void (await hook.result.current.save({ allowEmpty: true })));
-    expect(body(0)).toEqual({ document: { schemaVersion: 1, nodes: [], edges: [] }, allowEmpty: true });
+    expect(body(0)).toEqual({ document: { schemaVersion: 2, nodes: [], edges: [] }, allowEmpty: true });
   });
 
   it('429 reschedules at Retry-After without an error; 5xx backs off 10/20/40 s then waits for the next change', async () => {

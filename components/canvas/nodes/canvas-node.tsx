@@ -4,7 +4,8 @@ import type { NodeProps } from '@xyflow/react';
 import { memo, useEffect, useRef, useState } from 'react';
 
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
-import { type CanvasNode as CanvasNodeType, NODE_COLORS, NODE_SHAPES } from '@/types/canvas';
+import { isHexColor } from '@/lib/canvas/color';
+import { type CanvasNode as CanvasNodeType, isNodeShape, NODE_COLORS } from '@/types/canvas';
 
 import { NodeHandles } from './node-handles';
 import { NodeLabel } from './node-label';
@@ -16,14 +17,14 @@ const warned = new Set<string>();
 
 /** Storage may hold a shape/colour from a newer app version: render rectangle/neutral, warn once per id. */
 function knownVisuals(id: string, data: CanvasNodeType['data']) {
-  const shapeKnown = (NODE_SHAPES as readonly string[]).includes(data.shape);
-  const colorKnown = Object.hasOwn(NODE_COLORS, data.color);
+  const shapeKnown = isNodeShape(data.shape);
+  const colorKnown = Object.hasOwn(NODE_COLORS, data.color) || isHexColor(data.color);
   if ((!shapeKnown || !colorKnown) && !warned.has(id)) {
     warned.add(id);
     // eslint-disable-next-line no-console -- client-side diagnostic; lib/logger is server-only.
     console.warn(`[canvas] node ${id} has an unknown shape or colour; rendering defaults`);
   }
-  return { shape: shapeKnown ? data.shape : 'rectangle', color: colorKnown ? data.color : 'neutral' } as const;
+  return { shape: isNodeShape(data.shape) ? data.shape : 'rectangle', color: colorKnown ? data.color : 'neutral' } as const;
 }
 
 /** A double-click on a resize control or connection handle is not a request to edit the label. */

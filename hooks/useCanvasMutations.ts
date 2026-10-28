@@ -8,8 +8,8 @@ import {
   type CanvasEdge,
   type CanvasEdgeData,
   type CanvasNode,
-  type CanvasNodeData,
   DEFAULT_SIZES,
+  type NodeDataPatch,
   type NodeShape,
 } from '@/types/canvas';
 
@@ -19,9 +19,9 @@ export interface CanvasMutations {
   addNode(shape: NodeShape, position: XYPosition): CanvasNode | null;
   addNodes(items: CanvasNode[]): void;
   replaceNode(item: CanvasNode): void;
-  updateNodeData(id: string, patch: Partial<CanvasNodeData>): void;
+  updateNodeData(id: string, patch: NodeDataPatch): void;
   /** Merges `patch` into every listed node's data in one change set: one Liveblocks batch, one undo step (F08). */
-  updateNodesData(ids: readonly string[], patch: Partial<CanvasNodeData>): void;
+  updateNodesData(ids: readonly string[], patch: NodeDataPatch): void;
   addEdge(item: CanvasEdge): void;
   replaceEdge(item: CanvasEdge): void;
   updateEdgeData(id: string, patch: Partial<CanvasEdgeData>): void;

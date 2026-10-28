@@ -1,10 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react';
 
-import { NODE_COLORS, type NodeColorId, type NodeShape } from '@/types/canvas';
+import { resolveColor } from '@/lib/canvas/color';
+import type { NodeColor, NodeShape } from '@/types/canvas';
 
 export interface ShapeRendererProps {
   shape: NodeShape;
-  color: NodeColorId;
+  color: NodeColor;
   selected?: boolean;
   /** Drag preview (F07 ghost): dashed brand outline. */
   ghost?: boolean;
@@ -51,7 +52,7 @@ function SvgOutline({ shape, fill, width, dash }: { shape: SvgShape; fill: strin
  * circle are CSS boxes; diamond, hexagon and cylinder are inline SVG that scale with the node's size.
  */
 export function ShapeRenderer({ shape, color, selected = false, ghost = false, children, className }: ShapeRendererProps) {
-  const colors = NODE_COLORS[color];
+  const colors = resolveColor(color);
   const line = outline(selected, ghost);
   const base = `relative flex h-full w-full items-center justify-center ${className ?? ''}`;
 

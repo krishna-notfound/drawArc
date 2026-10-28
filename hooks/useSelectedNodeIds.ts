@@ -3,6 +3,7 @@
 import { type ReactFlowState, useStore } from '@xyflow/react';
 import { useCallback } from 'react';
 
+import { isHexColor } from '@/lib/canvas/color';
 import type { CanvasNodeData, NodeColorId } from '@/types/canvas';
 
 // `useStore` is not generic over node types; the canvas only ever holds `CanvasNode`s (F06).
@@ -19,7 +20,10 @@ export function useSelectedNodeIds(): string[] {
   return useStore(selectedIds, sameIds);
 }
 
-/** The colour every listed node shares, or `null` for a mixed (or empty) selection. */
+/**
+ * The palette colour every listed node shares, or `null` for a mixed (or empty) selection. A hex colour (written by
+ * F08 v2) is not a palette swatch, so it counts as mixed: the colour toolbar shows no active swatch.
+ */
 export function useSelectionColor(ids: readonly string[]): NodeColorId | null {
   const select = useCallback(
     (s: FlowState): NodeColorId | null => {
@@ -27,7 +31,7 @@ export function useSelectionColor(ids: readonly string[]): NodeColorId | null {
       for (const id of ids) {
         const data = s.nodeLookup.get(id)?.internals.userNode.data as CanvasNodeData | undefined;
         const color = data?.color;
-        if (color === undefined || (shared !== null && color !== shared)) return null;
+        if (color === undefined || isHexColor(color) || (shared !== null && color !== shared)) return null;
         shared = color;
       }
       return shared;

@@ -1,4 +1,4 @@
-import type { NodeShape } from '@/types/canvas';
+import type { NodeKind } from '@/types/canvas';
 
 // Crockford base32, the ULID alphabet (no I, L, O, U).
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -21,9 +21,9 @@ export function ulid(now: number = Date.now()): string {
   return time + random;
 }
 
-/** Node ids are `${shape}_${ulid}` (domain-model "Canvas schema v1"). */
-export function newNodeId(shape: NodeShape): string {
-  return `${shape}_${ulid()}`;
+/** Node ids are `${kind}_${ulid}` (domain-model "Canvas schema v2"). */
+export function newNodeId(kind: NodeKind): string {
+  return `${kind}_${ulid()}`;
 }
 
 /** Edge ids are `e_${ulid}`. */
