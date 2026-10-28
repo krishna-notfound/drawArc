@@ -75,7 +75,6 @@ export function StickyNode({ id, data, selected, isConnectable, width, height }:
         if (canEdit && !onControl(e.target)) setEditing(true);
       }}
     >
-      {selected && canEdit ? <CanvasNodeResizer kind="sticky" /> : null}
       {/* The clip box is inside the root so the handles, half outside the card, are never clipped. */}
       <div className={`absolute inset-0 flex overflow-hidden rounded-[2px] p-2.5 ${ALIGN_ITEMS[text.valign]}`}>
         <NodeLabel
@@ -97,6 +96,8 @@ export function StickyNode({ id, data, selected, isConnectable, width, height }:
           wrapperClassName={`absolute inset-0 flex p-2.5 ${ALIGN_ITEMS[text.valign]}`}
         />
       ) : null}
+      {/* After the clip box in the DOM, so its absolutely positioned layer never covers the controls. */}
+      {selected && canEdit ? <CanvasNodeResizer kind="sticky" /> : null}
       <NodeHandles isConnectable={isConnectable} />
     </div>
   );

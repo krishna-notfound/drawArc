@@ -140,7 +140,6 @@ export function TextNode({ id, data, selected, width, height }: NodeProps<Canvas
         if (canEdit && !onControl(e.target)) open();
       }}
     >
-      {selected && canEdit ? <CanvasNodeResizer kind="text" sides="horizontal" onResizeEnd={onResizeEnd} /> : null}
       <NodeLabel
         label={data.label}
         showPlaceholder={canEdit}
@@ -162,6 +161,8 @@ export function TextNode({ id, data, selected, width, height }: NodeProps<Canvas
           onDraftChange={onDraftChange}
         />
       ) : null}
+      {/* After the label in the DOM: a positioned label would otherwise paint over the 1 px edge controls. */}
+      {selected && canEdit ? <CanvasNodeResizer kind="text" sides="horizontal" onResizeEnd={onResizeEnd} /> : null}
     </div>
   );
 }
