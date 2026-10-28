@@ -46,7 +46,16 @@ test('a dropped shape is centred under the cursor at any pan/zoom and the viewpo
   expect(Math.abs(box.x + box.width / 2 - 640)).toBeLessThanOrEqual(2);
   expect(Math.round(800 - (box.y + box.height))).toBe(16);
   const labels = await palette.getByRole('button').evaluateAll((els) => els.map((el) => el.getAttribute('aria-label')));
-  expect(labels).toEqual(['Add rectangle', 'Add diamond', 'Add circle', 'Add pill', 'Add cylinder', 'Add hexagon']);
+  expect(labels).toEqual([
+    'Add rectangle',
+    'Add diamond',
+    'Add circle',
+    'Add pill',
+    'Add cylinder',
+    'Add hexagon',
+    'Add text', // F22
+    'Add sticky note',
+  ]);
 
   // AC-004 / AC-021: mid-drag, the ghost is centred on the pointer at the current zoom and is transparent to
   // elementFromPoint, which sees the flow pane under it (nothing intercepts the gesture).

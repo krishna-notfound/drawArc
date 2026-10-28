@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | Approved — implementation authorized (2026-10-28, D-066) |
+| Status | Verification — implemented and verified except AC-016 (blocked on F08 v2) and AC-020 (manual); awaiting owner review |
 | Spec approved | 2026-10-28, owner (D-066) |
 | Implementation authorized | 2026-10-28, owner — batch 1 |
-| Last verified | — |
+| Last verified | 2026-10-28, branch tip 59b7b15 plus the evidence commit |
 
 ## History
 - 2026-10-28 — drafted by the spec writer from D-052, D-057, D-063 (and D-053, D-056, D-058) and research R-005, R-006, R-008, R-027, R-031 (`00-summary.md` §2 C1/C2/C6), `01-selection-tools-text.md` §T6, §T10, §R4, §X6, §X7, §X9, §X10, `02-…` §F-A03, `03-…` §F-41, `04-…` §B4/§D3; React Flow 12.12.0 and Zod 4.6.7 facts verified against `node_modules` on 2026-10-28. Companion edits: `context/domain-model.md` (v2 block, PROPOSED → frozen at approval) and `features/06-base-collaborative-canvas/status.md` (open-issue pointer).
