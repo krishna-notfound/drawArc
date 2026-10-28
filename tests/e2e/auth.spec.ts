@@ -22,9 +22,8 @@ function emailField(page: Page) {
 test.describe('signed out', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('/ and /editor send visitors to /sign-in (AC-007, AC-008)', async ({ page }) => {
-    await page.goto('/');
-    await expect(page).toHaveURL(/\/sign-in$/, NAVIGATION);
+  // F26 supersedes F02 FR-005: '/' is now the landing page (tests/e2e/landing.spec.ts).
+  test('/editor sends visitors to /sign-in (AC-008)', async ({ page }) => {
     await page.goto('/editor');
     await expect(page).toHaveURL(/\/sign-in$/, NAVIGATION);
     await expect(emailField(page)).toBeVisible();
@@ -86,8 +85,9 @@ test.describe('signed out', () => {
 });
 
 test.describe('signed in as user A', () => {
-  test('/, /sign-in and /sign-up land on /editor without rendering a form (AC-006, AC-007)', async ({ page }) => {
-    for (const path of ['/', '/sign-in', '/sign-up']) {
+  // F26 supersedes F02 FR-005: '/' is now the landing page (tests/e2e/landing.spec.ts).
+  test('/sign-in and /sign-up land on /editor without rendering a form (AC-006)', async ({ page }) => {
+    for (const path of ['/sign-in', '/sign-up']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/editor$/, NAVIGATION);
       await expect(page.getByRole('heading', { name: EMPTY_STATE })).toBeVisible();

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { LayoutBoundaryProbe } from "@/components/e2e/layout-boundary-probe";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { e2eHooksEnabled } from "@/lib/env.public";
+import { siteUrl } from "@/lib/site";
 
 import "./globals.css";
 import { Providers } from "./providers";
@@ -21,6 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: { default: "drawArc", template: "%s · drawArc" },
   description: "Real-time collaborative system-design canvas.",
 };
