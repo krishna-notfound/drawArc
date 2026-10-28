@@ -25,6 +25,10 @@ function run(action: ShortcutAction, actions: CanvasActions): void {
       return actions.duplicateSelection();
     case 'delete':
       return actions.deleteSelection();
+    case 'addText':
+      return actions.addText();
+    case 'addSticky':
+      return actions.addSticky();
     case 'cheatSheet':
       return actions.openCheatSheet();
     default: {

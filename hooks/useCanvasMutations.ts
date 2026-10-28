@@ -4,19 +4,31 @@ import { type OnDelete, type ReactFlowState, useStore, useStoreApi, type XYPosit
 import { useMemo } from 'react';
 
 import { newNodeId } from '@/lib/canvas/ids';
+import { requestEditorOpen } from '@/lib/canvas/pending-editor';
 import {
   type CanvasEdge,
   type CanvasEdgeData,
   type CanvasNode,
+  type CanvasNodeData,
   DEFAULT_SIZES,
   type NodeDataPatch,
   type NodeShape,
 } from '@/types/canvas';
 
+/** What a text or sticky commit writes in one `replace` (F22): the label and, for text, the measured size. */
+export type TextCommitPatch = { label?: string; width?: number; height?: number; autoWidth?: boolean };
+
 export interface CanvasMutations {
   canEdit: boolean;
   /** Creates a node of `shape` at `position` (top-left, flow coordinates) and selects it; `null` when read-only. */
   addNode(shape: NodeShape, position: XYPosition): CanvasNode | null;
+  /**
+   * Creates a text or sticky node at `position` (top-left) and selects it; `null` when read-only. An empty text node
+   * flags its editor to open on mount; a non-empty `init.label` (F10 v2 paste) skips that.
+   */
+  addNodeOfKind(kind: 'text' | 'sticky', position: XYPosition, init?: { label?: string }): CanvasNode | null;
+  /** One `replace` carrying label, size and (text only) autoWidth: one Storage write, one undo entry. */
+  commitTextNode(id: string, patch: TextCommitPatch): void;
   addNodes(items: CanvasNode[]): void;
   replaceNode(item: CanvasNode): void;
   updateNodeData(id: string, patch: NodeDataPatch): void;
@@ -86,6 +98,40 @@ export function useCanvasMutations(): CanvasMutations {
         store.getState().unselectNodesAndEdges();
         nodeChanges([{ type: 'select', id: item.id, selected: true }]);
         return item;
+      },
+      addNodeOfKind(kind, position, init) {
+        if (!writable()) return null;
+        const { width, height } = DEFAULT_SIZES[kind];
+        const label = init?.label ?? '';
+        const data: CanvasNodeData =
+          kind === 'text'
+            ? { label, shape: 'text', color: 'neutral', autoWidth: true }
+            : { label, shape: 'sticky', color: 'orange' };
+        const item: CanvasNode = { id: newNodeId(kind), type: 'canvasNode', position, width, height, data };
+        // Flagged before the add so a synchronous mount still sees it; only the creating client ever has the flag.
+        if (kind === 'text' && label === '') requestEditorOpen(item.id);
+        nodeChanges([{ type: 'add', item }]);
+        store.getState().unselectNodesAndEdges();
+        nodeChanges([{ type: 'select', id: item.id, selected: true }]);
+        return item;
+      },
+      commitTextNode(id, patch) {
+        if (!writable()) return;
+        const node = store.getState().nodeLookup.get(id)?.internals.userNode;
+        if (!node) return; // deleted remotely meanwhile (EC-009)
+        const { label, width, height, autoWidth } = patch;
+        const data: CanvasNodeData = {
+          ...node.data,
+          ...(label !== undefined ? { label } : {}),
+          ...(autoWidth !== undefined && node.data.shape === 'text' ? { autoWidth } : {}),
+        };
+        nodeChanges([
+          {
+            type: 'replace',
+            id,
+            item: { ...node, ...(width !== undefined ? { width } : {}), ...(height !== undefined ? { height } : {}), data },
+          },
+        ]);
       },
       addNodes(items) {
         if (!writable() || items.length === 0) return;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { LABEL_MAX_LENGTH } from '@/types/canvas';
 
@@ -12,6 +12,8 @@ export interface NodeLabelEditorProps {
   onCommit(value: string): void;
   /** Called at most once (Escape); nothing is written. */
   onCancel(): void;
+  /** Typography from `data.text`, identical to the resting label's so opening the editor causes no jump. */
+  style?: CSSProperties;
 }
 
 const stop = (e: Event) => e.stopPropagation();
@@ -22,7 +24,7 @@ const stop = (e: Event) => e.stopPropagation();
  * return focus to the node. If the editor unmounts for any other reason (node deleted remotely, role downgraded), it
  * closes without committing.
  */
-export function NodeLabelEditor({ initial, onCommit, onCancel }: NodeLabelEditorProps) {
+export function NodeLabelEditor({ initial, onCommit, onCancel, style }: NodeLabelEditorProps) {
   const [draft, setDraft] = useState(initial);
   const ref = useRef<HTMLTextAreaElement>(null);
   const callbacks = useRef({ onCommit, onCancel });
@@ -87,6 +89,7 @@ export function NodeLabelEditor({ initial, onCommit, onCancel }: NodeLabelEditor
         placeholder="Label"
         rows={1}
         maxLength={LABEL_MAX_LENGTH}
+        style={style}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={(e) => finish(e.currentTarget, () => callbacks.current.onCommit(e.currentTarget.value), false)}

@@ -17,6 +17,8 @@ function makeActions(canEdit = true): CanvasActions {
     fitView: vi.fn(),
     undo: vi.fn(),
     redo: vi.fn(),
+    addText: vi.fn(),
+    addSticky: vi.fn(),
     openCheatSheet: vi.fn(),
   };
 }

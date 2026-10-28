@@ -5,14 +5,20 @@ import { type EdgeChange, type NodeChange, useReactFlow, useStoreApi } from '@xy
 import { useMemo } from 'react';
 
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
+import { centredDropPosition } from '@/lib/canvas/drop-position';
 import { duplicateSelection } from '@/lib/canvas/duplicate';
-import type { CanvasEdge, CanvasNode } from '@/types/canvas';
+import { focusNodeWhenRendered } from '@/lib/canvas/focus-node';
+import { type CanvasEdge, type CanvasNode, DEFAULT_SIZES } from '@/types/canvas';
 
 export interface CanvasActions {
   canEdit: boolean;
   deleteSelection(): void;
   duplicateSelection(): void;
   selectAll(): void;
+  /** Creates an empty text node at the viewport centre and opens its editor (`T`). */
+  addText(): void;
+  /** Creates a sticky note at the viewport centre (`N`). */
+  addSticky(): void;
   clearSelection(): void;
   /** Makes exactly these nodes and edges the (local) selection. */
   selectOnly(nodeIds: readonly string[], edgeIds?: readonly string[]): void;
@@ -59,9 +65,22 @@ export function useCanvasActions(openCheatSheet: () => void): CanvasActions {
       if (edgeChanges.length > 0) triggerEdgeChanges(edgeChanges);
     };
 
+    const addAtCentre = (kind: 'text' | 'sticky') => {
+      if (!canEdit) return;
+      const domNode = store.getState().domNode;
+      if (!domNode) return;
+      const rect = domNode.getBoundingClientRect();
+      const centre = rf.screenToFlowPosition({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+      const node = mutations.addNodeOfKind(kind, centredDropPosition(centre, DEFAULT_SIZES[kind]));
+      // A text node focuses its own textarea; a sticky takes keyboard focus like a shape does (F07 FR-008).
+      if (node && kind === 'sticky') focusNodeWhenRendered(domNode, node.id);
+    };
+
     return {
       canEdit,
       selectOnly,
+      addText: () => addAtCentre('text'),
+      addSticky: () => addAtCentre('sticky'),
       deleteSelection() {
         if (!canEdit) return;
         const { nodes, edges } = store.getState();

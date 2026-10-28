@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 import { cn } from '@/lib/utils';
 
 /**
@@ -15,14 +17,17 @@ export interface NodeLabelProps {
   showPlaceholder: boolean;
   /** Kept in the layout but invisible while the editor overlays it (no layout shift, FR-009). */
   hidden?: boolean;
+  /** Typography from `data.text` (`textStyle`); overrides the default size, weight and alignment. */
+  style?: CSSProperties;
 }
 
 /** The node's label at rest (FR-009, FR-014): up to 5 lines, overflow hidden; the stored text stays intact. */
-export function NodeLabel({ label, showPlaceholder, hidden = false }: NodeLabelProps) {
+export function NodeLabel({ label, showPlaceholder, hidden = false, style }: NodeLabelProps) {
   if (!label) {
     return (
       <span
         aria-hidden="true"
+        style={style}
         data-slot="node-label-placeholder"
         className={cn(LABEL_TYPOGRAPHY, 'relative min-h-[1em] text-copy-faint select-none', hidden && 'invisible')}
       >
@@ -33,6 +38,7 @@ export function NodeLabel({ label, showPlaceholder, hidden = false }: NodeLabelP
   return (
     <span
       data-slot="node-label"
+      style={style}
       className={cn(LABEL_TYPOGRAPHY, 'relative line-clamp-5 max-h-full overflow-hidden', hidden && 'invisible')}
     >
       {label}

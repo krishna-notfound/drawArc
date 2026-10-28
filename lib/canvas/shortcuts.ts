@@ -12,13 +12,22 @@ export type ShortcutAction =
   | 'clearSelection'
   | 'selectAll'
   | 'duplicate'
+  | 'addText'
+  | 'addSticky'
   | 'delete'
   | 'cheatSheet';
 
 export type Platform = 'mac' | 'other';
 
 /** Actions that write to Storage or history: no-ops (and not `preventDefault`ed) for read-only members (FR-011). */
-export const MUTATING: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>(['undo', 'redo', 'duplicate', 'delete']);
+export const MUTATING: ReadonlySet<ShortcutAction> = new Set<ShortcutAction>([
+  'undo',
+  'redo',
+  'duplicate',
+  'delete',
+  'addText',
+  'addSticky',
+]);
 
 type KeyEventLike = Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>;
 
@@ -40,6 +49,8 @@ export function matchShortcut(e: KeyEventLike): ShortcutAction | null {
     return null;
   }
   if (shift && e.code === 'Digit1') return 'fitView';
+  if (!shift && key === 't') return 'addText';
+  if (!shift && key === 'n') return 'addSticky';
   switch (key) {
     case '+':
     case '=':
@@ -84,6 +95,10 @@ export function formatKeys(action: ShortcutAction, platform: Platform): string {
       return mac ? '⌘A' : 'Ctrl+A';
     case 'duplicate':
       return mac ? '⌘D' : 'Ctrl+D';
+    case 'addText':
+      return 'T';
+    case 'addSticky':
+      return 'N';
     case 'zoomIn':
       return '+';
     case 'zoomOut':
@@ -144,6 +159,8 @@ export const SHORTCUT_ROWS: readonly ShortcutRow[] = [
   },
   { action: 'Select all', input: '⌘/Ctrl+A', viewerVisible: false },
   { action: 'Duplicate', input: '⌘/Ctrl+D', viewerVisible: false },
+  { action: 'Add text', input: '`T` — type; Enter commits, Esc removes an empty text', viewerVisible: false },
+  { action: 'Add sticky note', input: '`N`', viewerVisible: false },
   { action: 'Clear selection', input: 'Esc', viewerVisible: false },
   { action: 'Keyboard shortcuts', input: '?', viewerVisible: true },
 ];
