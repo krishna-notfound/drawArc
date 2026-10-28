@@ -29,8 +29,8 @@ describe('registry (F10 AC-025)', () => {
     expect(new Set(all).size).toBe(all.length);
     for (const b of SHORTCUTS) expect(b.chords.length > 0 || KEYLESS.has(b.action), b.action).toBe(true);
     expect(() => checkRegistry(SHORTCUTS, RESERVED_CHORDS)).not.toThrow();
-    expect(() => checkRegistry([...SHORTCUTS, { ...bindingFor('undo'), chords: ['mod+a'] }], RESERVED_CHORDS)).toThrow(/Duplicate chord "mod\+a"/);
-    expect(() => checkRegistry(SHORTCUTS, { ...RESERVED_CHORDS, Escape: 'x' })).toThrow(/"Escape"/);
+    expect(() => checkRegistry([...SHORTCUTS, { ...bindingFor('copy'), chords: ['mod+a'] }], RESERVED_CHORDS)).toThrow(/Duplicate chord "mod\+a"/);
+    expect(() => checkRegistry(SHORTCUTS, { ...RESERVED_CHORDS, d: 'x' })).toThrow(/"d"/);
   });
 
   it('keeps the ten v1 labels verbatim and renders W3C aria strings', () => {
@@ -64,5 +64,22 @@ describe('registry (F10 AC-025)', () => {
     expect(matchShortcut(key('r', { ctrlKey: true }))).toBeNull();
     expect(matchShortcut(key('h', { altKey: true }))).toBeNull();
     expect(matchShortcut(key('R', { shiftKey: true }))).toBeNull();
+  });
+
+  it('letters insert shapes (CapsLock-safe), Ctrl+V is left to the paste event (AC-027)', () => {
+    const letters: [string, ShortcutAction][] = [
+      ['r', 'insertRectangle'],
+      ['d', 'insertDiamond'],
+      ['o', 'insertCircle'],
+      ['p', 'insertPill'],
+      ['c', 'insertCylinder'],
+      ['h', 'insertHexagon'],
+    ];
+    for (const [k, a] of letters) expect(matchShortcut(key(k))).toBe(a);
+    expect(matchShortcut(key('R'))).toBe('insertRectangle');
+    expect(matchShortcut(key('c', { ctrlKey: true }))).toBe('copy');
+    expect(matchShortcut(key('x', { metaKey: true }))).toBe('cut');
+    expect(matchShortcut(key('v', { ctrlKey: true }))).toBeNull();
+    expect(formatKeys('paste', 'other')).toBe('Ctrl+V');
   });
 });

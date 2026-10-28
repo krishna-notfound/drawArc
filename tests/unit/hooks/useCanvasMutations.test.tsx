@@ -121,3 +121,29 @@ describe('useCanvasMutations().updateNodesData (F08 AC-017 unit half)', () => {
     for (const change of changes) expect(change.item.data.color).toBe('green');
   });
 });
+
+describe('useCanvasMutations().moveNodes (F10 v2 FR-020)', () => {
+  const n = (id: string, x: number, y: number) =>
+    ({ id, type: 'canvasNode', position: { x, y }, width: 100, height: 50, data: { label: '', shape: 'rectangle', color: 'neutral' } }) as CanvasNode;
+
+  it('emits one replace change set with new positions and skips unknown ids', () => {
+    const { result, onNodesChange } = setup(true);
+    const nodes = [n('A', 0, 0), n('B', 300, 200)];
+    act(() =>
+      result.current.store.setState({
+        nodes,
+        nodeLookup: new Map(nodes.map((node) => [node.id, { internals: { userNode: node } }])),
+      } as never),
+    );
+    result.current.mutations.moveNodes([
+      { id: 'A', position: { x: 250, y: 0 } },
+      { id: 'ghost', position: { x: 1, y: 1 } },
+    ]);
+    expect(onNodesChange).toHaveBeenCalledOnce();
+    expect(onNodesChange.mock.calls[0][0]).toEqual([
+      { type: 'replace', id: 'A', item: expect.objectContaining({ id: 'A', position: { x: 250, y: 0 } }) },
+    ]);
+    result.current.mutations.moveNodes([]);
+    expect(onNodesChange).toHaveBeenCalledOnce();
+  });
+});

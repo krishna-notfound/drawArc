@@ -14,7 +14,16 @@ export type ShortcutAction =
   | 'selectAll'
   | 'duplicate'
   | 'delete'
-  | 'cheatSheet';
+  | 'cheatSheet'
+  | 'copy'
+  | 'cut'
+  | 'paste'
+  | 'insertRectangle'
+  | 'insertDiamond'
+  | 'insertCircle'
+  | 'insertPill'
+  | 'insertCylinder'
+  | 'insertHexagon';
 
 export type Platform = 'mac' | 'other';
 export type ShortcutGroup = 'navigate' | 'select' | 'edit' | 'insert' | 'arrange' | 'history' | 'help';
@@ -58,6 +67,15 @@ export const SHORTCUTS: readonly ShortcutBinding[] = [
   { action: 'duplicate', chords: ['mod+d'], label: 'Duplicate', group: 'edit', mutating: true, viewerVisible: false },
   { action: 'delete', chords: ['Delete', 'Backspace'], label: 'Delete', group: 'edit', mutating: true, viewerVisible: false },
   { action: 'cheatSheet', chords: ['?'], label: 'Keyboard shortcuts', group: 'help', mutating: false, viewerVisible: true },
+  { action: 'copy', chords: ['mod+c'], label: 'Copy', group: 'edit', mutating: false, viewerVisible: false },
+  { action: 'cut', chords: ['mod+x'], label: 'Cut', group: 'edit', mutating: true, viewerVisible: false },
+  { action: 'paste', chords: ['mod+v'], label: 'Paste', group: 'edit', mutating: true, viewerVisible: false, handledBy: 'paste-event' },
+  { action: 'insertRectangle', chords: ['r'], label: 'Add rectangle', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'insertDiamond', chords: ['d'], label: 'Add diamond', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'insertCircle', chords: ['o'], label: 'Add circle', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'insertPill', chords: ['p'], label: 'Add pill', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'insertCylinder', chords: ['c'], label: 'Add cylinder', group: 'insert', mutating: true, viewerVisible: false },
+  { action: 'insertHexagon', chords: ['h'], label: 'Add hexagon', group: 'insert', mutating: true, viewerVisible: false },
 ];
 
 /** Letters held back for later features; `matchShortcut` ignores them and the duplicate guard protects them. */

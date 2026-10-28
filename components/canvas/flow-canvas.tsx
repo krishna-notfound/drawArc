@@ -20,6 +20,7 @@ import { type CSSProperties, type ReactNode, useCallback, useState } from 'react
 
 import { useCanvasConnections } from '@/hooks/useCanvasConnections';
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
+import { usePointerPosition } from '@/hooks/usePointerPosition';
 import type { ProjectRole } from '@/lib/access';
 import { e2eHooksEnabled } from '@/lib/env.public';
 import { type CanvasEdge, type CanvasNode, EDGE_STROKE } from '@/types/canvas';
@@ -135,11 +136,13 @@ function CanvasSurface({ nodes, edges, canWrite, handlers, children }: CanvasSur
   );
   // F09: connection rules, edge creation and reconnection, through the single write path.
   const connections = useCanvasConnections(useCanvasMutations());
+  // F10 v2: where paste and letter-key insertion land.
+  const pointer = usePointerPosition();
 
   return (
     <div data-slot="flow-canvas" data-can-write={String(canWrite)} className="fixed inset-0 bg-base">
       {/* F10: keyboard, context menu, control bar and cheat-sheet around the flow. */}
-      <CanvasErgonomics>
+      <CanvasErgonomics pointer={pointer}>
       <ReactFlow<CanvasNode, CanvasEdge>
         nodes={nodes}
         edges={edges}

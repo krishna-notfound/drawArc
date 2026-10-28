@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 import type { CanvasActions } from '@/hooks/useCanvasActions';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -18,11 +18,23 @@ function makeActions(canEdit = true): CanvasActions {
     undo: vi.fn(),
     redo: vi.fn(),
     openCheatSheet: vi.fn(),
+    copy: vi.fn(() => true),
+    cut: vi.fn(() => true),
+    paste: vi.fn(() => true),
+    pasteFromClipboard: vi.fn(() => Promise.resolve()),
+    insertShape: vi.fn(),
   };
 }
 
 function press(target: EventTarget, key: string, init: KeyboardEventInit = {}): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init });
+  target.dispatchEvent(event);
+  return event;
+}
+
+function paste(text: string, target: EventTarget = document.body): ClipboardEvent {
+  const event = new Event('paste', { bubbles: true, cancelable: true }) as ClipboardEvent;
+  Object.defineProperty(event, 'clipboardData', { value: { getData: () => text } });
   target.dispatchEvent(event);
   return event;
 }
@@ -43,7 +55,7 @@ describe('useKeyboardShortcuts (F10 FR-004–FR-006, FR-011)', () => {
     expect(press(document.body, 'k').defaultPrevented).toBe(false);
   });
 
-  it('ignores keys typed into a text field or while a dialog or menu is open (AC-006, AC-007, US-8)', () => {
+  it('ignores keys typed into a text field or while a dialog or menu is open (AC-006, AC-007, US-8, F10 v2 Review Focus 5)', () => {
     const actions = makeActions();
     renderHook(() => useKeyboardShortcuts(actions));
     document.body.innerHTML = '<textarea id="t"></textarea><div contenteditable="true" id="ce"></div>';
@@ -57,6 +69,10 @@ describe('useKeyboardShortcuts (F10 FR-004–FR-006, FR-011)', () => {
     press(document.body, 'Delete');
     press(document.getElementById('close')!, '?', { shiftKey: true });
     press(document.body, '+');
+    press(document.body, 'c', { ctrlKey: true });
+    press(document.body, 'r');
+    press(document.body, 'ArrowLeft', { ctrlKey: true, shiftKey: true });
+    paste('{"type":"drawarc-clipboard"}');
     document.body.innerHTML = '<div role="menu" data-state="open"></div>';
     press(document.body, 'Escape');
 
@@ -82,5 +98,53 @@ describe('useKeyboardShortcuts (F10 FR-004–FR-006, FR-011)', () => {
     press(document.body, '?', { shiftKey: true });
     expect(actions.zoomIn).toHaveBeenCalledOnce();
     expect(actions.openCheatSheet).toHaveBeenCalledOnce();
+  });
+});
+
+describe('useKeyboardShortcuts (F10 v2)', () => {
+  it('runs in the capture phase: a focused node that preventDefaults its own keydown neither blocks nor sees a handled shortcut (D-10g, EC-027 unit)', () => {
+    const actions = makeActions();
+    renderHook(() => useKeyboardShortcuts(actions));
+    document.body.innerHTML = '<div class="react-flow__node" tabindex="0" id="n"></div>';
+    const nodeEl = document.getElementById('n')!;
+    const nodeSaw = vi.fn((e: Event) => e.preventDefault());
+    nodeEl.addEventListener('keydown', nodeSaw);
+    const ev = press(nodeEl, 'c', { ctrlKey: true });
+    expect(actions.copy).toHaveBeenCalledOnce();
+    expect(ev.defaultPrevented).toBe(true);
+    expect(nodeSaw).not.toHaveBeenCalled();
+    press(nodeEl, 'k'); // unhandled keys still reach the node
+    expect(nodeSaw).toHaveBeenCalledOnce();
+  });
+
+  it('letter keys insert for editors only; copy with nothing selected keeps the browser default (AC-027, FR-016)', () => {
+    const actions = makeActions();
+    renderHook(() => useKeyboardShortcuts(actions));
+    expect(press(document.body, 'r').defaultPrevented).toBe(true);
+    expect(actions.insertShape).toHaveBeenCalledWith('rectangle');
+    expect(press(document.body, 'r', { ctrlKey: true }).defaultPrevented).toBe(false);
+    (actions.copy as Mock).mockReturnValue(false);
+    expect(press(document.body, 'c', { ctrlKey: true }).defaultPrevented).toBe(false);
+    const viewer = makeActions(false);
+    renderHook(() => useKeyboardShortcuts(viewer));
+    press(document.body, 'h');
+    expect(viewer.insertShape).not.toHaveBeenCalled();
+  });
+
+  it('Ctrl+V is left to the paste event, which is prevented only when something was written (D-10f)', () => {
+    const actions = makeActions();
+    renderHook(() => useKeyboardShortcuts(actions));
+    expect(press(document.body, 'v', { ctrlKey: true }).defaultPrevented).toBe(false);
+    expect(paste('{"type":"drawarc-clipboard"}').defaultPrevented).toBe(true);
+    expect(actions.paste).toHaveBeenCalledWith('{"type":"drawarc-clipboard"}');
+    (actions.paste as Mock).mockReturnValue(false);
+    expect(paste('nothing').defaultPrevented).toBe(false);
+    document.body.innerHTML = '<textarea id="t"></textarea>';
+    paste('x', document.getElementById('t')!);
+    expect(actions.paste).toHaveBeenCalledTimes(2); // not intercepted in a text field
+    const viewer = makeActions(false);
+    renderHook(() => useKeyboardShortcuts(viewer));
+    paste('{"type":"drawarc-clipboard"}');
+    expect(viewer.paste).not.toHaveBeenCalled();
   });
 });

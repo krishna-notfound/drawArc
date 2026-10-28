@@ -72,6 +72,12 @@ const REGISTRY_TABLE: readonly { action: string; actions: ShortcutAction[]; view
   { action: 'Duplicate', actions: ['duplicate'], viewerVisible: false },
   { action: 'Clear selection', actions: ['clearSelection'], viewerVisible: false },
   { action: 'Keyboard shortcuts', actions: ['cheatSheet'], viewerVisible: true },
+  { action: 'Copy / Cut / Paste', actions: ['copy', 'cut', 'paste'], viewerVisible: false },
+  {
+    action: 'Add shape at pointer',
+    actions: ['insertRectangle', 'insertDiamond', 'insertCircle', 'insertPill', 'insertCylinder', 'insertHexagon'],
+    viewerVisible: false,
+  },
 ];
 
 /** Rows after the ten verbatim ones are written from the registry, so no chord is typed twice (FR-014). */
