@@ -3,13 +3,13 @@
 import type { XYPosition } from '@xyflow/react';
 import { type KeyboardEvent, type MouseEvent, type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { DEFAULT_SIZES, type NodeShape } from '@/types/canvas';
+import { DEFAULT_SIZES, type PaletteKind } from '@/types/canvas';
 
 /** Pointer travel (px) that turns a press into a drag; less is a click (FR-002, FR-007). */
 export const DRAG_THRESHOLD_PX = 4;
 
 export interface ShapeDragState {
-  shape: NodeShape;
+  shape: PaletteKind;
   /** Pointer position (client px); the ghost is centred here. */
   x: number;
   y: number;
@@ -24,9 +24,9 @@ export interface ShapeDragOptions {
   getContainer(): HTMLElement | null;
   getZoom(): number;
   /** A drag ended over the flow pane at `client`. */
-  onDrop(shape: NodeShape, client: XYPosition): void;
+  onDrop(shape: PaletteKind, client: XYPosition): void;
   /** A click or Enter/Space without a drag: place the shape at the viewport centre. */
-  onPlace(shape: NodeShape): void;
+  onPlace(shape: PaletteKind): void;
 }
 
 export interface ShapeButtonProps {
@@ -40,7 +40,7 @@ export interface ShapeButtonProps {
 }
 
 interface Session {
-  shape: NodeShape;
+  shape: PaletteKind;
   pointerId: number;
   target: HTMLElement;
   startX: number;
@@ -121,7 +121,7 @@ export function useShapeDrag({ getContainer, getZoom, onDrop, onPlace }: ShapeDr
   );
 
   const buttonProps = useCallback(
-    (shape: NodeShape): ShapeButtonProps => ({
+    (shape: PaletteKind): ShapeButtonProps => ({
       onPointerDown(e) {
         if (e.button !== 0 || !e.isPrimary) return;
         suppressClick.current = false;

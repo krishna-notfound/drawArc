@@ -8,7 +8,9 @@ import { fromDocument, toDocument } from '@/lib/canvas/serialize';
 import { type CanvasDocument, type CanvasEdge, type CanvasNode, DEFAULT_SIZES } from '@/types/canvas';
 import { makeCanvasDocument, testUlid } from '@/tests/factories';
 
-const v1Small = JSON.parse(readFileSync('tests/fixtures/canvas/v1-small.json', 'utf8')) as CanvasDocument;
+const load = (name: string) => JSON.parse(readFileSync('tests/fixtures/canvas/' + name, 'utf8')) as CanvasDocument;
+const v2Small = load('v2-small.json');
+const v2Kinds = load('v2-kinds.json');
 const RUNTIME_KEYS = ['selected', 'dragging', 'measured', 'resizing', 'style', 'className', 'zIndex'];
 
 const nodeA = `rectangle_${testUlid(1)}`;
@@ -55,12 +57,23 @@ describe('toDocument (AC-007)', () => {
   });
 });
 
+describe('v2 data (FR-006)', () => {
+  it('emits schemaVersion 2 and the whole data object, dropping no kind field', () => {
+    const data = { label: 't', shape: 'text', color: 'neutral', autoWidth: false } as const;
+    const doc = toDocument([{ id: `text_${testUlid(1)}`, type: 'canvasNode', position: { x: 0, y: 0 }, width: 30, height: 20, data }], []);
+    expect(doc.schemaVersion).toBe(2);
+    expect(doc.nodes[0].data).toEqual(data);
+    expect(validateDocument(doc).ok).toBe(true);
+  });
+});
+
 describe('round trip (AC-008)', () => {
   it.each([
     ['empty', makeCanvasDocument({ nodes: 0 })],
     ['small-5-nodes', makeCanvasDocument({ nodes: 5 })],
     ['large-500-nodes', makeCanvasDocument({ nodes: 500 })],
-    ['v1-small', v1Small],
+    ['v2-small', v2Small],
+    ['v2-kinds', v2Kinds],
   ])('toDocument(fromDocument(%s)) deep-equals the input', (_name, doc) => {
     const { nodes, edges } = fromDocument(doc);
     expect(toDocument(nodes, edges)).toEqual(doc);

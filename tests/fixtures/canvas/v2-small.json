@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "nodes": [
+    {
+      "id": "rectangle_01JBE0000000000000000000A1",
+      "type": "canvasNode",
+      "position": { "x": 0, "y": 0 },
+      "width": 180,
+      "height": 80,
+      "data": { "label": "API Gateway", "shape": "rectangle", "color": "blue" }
+    },
+    {
+      "id": "cylinder_01JBE0000000000000000000A2",
+      "type": "canvasNode",
+      "position": { "x": 320, "y": -15.5 },
+      "width": 140,
+      "height": 110,
+      "data": { "label": "Postgres", "shape": "cylinder", "color": "green" }
+    },
+    {
+      "id": "diamond_01JBE0000000000000000000A3",
+      "type": "canvasNode",
+      "position": { "x": 120, "y": 200 },
+      "width": 140,
+      "height": 140,
+      "data": { "label": "", "shape": "diamond", "color": "neutral" }
+    },
+    {
+      "id": "circle_01JBE0000000000000000000A4",
+      "type": "canvasNode",
+      "position": { "x": -240, "y": 40 },
+      "width": 96,
+      "height": 96,
+      "data": { "label": "Client", "shape": "circle", "color": "teal" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_01JBE0000000000000000000B1",
+      "type": "canvasEdge",
+      "source": "circle_01JBE0000000000000000000A4",
+      "target": "rectangle_01JBE0000000000000000000A1",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "data": { "label": "HTTPS" }
+    },
+    {
+      "id": "e_01JBE0000000000000000000B2",
+      "type": "canvasEdge",
+      "source": "rectangle_01JBE0000000000000000000A1",
+      "target": "cylinder_01JBE0000000000000000000A2",
+      "sourceHandle": "right",
+      "targetHandle": "left"
+    },
+    {
+      "id": "e_01JBE0000000000000000000B3",
+      "type": "canvasEdge",
+      "source": "rectangle_01JBE0000000000000000000A1",
+      "target": "diamond_01JBE0000000000000000000A3",
+      "sourceHandle": "bottom",
+      "targetHandle": "top"
+    }
+  ]
+}

@@ -78,6 +78,8 @@ const REGISTRY_TABLE: readonly { action: string; actions: ShortcutAction[]; view
     actions: ['insertRectangle', 'insertDiamond', 'insertCircle', 'insertPill', 'insertCylinder', 'insertHexagon'],
     viewerVisible: false,
   },
+  { action: 'Add text', actions: ['addText'], viewerVisible: false },
+  { action: 'Add sticky note', actions: ['addSticky'], viewerVisible: false },
   { action: 'Grid', actions: ['toggleGrid'], viewerVisible: true },
   { action: 'Align', actions: ['alignLeft', 'alignRight', 'alignTop', 'alignBottom'], viewerVisible: false },
   { action: 'Zoom to selection', actions: ['zoomToSelection'], viewerVisible: true },

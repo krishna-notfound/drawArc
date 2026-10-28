@@ -10,16 +10,17 @@ import type { PersistedNode } from '@/types/canvas';
 // editing a template with: npx vitest run tests/unit/canvas/templates.test.ts -u
 
 describe('starter templates', () => {
-  it('are valid schema-v1 documents with tidy, non-overlapping layouts and matching fixtures (AC-001–003, AC-017)', async () => {
+  it('are valid schema-v2 documents with tidy, non-overlapping layouts and matching fixtures (AC-001–003, AC-017)', async () => {
     expect(CANVAS_TEMPLATES.map((t) => t.id)).toEqual(['microservices', 'cicd-pipeline', 'event-driven']);
     expect(new Set(CANVAS_TEMPLATES.map((t) => t.name)).size).toBe(CANVAS_TEMPLATES.length);
 
     for (const template of CANVAS_TEMPLATES) {
       const { document } = template;
       expect(template.description.length, template.id).toBeLessThanOrEqual(120);
-      // Schema v1 covers shapes, colours, sizes, handles, unique ids, existing endpoints and no self-loops.
+      // Schema v2 covers shapes, colours, sizes, handles, unique ids, existing endpoints and no self-loops.
       const parsed = CanvasDocumentSchema.safeParse(document);
       expect(parsed.success, `${template.id}: ${parsed.error?.message}`).toBe(true);
+      expect(document.schemaVersion).toBe(2);
       expect(findOverlaps(document.nodes, 20), template.id).toEqual([]);
       for (const node of document.nodes) expect(node.data.label.length, node.id).toBeLessThanOrEqual(24);
       for (const edge of document.edges) expect(edge.data?.label?.length ?? 0, edge.id).toBeLessThanOrEqual(100);

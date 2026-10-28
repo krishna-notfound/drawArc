@@ -20,6 +20,7 @@ import {
 import type { AlignMode, Axis } from '@/lib/canvas/align';
 import { centredDropPosition } from '@/lib/canvas/drop-position';
 import { duplicateSelection } from '@/lib/canvas/duplicate';
+import { focusNodeWhenRendered } from '@/lib/canvas/focus-node';
 import { textInserter, textMaxLength } from '@/lib/canvas/kinds';
 import { gridStore } from '@/lib/canvas/preferences';
 import type { ShortcutAction } from '@/lib/canvas/registry';
@@ -49,6 +50,10 @@ export interface CanvasActions {
   pasteFromClipboard(): Promise<void>;
   /** Adds `shape` centred on the pointer, or on the viewport centre when the pointer is off the canvas. */
   insertShape(shape: NodeShape): void;
+  /** Adds an empty text node centred on the pointer (or viewport centre) and opens it for typing (F22). */
+  addText(): void;
+  /** Adds a sticky note centred on the pointer (or viewport centre) and focuses it (F22). */
+  addSticky(): void;
   /** Flips this user's grid preference (localStorage only); allowed for viewers, never a history entry. */
   toggleGrid(): void;
   /** Fits the selected nodes (padding 0.2, 200 ms), or everything when nothing is selected. */
@@ -128,6 +133,12 @@ export function runAction(action: ShortcutAction, actions: CanvasActions): boole
       actions.insertShape(shape);
       return true;
     }
+    case 'addText':
+      actions.addText();
+      return true;
+    case 'addSticky':
+      actions.addSticky();
+      return true;
     case 'toggleGrid':
       actions.toggleGrid();
       return true;
@@ -211,6 +222,15 @@ export function useCanvasActions(openCheatSheet: () => void, pointer: PointerRef
           ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
           : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
       );
+    };
+
+    /** T / N insertion: centred on the pointer, else the viewport centre. */
+    const addAtPoint = (kind: 'text' | 'sticky') => {
+      if (!canEdit) return;
+      const node = mutations.addNodeOfKind(kind, centredDropPosition(targetPoint(), DEFAULT_SIZES[kind]));
+      // A text node focuses its own textarea; a sticky takes keyboard focus like a shape does (F07 FR-008).
+      const domNode = store.getState().domNode;
+      if (node && kind === 'sticky' && domNode) focusNodeWhenRendered(domNode, node.id);
     };
 
     const deleteSelection = () => {
@@ -321,6 +341,8 @@ export function useCanvasActions(openCheatSheet: () => void, pointer: PointerRef
         if (!canEdit) return;
         mutations.addNode(shape, centredDropPosition(targetPoint(), DEFAULT_SIZES[shape]));
       },
+      addText: () => addAtPoint('text'),
+      addSticky: () => addAtPoint('sticky'),
       toggleGrid: () => gridStore.set(!gridStore.get()),
       zoomToSelection() {
         const selected = store.getState().nodes.filter((n) => n.selected);

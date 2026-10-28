@@ -81,7 +81,8 @@ describe('clipboard core (F10 v2)', () => {
       ],
       [edge(E1), edge(pedge(E2.id, N1.id, Z.id))],
     );
-    expect(out).toEqual({ type: 'drawarc-clipboard', schemaVersion: 1, nodes: [N1, N2], edges: [E1] });
+    // F22: the live canvas schema is v2; a v1 envelope still parses (line 34 fixture) through migrate.
+    expect(out).toEqual({ type: 'drawarc-clipboard', schemaVersion: 2, nodes: [N1, N2], edges: [E1] });
   });
 
   it('writeClipboardText/readClipboardText survive a missing or rejecting navigator.clipboard (AC-029, EC-014, EC-015)', async () => {

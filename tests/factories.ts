@@ -52,5 +52,5 @@ export function makeCanvasDocument({ nodes = 5, edges = Math.max(0, nodes - 1) }
     targetHandle: 'left',
     ...(i % 2 === 0 ? { data: { label: `edge ${i + 1}` } } : {}),
   }));
-  return { schemaVersion: 1, nodes: nodeList, edges: edgeList };
+  return { schemaVersion: 2, nodes: nodeList, edges: edgeList };
 }

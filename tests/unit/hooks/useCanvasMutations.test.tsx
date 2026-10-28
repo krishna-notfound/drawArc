@@ -3,6 +3,7 @@ import { ReactFlowProvider, useStoreApi } from '@xyflow/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useCanvasMutations } from '@/hooks/useCanvasMutations';
+import { takeEditorOpen } from '@/lib/canvas/pending-editor';
 import { type CanvasEdge, type CanvasNode, DEFAULT_SIZES, NODE_SHAPES } from '@/types/canvas';
 
 // F06 passes useLiveblocksFlow's handlers to <ReactFlow> only for writable members; React Flow keeps them in its
@@ -119,6 +120,61 @@ describe('useCanvasMutations().updateNodesData (F08 AC-017 unit half)', () => {
     const [changes] = onNodesChange.mock.calls[0]!;
     expect(changes.map((c: { type: string; id: string }) => [c.type, c.id])).toEqual(ids.map((id) => ['replace', id]));
     for (const change of changes) expect(change.item.data.color).toBe('green');
+  });
+});
+
+describe('useCanvasMutations().addNodeOfKind / commitTextNode (F22 AC-007, AC-010, AC-018 unit half)', () => {
+  it('addNodeOfKind creates a text node 24x20 with autoWidth and flags its editor to open', () => {
+    const { result, onNodesChange } = setup(true);
+    const node = result.current.mutations.addNodeOfKind('text', { x: 5, y: 6 })!;
+    expect(node).toMatchObject({ width: 24, height: 20, data: { label: '', shape: 'text', color: 'neutral', autoWidth: true } });
+    expect(node.id).toMatch(/^text_/);
+    expect(takeEditorOpen(node.id)).toBe(true);
+    expect(takeEditorOpen(node.id)).toBe(false);
+    expect(onNodesChange.mock.calls[0]).toEqual([[{ type: 'add', item: node }]]);
+    expect(onNodesChange.mock.calls[1]).toEqual([[{ type: 'select', id: node.id, selected: true }]]);
+  });
+
+  it('addNodeOfKind creates a 250x250 orange sticky; an initial label skips the editor flag', () => {
+    const { result } = setup(true);
+    const sticky = result.current.mutations.addNodeOfKind('sticky', { x: 0, y: 0 })!;
+    expect(sticky).toMatchObject({ width: 250, height: 250, data: { label: '', shape: 'sticky', color: 'orange' } });
+    expect(sticky.id).toMatch(/^sticky_/);
+    expect(takeEditorOpen(sticky.id)).toBe(false);
+    const pasted = result.current.mutations.addNodeOfKind('text', { x: 0, y: 0 }, { label: 'pasted' })!;
+    expect(pasted.data.label).toBe('pasted');
+    expect(takeEditorOpen(pasted.id)).toBe(false);
+  });
+
+  it('commitTextNode writes label, width, height and autoWidth in one replace', () => {
+    const { result, onNodesChange } = setup(true);
+    const node = result.current.mutations.addNodeOfKind('text', { x: 0, y: 0 })!;
+    act(() => {
+      result.current.store.getState().setNodes([node]);
+    });
+    onNodesChange.mockClear();
+
+    result.current.mutations.commitTextNode(node.id, { label: 'Hi', width: 120, height: 24, autoWidth: false });
+
+    expect(onNodesChange).toHaveBeenCalledTimes(1);
+    expect(onNodesChange.mock.calls[0][0]).toEqual([
+      {
+        type: 'replace',
+        id: node.id,
+        item: expect.objectContaining({
+          width: 120,
+          height: 24,
+          data: { label: 'Hi', shape: 'text', color: 'neutral', autoWidth: false },
+        }),
+      },
+    ]);
+  });
+
+  it('addNodeOfKind and commitTextNode are silent no-ops for read-only members', () => {
+    const { result, onNodesChange } = setup(false);
+    expect(result.current.mutations.addNodeOfKind('text', { x: 0, y: 0 })).toBeNull();
+    result.current.mutations.commitTextNode('text_x', { label: 'x' });
+    expect(onNodesChange).not.toHaveBeenCalled();
   });
 });
 

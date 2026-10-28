@@ -2,17 +2,17 @@
 
 | Field | Value |
 |---|---|
-| Status | Approved — implementation authorized (2026-10-28, D-066) |
+| Status | Verification — implemented and verified except AC-016 (blocked on F08 v2) and AC-020 (manual); awaiting owner review |
 | Spec approved | 2026-10-28, owner (D-066) |
 | Implementation authorized | 2026-10-28, owner — batch 1 |
-| Last verified | — |
+| Last verified | 2026-10-28, branch tip 59b7b15 plus the evidence commit |
 
 ## History
 - 2026-10-28 — drafted by the spec writer from D-052, D-057, D-063 (and D-053, D-056, D-058) and research R-005, R-006, R-008, R-027, R-031 (`00-summary.md` §2 C1/C2/C6), `01-selection-tools-text.md` §T6, §T10, §R4, §X6, §X7, §X9, §X10, `02-…` §F-A03, `03-…` §F-41, `04-…` §B4/§D3; React Flow 12.12.0 and Zod 4.6.7 facts verified against `node_modules` on 2026-10-28. Companion edits: `context/domain-model.md` (v2 block, PROPOSED → frozen at approval) and `features/06-base-collaborative-canvas/status.md` (open-issue pointer).
 - 2026-10-28 — Approved by owner with batch 1 (D-066); the 14 local decisions in `docs/research/batch1-owner-decisions.md` adopted as recommended. Implementation authorized (Sonnet 5.5 agent, own worktree).
 
 ## Evidence
-None yet.
+- **Integration (2026-10-28):** `main` (`77103b2`, F10 v2 + F26) merged in `ee6cb34` (8 conflicts, F10 v2 registry/clipboard/grid/align base with F22's `addNodeOfKind`/`commitTextNode`/palette layered on; the interim `addText`/`addSticky` `matchShortcut` path was dropped). Hand-over `fa880e4`: `t`/`n` left `RESERVED_CHORDS` and became `addText`/`addSticky` registry bindings (insert group, mutating, pointer else viewport centre, viewer no-op) with `CanvasActions` methods, `runAction` cases and cheat-sheet rows (20 → 22 e2e rows); palette tooltips read the keys from the registry; `lib/canvas/kinds.ts` kept (it now resolves the real `NODE_KINDS` / `TEXT_MAX_LENGTH`; `kinds.test.ts` guards it) and plain-text paste creates a text node (unit AC-033 with the shim stubbed, real-shim unit test, e2e paste test). Behaviour change vs FR-008 wording: T/N insert centred on the pointer (viewport centre only when the pointer is off-canvas), like R/D/O/P/C/H; the e2e specs now click the insertion point first. Test fix `16206d8`. Results: `npm run check` — tsc and eslint clean, vitest 90 files / 632 tests pass (one `landing-metadata` import timeout under load on the first run, green on rerun), prisma valid; `npm run build` ok; `npm audit --audit-level=high` 0 vulnerabilities; `npm run e2e` (3022, 4 workers) 91 of 93 pass, the 2 failures (`ergonomics-collab` AC-023, `persistence` AC-022) are `openCanvas` 20 s connect timeouts under 4-worker dev-server load and pass alone — flakes; the first full run's real failures (T/N tests assuming viewport-centre insertion, and a count race in the F10 AC-042 test) are fixed in `16206d8`, its other two failures (`sharing` AC-026, `text-sticky-collab` AC-019) were the same kind of flake and passed alone.
 
 ## Open issues (owner decisions needed at approval)
 - **D-22a** one React Flow node type with kind dispatch on `data.shape` (vs. separate `textNode`/`stickyNode` types). Recommend A: no change to `nodeTypes`, serialisers, F13/F14.

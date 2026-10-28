@@ -51,5 +51,5 @@ const edges = links.slice(0, EDGES).map(([source, target, sourceHandle, targetHa
   targetHandle,
 }));
 
-writeFileSync('tests/fixtures/canvas/large-500-nodes.json', `${JSON.stringify({ schemaVersion: 1, nodes, edges })}\n`);
+writeFileSync('tests/fixtures/canvas/large-500-nodes.json', `${JSON.stringify({ schemaVersion: 2, nodes, edges })}\n`);
 console.log(`large-500-nodes.json: ${nodes.length} nodes, ${edges.length} edges`);

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 
+import { resolveColor } from '@/lib/canvas/color';
 import { boundsOf } from '@/lib/canvas/layout-check';
 import type { CanvasTemplate } from '@/lib/canvas/templates';
-import { NODE_COLORS, type PersistedNode } from '@/types/canvas';
+import type { PersistedNode } from '@/types/canvas';
 
 const PADDING = 24;
 
@@ -10,7 +11,7 @@ const PADDING = 24;
 function NodeShape({ node }: { node: PersistedNode }) {
   const { x, y } = node.position;
   const { width: w, height: h } = node;
-  const colors = NODE_COLORS[node.data.color];
+  const colors = resolveColor(node.data.color);
   // The preview is scaled down ~6×; a non-scaling stroke keeps outlines at 1 px on screen.
   const paint = { fill: colors.fill, stroke: colors.text, strokeWidth: 1, vectorEffect: 'non-scaling-stroke' } as const;
   const points = (pairs: [number, number][]) => pairs.map(([px, py]) => `${x + px * w},${y + py * h}`).join(' ');

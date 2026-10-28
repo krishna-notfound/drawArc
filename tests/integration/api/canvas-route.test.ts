@@ -31,7 +31,7 @@ const { PUT, GET } = await import('@/app/api/projects/[projectId]/canvas/route')
 
 const PREFIX = 'l2_canvas_';
 const small = JSON.parse(readFileSync('tests/fixtures/canvas/v1-small.json', 'utf8')) as CanvasDocument;
-const EMPTY: CanvasDocument = { schemaVersion: 1, nodes: [], edges: [] };
+const EMPTY: CanvasDocument = { schemaVersion: 2, nodes: [], edges: [] };
 const ULID_TAIL = (i: number) => String(i).padStart(26, '0').replace(/[ILOU]/g, '0');
 
 type Ctx = Parameters<typeof PUT>[1];
@@ -96,11 +96,11 @@ describe.skipIf(!hasTestDatabase)('/api/projects/[projectId]/canvas (L2)', { tim
       asUser(who());
       const res = await put(project.id, { document: small });
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ savedAt: expect.any(String), schemaVersion: 1, size: 123, pointerUpdated: true });
-      expect(h.putCanvas).toHaveBeenCalledWith(project.id, small);
+      expect(await res.json()).toEqual({ savedAt: expect.any(String), schemaVersion: 2, size: 123, pointerUpdated: true });
+      expect(h.putCanvas).toHaveBeenCalledWith(project.id, { ...small, schemaVersion: 2 });
       const row = await db.project.findUniqueOrThrow({ where: { id: project.id } });
       expect(row.canvasBlobPath).toBe(`canvas/${project.id}.json`);
-      expect(row.canvasSchemaVersion).toBe(1);
+      expect(row.canvasSchemaVersion).toBe(2);
       expect(Math.abs(row.canvasSavedAt!.getTime() - Date.now())).toBeLessThan(5_000);
     });
 
@@ -125,7 +125,7 @@ describe.skipIf(!hasTestDatabase)('/api/projects/[projectId]/canvas (L2)', { tim
         const res = await get(project.id);
         expect(res.status).toBe(200);
         expect(res.headers.get('Cache-Control')).toBe('no-store');
-        expect(await res.json()).toEqual({ document: small, savedAt: null, schemaVersion: 1 });
+        expect(await res.json()).toEqual({ document: { ...small, schemaVersion: 2 }, savedAt: null, schemaVersion: 2 });
       }
       asUser(stranger);
       const asStranger = await get(project.id);

@@ -10,21 +10,24 @@ import {
 } from '@/types/canvas';
 
 function persistNode(node: CanvasNode): PersistedNode {
-  const { label, shape, color } = node.data;
   // Unknown shapes (EC-001) fall back to rectangle sizes here; validation then rejects the shape itself.
-  const fallback = DEFAULT_SIZES[shape] ?? DEFAULT_SIZES.rectangle;
+  const fallback = DEFAULT_SIZES[node.data.shape] ?? DEFAULT_SIZES.rectangle;
   return {
     id: node.id,
     type: 'canvasNode',
     position: { x: node.position.x, y: node.position.y },
     width: node.width ?? node.measured?.width ?? fallback.width,
     height: node.height ?? node.measured?.height ?? fallback.height,
-    data: { label, shape, color },
+    // The whole `data` object: the schema's strict kind objects are the allowlist, so no v2 field is dropped.
+    data: { ...node.data },
+    ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
+    ...(node.extent === 'parent' ? { extent: 'parent' as const } : {}),
   };
 }
 
 function persistEdge(edge: CanvasEdge): PersistedEdge {
   const label = edge.data?.label;
+  const style = edge.data?.style;
   return {
     id: edge.id,
     type: 'canvasEdge',
@@ -32,7 +35,7 @@ function persistEdge(edge: CanvasEdge): PersistedEdge {
     target: edge.target,
     sourceHandle: (edge.sourceHandle ?? 'right') as HandleId,
     targetHandle: (edge.targetHandle ?? 'left') as HandleId,
-    ...(label ? { data: { label } } : {}),
+    ...(label || style ? { data: { ...(label ? { label } : {}), ...(style ? { style: { ...style } } : {}) } } : {}),
   };
 }
 
@@ -55,6 +58,8 @@ export function fromDocument(doc: CanvasDocument): { nodes: CanvasNode[]; edges:
       width: node.width,
       height: node.height,
       data: { ...node.data },
+      ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
+      ...(node.extent !== undefined ? { extent: node.extent } : {}),
     })),
     edges: doc.edges.map((edge) => ({
       id: edge.id,

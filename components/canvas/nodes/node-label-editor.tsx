@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { LABEL_MAX_LENGTH } from '@/types/canvas';
 
@@ -12,6 +12,17 @@ export interface NodeLabelEditorProps {
   onCommit(value: string): void;
   /** Called at most once (Escape); nothing is written. */
   onCancel(): void;
+  /** Typography from `data.text`, identical to the resting label's so opening the editor causes no jump. */
+  style?: CSSProperties;
+  /** Cap on the draft length; defaults to the shape label cap (`LABEL_MAX_LENGTH`). */
+  maxLength?: number;
+  /** Textarea typography classes; defaults to `LABEL_TYPOGRAPHY` (centred, 8 px padding, wrapping). */
+  className?: string;
+  /** Classes of the positioning wrapper; defaults to a centring overlay. */
+  wrapperClassName?: string;
+  placeholder?: string;
+  /** Called with every draft change (never a write): the text node measures it to grow while typing. */
+  onDraftChange?(value: string): void;
 }
 
 const stop = (e: Event) => e.stopPropagation();
@@ -22,7 +33,17 @@ const stop = (e: Event) => e.stopPropagation();
  * return focus to the node. If the editor unmounts for any other reason (node deleted remotely, role downgraded), it
  * closes without committing.
  */
-export function NodeLabelEditor({ initial, onCommit, onCancel }: NodeLabelEditorProps) {
+export function NodeLabelEditor({
+  initial,
+  onCommit,
+  onCancel,
+  style,
+  maxLength = LABEL_MAX_LENGTH,
+  className = LABEL_TYPOGRAPHY,
+  wrapperClassName = 'absolute inset-0 flex items-center justify-center',
+  placeholder = 'Label',
+  onDraftChange,
+}: NodeLabelEditorProps) {
   const [draft, setDraft] = useState(initial);
   const ref = useRef<HTMLTextAreaElement>(null);
   const callbacks = useRef({ onCommit, onCancel });
@@ -80,17 +101,21 @@ export function NodeLabelEditor({ initial, onCommit, onCancel }: NodeLabelEditor
   }
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
+    <div className={wrapperClassName}>
       <textarea
         ref={ref}
         aria-label="Node label"
-        placeholder="Label"
+        placeholder={placeholder}
         rows={1}
-        maxLength={LABEL_MAX_LENGTH}
+        maxLength={maxLength}
+        style={style}
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          onDraftChange?.(e.target.value);
+        }}
         onBlur={(e) => finish(e.currentTarget, () => callbacks.current.onCommit(e.currentTarget.value), false)}
-        className={`nodrag nowheel nopan field-sizing-content max-h-full w-full resize-none overflow-auto bg-transparent outline-none placeholder:text-copy-faint ${LABEL_TYPOGRAPHY}`}
+        className={`nodrag nowheel nopan field-sizing-content max-h-full w-full resize-none overflow-auto bg-transparent outline-none placeholder:text-copy-faint ${className}`}
       />
     </div>
   );
